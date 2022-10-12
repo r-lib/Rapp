@@ -64,22 +64,52 @@ flip-coin --n 1
 ```
 
 Option values passed from the command line are parsed as yaml/json, and then coerced
-to the original R option type.
+to the original R option type. The following option value types are supported: int, float, string, and bool. Values can be supplied after the option, or as part of the option with `=`. The following two usages are the same:
+
+```bash
+flip-coin --n=1
+flip-coin --n 1
+```
+
+Bool options, (that is, assignments of `TRUE` or `FALSE` in an R app) are a little different.
+They support usage as switches at the command line.
+For example in an R script:
+
+```R
+echo <- TRUE
+```
+means that at the command line the following are supported:
+```R
+my-app --echo       # TRUE 
+my-app --echo=yes   # TRUE 
+my-app --echo=true  # TRUE
+my-app --echo=1     # TRUE
+
+my-app --no-echo     # FALSE 
+my-app --echo=no     # FALSE 
+my-app --echo=false  # FALSE 
+my-app --echo=0      # FALSE 
+```
 
 ### Positional Arguments
 
 Simple assignments of length-0 objects at the top level of an R script become
-positional arguments. If the R symbol has a `...` suffix or prefix, it is a collector 
+positional arguments. If the R symbol has a `...` suffix or prefix, it becomes a collector 
 for a variable number of positional arguments. Positional arguments always come into the R app as character strings.
 
-```
+```R
 args... <- c()
+```
+or
+```R
+first_arg      <- c()
+...middle_args <- c()
+last_arg       <- c()
 ```
 
 ## Shipping an Rapp as part of an R package
 
-You can easily share your R app command line executable as part of your
-package as part of an R package.
+You can easily share your R app command line executable as part of an R package.
 
 -  Add {Rapp} as a dependency in your DESCRIPTION
 -  Place your app in the `exec` folder in your package, e.g: `exec/myapp`.
