@@ -1,36 +1,43 @@
-
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
 
 # Rapp
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
-Rapp (short for "R application") makes it fun to write and share command line applications in R.
+Rapp (short for "R application") makes it fun to write and share command
+line applications in R.
 
-It is an alternative front end to R, a drop-in replacement for `Rscript` that
-does automatic handling of command line arguments. It converts a simple
-R script into a command line application with a rich and robust support for command line arguments.
+It is an alternative front end to R, a drop-in replacement for `Rscript`
+that does automatic handling of command line arguments. It converts a
+simple R script into a command line application with a rich and robust
+support for command line arguments.
 
-It aims to provides a seamless transition from interactive repl-driven development to non-interactive execution with command line arguments.
+It aims to provides a seamless transition from interactive repl-driven
+development at the R console to non-interactive execution at the command
+line.
 
 Here is a simple example Rapp:
 
-```R
+``` r
 #!/usr/bin/env Rapp
 #| name: flip-coin
-#| description: |
-#|   flip a coin.
+#| description: Flip a coin.
 
 #| description: number of coin flips
 n <- 1
 
-cat(sample(c("heads", "tails"), n, TRUE),
-    fill = TRUE)
+cat(sample(c("heads", "tails"), n, TRUE), fill = TRUE)
 ```
 
-
 Then you can invoke it from the command line:
-```bash
+
+``` bash
 $ flip-coin
 tails
 
@@ -55,31 +62,39 @@ Application options and arguments work like this:
 
 Simple assignments of scalar literals at the top level of the R script
 are automatically as *options*.
-```R
+
+``` r
 n <- 1
 ```
+
 becomes an option at the command line:
-```bash
+
+``` bash
 flip-coin --n 1
 ```
 
-Option values passed from the command line are parsed as yaml/json, and then coerced
-to the original R option type. The following option value types are supported: int, float, string, and bool. Values can be supplied after the option, or as part of the option with `=`. The following two usages are the same:
+Option values passed from the command line are parsed as yaml/json, and
+then coerced to the original R option type. The following option value
+types are supported: int, float, string, and bool. Values can be
+supplied after the option, or as part of the option with `=`. The
+following two usages are the same:
 
-```bash
+``` bash
 flip-coin --n=1
 flip-coin --n 1
 ```
 
-Bool options, (that is, assignments of `TRUE` or `FALSE` in an R app) are a little different.
-They support usage as switches at the command line.
-For example in an R script:
+Bool options, (that is, assignments of `TRUE` or `FALSE` in an R app)
+are a little different. They support usage as switches at the command
+line. For example in an R script:
 
-```R
+``` r
 echo <- TRUE
 ```
+
 means that at the command line the following are supported:
-```R
+
+``` r
 my-app --echo       # TRUE 
 my-app --echo=yes   # TRUE 
 my-app --echo=true  # TRUE
@@ -93,15 +108,19 @@ my-app --echo=0      # FALSE
 
 ### Positional Arguments
 
-Simple assignments of length-0 objects at the top level of an R script become
-positional arguments. If the R symbol has a `...` suffix or prefix, it becomes a collector 
-for a variable number of positional arguments. Positional arguments always come into the R app as character strings.
+Simple assignments of length-0 objects at the top level of an R script
+become positional arguments. If the R symbol has a `...` suffix or
+prefix, it becomes a collector for a variable number of positional
+arguments. Positional arguments always come into the R app as character
+strings.
 
-```R
+``` r
 args... <- c()
 ```
+
 or
-```R
+
+``` r
 first_arg      <- c()
 ...middle_args <- c()
 last_arg       <- c()
@@ -109,24 +128,27 @@ last_arg       <- c()
 
 ## Shipping an Rapp as part of an R package
 
-You can easily share your R app command line executable as part of an R package.
+You can easily share your R app command line executable as part of an R
+package.
 
--  Add {Rapp} as a dependency in your DESCRIPTION
--  Place your app in the `exec` folder in your package, e.g: `exec/myapp`.
-   Apps are automatically installed as executable.
--  Instruct your users to add executables from Rapp and your package to their PATH.
-   On Linux and macOS, add the following to .bashrc or .zshrc (or equivalent)
+-   Add {Rapp} as a dependency in your DESCRIPTION
+-   Place your app in the `exec` folder in your package, e.g:
+    `exec/myapp`. Apps are automatically installed as executable.
+-   Instruct your users to add executables from Rapp and your package to
+    their PATH. On Linux and macOS, add the following to .bashrc or
+    .zshrc (or equivalent)
 
-```bash
+``` bash
 export PATH=$(Rscript -e 'cat(system.file("exec", package = "Rapp"))'):$PATH
 export PATH=$(Rscript -e 'cat(system.file("exec", package = "my.package.name"))'):$PATH
 ```
 
 # Windows
 
-Rapp works on Windows. However, because there is no native support for `!#` shebang
-executable on Windows, you must invoke Rapp directly.
-```cmd
+Rapp works on Windows. However, because there is no native support for
+`!#` shebang executable on Windows, you must invoke Rapp directly.
+
+``` cmd
 Rapp flip-coin --n 3
 ```
 
