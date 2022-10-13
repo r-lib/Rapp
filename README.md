@@ -1,8 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
 
 # Rapp
 
@@ -29,7 +24,7 @@ Here is a simple example Rapp:
 #| name: flip-coin
 #| description: Flip a coin.
 
-#| description: number of coin flips
+#| description: Number of coin flips
 n <- 1
 
 cat(sample(c("heads", "tails"), n, TRUE), fill = TRUE)
@@ -46,13 +41,13 @@ tails heads tails
 
 $ flip-coin --help --yaml
 name: flip-coin
-description: flip a coin.
+description: Flip a coin.
 options:
   'n':
     default: 1.0
     val_type: float
     arg_type: option
-    description: number of coin flips
+    description: Number of coin flips
 arguments: {}
 ```
 
@@ -61,7 +56,7 @@ Application options and arguments work like this:
 ### Options
 
 Simple assignments of scalar literals at the top level of the R script
-are automatically as *options*.
+are automatically treated as command line *options*.
 
 ``` r
 n <- 1
@@ -74,10 +69,10 @@ flip-coin --n 1
 ```
 
 Option values passed from the command line are parsed as yaml/json, and
-then coerced to the original R option type. The following option value
-types are supported: int, float, string, and bool. Values can be
-supplied after the option, or as part of the option with `=`. The
-following two usages are the same:
+then coerced to the original R type. The following option value types
+are supported: int, float, string, and bool. Values can be supplied
+after the option, or as part of the option with `=`. The following two
+usages are the same:
 
 ``` bash
 flip-coin --n=1
