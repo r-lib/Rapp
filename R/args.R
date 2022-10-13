@@ -99,10 +99,9 @@ process_args <- function(args, app) {
     )
 
     # TODO: do we care about enforcing or formalizing flag val length?
-    # right now, a val like [a,b,c] gets parsed and is injected as a
-    # length 3 character vector.
+    # right now, a val like [1,2,3] gets parsed and is injected as a
+    # length 3 integer vector.
     # Decide if this needs a guardrail or paving and signage.
-    val <- parse_yaml(val)
 
     # Try coerce to the R type, but if coercion fails, e.g.:
     # Warning in as.vector("1a", "integer") : NAs introduced by coercion
@@ -110,10 +109,12 @@ process_args <- function(args, app) {
     # NAs cannot be injected from cli args via regular yaml,
     # NAs are sentinals users can use to check if an opt was supplied.
     # (but anything is possible with '!expr ...')
-    tryCatch({
-      if (!is.na(coerced_val <- as.vector(val, mode)))
-        val <- coerced_val
-    }, error = identity, warning = identity)
+    if (mode != "character")
+      tryCatch({
+        val <- parse_yaml(val)
+        if (!is.na(coerced_val <- as.vector(val, mode)))
+          val <- coerced_val
+      }, error = identity, warning = identity)
 
     # val can be NULL
     app$exprs[[spec$.val_pos_in_exprs]] <- val

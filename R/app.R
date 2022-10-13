@@ -81,7 +81,8 @@ get_app_inputs <- function(app) {
     name <- as.character(e[[2L]])
 
     # already encountered this same symbol as a flag earlier
-    if (name %in% names(args))
+    if (name %in% names(args) ||
+        name %in% names(opts))
       next
 
     default <- e[[3L]]
