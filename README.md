@@ -150,3 +150,16 @@ Rapp flip-coin --n 3
 ## More examples
 
 See the `inst/examples` folder for more example R apps.
+
+
+## Other Approaches
+
+This package is just one set of ideas for how to build command line apps in R.
+Some other packages in this space:
+
+- [littler](https://github.com/eddelbuettel/littler) (typically paired with one of the below)
+- [docopt](https://github.com/docopt/docopt.R)
+- [optparse](https://github.com/trevorld/r-optparse)
+- [argparse](https://github.com/trevorld/r-argparse)
+- [argparser](https://cran.r-project.org/web/packages/argparser/index.html)
+
