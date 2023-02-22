@@ -1,5 +1,4 @@
 
-
 print.yaml <- function(x, file = "", ..., append = FALSE) {
   out <- encode_yaml(x, ...)
   for (f in file)
@@ -8,15 +7,9 @@ print.yaml <- function(x, file = "", ..., append = FALSE) {
   invisible(out)
 }
 
+read_yaml <- function(...) maybe_as_yaml(yaml::read_yaml(...))
 
-read_yaml <- function(...) {
-  maybe_as_yaml(yaml::read_yaml(...))
-}
-
-parse_yaml <-  function(...) {
-  maybe_as_yaml(yaml::yaml.load(...))
-}
-
+parse_yaml <-  function(...) maybe_as_yaml(yaml::yaml.load(...))
 
 parse_hashpipe_yaml <- function(x, ...) {
   stopifnot(startsWith(x, "#| "))
@@ -24,11 +17,7 @@ parse_hashpipe_yaml <- function(x, ...) {
   parse_yaml(x, ...)
 }
 
-
-
-as_yaml <- function(x)
-  maybe_as_yaml(as.list(x))
-
+as_yaml <- function(x) maybe_as_yaml(as.list(x))
 
 encode_yaml <- function(x, ...) {
   as_yaml_args <- utils::modifyList(list(
@@ -40,7 +29,6 @@ encode_yaml <- function(x, ...) {
   out <- strsplit(out, "\n", fixed = TRUE)[[1L]]
   out
 }
-
 
 # yaml <- function(...)
 #   as_yaml(rlang::dots_list(..., .named = TRUE))
@@ -57,14 +45,10 @@ maybe_as_yaml <- function(x) {
 }
 
 
-`$.yaml` <- function(x, ...)
-  maybe_as_yaml(unclass(x)[[...]])
-  # no partial matching, preserve 'yaml' class on sublists
+# no partial matching, preserve 'yaml' class on sublists
+`$.yaml` <- function(x, ...) maybe_as_yaml(unclass(x)[[...]])
 
-
-`[[.yaml` <- function(x, ...)
-  maybe_as_yaml(NextMethod())
-
+`[[.yaml` <- function(x, ...) maybe_as_yaml(NextMethod())
 
 `[.yaml` <- `[[.yaml`
 

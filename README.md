@@ -90,15 +90,15 @@ echo <- TRUE
 means that at the command line the following are supported:
 
 ``` r
-my-app --echo       # TRUE 
-my-app --echo=yes   # TRUE 
+my-app --echo       # TRUE
+my-app --echo=yes   # TRUE
 my-app --echo=true  # TRUE
 my-app --echo=1     # TRUE
 
-my-app --no-echo     # FALSE 
-my-app --echo=no     # FALSE 
-my-app --echo=false  # FALSE 
-my-app --echo=0      # FALSE 
+my-app --no-echo     # FALSE
+my-app --echo=no     # FALSE
+my-app --echo=false  # FALSE
+my-app --echo=0      # FALSE
 ```
 
 ### Positional Arguments
@@ -162,4 +162,3 @@ Some other packages in this space:
 - [optparse](https://github.com/trevorld/r-optparse)
 - [argparse](https://github.com/trevorld/r-argparse)
 - [argparser](https://cran.r-project.org/web/packages/argparser/index.html)
-

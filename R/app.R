@@ -1,6 +1,4 @@
 
-
-
 as_app <- function(x, complete = TRUE) {
   if(inherits(x, "Rapp"))
     return(x)
@@ -97,7 +95,7 @@ get_app_inputs <- function(app) {
       if(!call_sym %in% c("c", "character", "+"))
         next
 
-      if(all.names(default) %in% c("c", "character")) #"+"
+      if(all.names(default) %in% c("c", "character", "-", "+"))
         default <- eval(default, envir = baseenv())
       ## TODO: complex are `+` calls, eval, all else, next
       ## TODO: special syntax for var len values? `vals <- c("a", "b")`, injected as `[a,b]`
@@ -134,9 +132,6 @@ get_app_inputs <- function(app) {
       else "positional",
       .val_pos_in_exprs = c(i, 3L)
     )
-
-    # "complex" = "string"))
-    # yaml has no native support for complex
 
     lineno <- utils::getSrcLocation(exprs[i], "line")
     # look for adjacent anno hints about this flag
@@ -180,4 +175,3 @@ run <- function(app, args = commandArgs(TRUE)) {
     eval(app$exprs, new.env(parent = globalenv()))
   invisible()
 }
-

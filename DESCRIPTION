@@ -3,10 +3,10 @@ Title: Build Command Line Applications in R
 Version: 0.0.0.9000
 Authors@R:
     person("Tomasz", "Kalinowski", role = c("aut", "cre"),
-           email = "tomasz.kalinowski@rstudio.com")
-Description: Run simple R scripts as command line applications, with 
-  automatic robust and convenient support for command line arguments. 
-  This package provides Rapp, an alternative R front-end to Rscript 
+           email = "tomasz.kalinowski@posit.co")
+Description: Run simple R scripts as command line applications, with
+  automatic robust and convenient support for command line arguments.
+  This package provides Rapp, an alternative R front-end to Rscript
   that enables this.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
