@@ -162,7 +162,7 @@ get_app_inputs <- function(app) {
 #' @param app A filepath to an Rapp.
 #' @param args character vector of command line args.
 #'
-#' @return nothing, invisibly. Called for its side effect.
+#' @return `NULL`, invisibly. Called for its side effect.
 #' @export
 run <- function(app, args = commandArgs(TRUE)) {
   args <- textConnection(args)

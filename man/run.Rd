@@ -12,7 +12,7 @@ run(app, args = commandArgs(TRUE))
 \item{args}{character vector of command line args.}
 }
 \value{
-nothing, invisibly. Called for its side effect.
+\code{NULL}, invisibly. Called for its side effect.
 }
 \description{
 Run an R app.
