@@ -164,6 +164,39 @@ get_app_inputs <- function(app) {
 #'
 #' @return `NULL`, invisibly. Called for its side effect.
 #' @export
+#'
+#' @details
+#' See the package README for full details.
+#' https://github.com/t-kalinowski/Rapp
+#'
+#' @export
+#' @examples
+#' # For the example, place 'Rapp', the package examples, and 'R' on the PATH
+#' old_path <- Sys.getenv("PATH")
+#' Sys.setenv(PATH = paste(system.file("examples", package = "Rapp"),
+#'                         system.file("exec", package = "Rapp"),
+#'                         R.home("bin"),
+#'                         old_path,
+#'                         sep = .Platform$path.sep))
+#'
+#' # Here is an example app:
+#' # flip-coin.R
+#' writeLines(readLines(
+#'   system.file("examples/flip-coin.R", package = "Rapp")))
+#'
+#' if(.Platform$OS.type != "windows") {
+#'   # on macOS and Linux, you can call the app directly
+#'   system("flip-coin.R")
+#'   system("flip-coin.R --n 3")
+#' } else {
+#'   # On windows, there is no support for shebang '#!' style executables
+#'   # but you can invoke 'Rapp' directly
+#'   system("Rapp flip-coin.R")
+#'   system("Rapp flip-coin.R --n 3")
+#' }
+#'
+#' # restore PATH
+#' Sys.setenv(PATH = old_path)
 run <- function(app, args = commandArgs(TRUE)) {
   args <- textConnection(args)
   if(missing(app))

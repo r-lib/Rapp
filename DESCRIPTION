@@ -1,13 +1,13 @@
 Package: Rapp
-Title: Build Command Line Applications in R
+Title: Easily Build Command Line Applications 
 Version: 0.1.0
 Authors@R:
     person("Tomasz", "Kalinowski", role = c("aut", "cre"),
            email = "tomasz@posit.co")
-Description: Run simple R scripts as command line applications, with
+Description: Run simple 'R' scripts as command line applications, with
   automatic robust and convenient support for command line arguments.
-  This package provides 'Rapp', an alternative R front-end to 'Rscript'
-  that enables this.
+  This package provides 'Rapp', an alternative 'R' front-end similar to 
+  'Rscript', that enables this.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

@@ -33,7 +33,6 @@ test_that("examples work", {
              fi <- tempfile())
   on.exit(unlink(fi), add = TRUE)
 
-
   expect_equal(
     run_app("unique.R", fi),
     c("a", "b", "c")

@@ -17,3 +17,35 @@ run(app, args = commandArgs(TRUE))
 \description{
 Run an R app.
 }
+\details{
+See the package README for full details.
+https://github.com/t-kalinowski/Rapp
+}
+\examples{
+# For the example, place 'Rapp', the package examples, and 'R' on the PATH
+old_path <- Sys.getenv("PATH")
+Sys.setenv(PATH = paste(system.file("examples", package = "Rapp"),
+                        system.file("exec", package = "Rapp"),
+                        R.home("bin"),
+                        old_path,
+                        sep = .Platform$path.sep))
+
+# Here is an example app:
+# flip-coin.R
+writeLines(readLines(
+  system.file("examples/flip-coin.R", package = "Rapp")))
+
+if(.Platform$OS.type != "windows") {
+  # on macOS and Linux, you can call the app directly
+  system("flip-coin.R")
+  system("flip-coin.R --n 3")
+} else {
+  # On windows, there is no support for shebang '#!' style executables
+  # but you can invoke 'Rapp' directly
+  system("Rapp flip-coin.R")
+  system("Rapp flip-coin.R --n 3")
+}
+
+# restore PATH
+Sys.setenv(PATH = old_path)
+}
