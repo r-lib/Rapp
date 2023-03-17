@@ -2,6 +2,7 @@ test_that("examples work", {
   old_path <- Sys.getenv("PATH")
   Sys.setenv(PATH = paste(system.file("examples", package = "Rapp"),
                           system.file("exec", package = "Rapp"),
+                          R.home("bin"),
                           old_path,
                           sep = .Platform$path.sep))
   on.exit(Sys.setenv(PATH = old_path), add = TRUE)

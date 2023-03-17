@@ -53,10 +53,10 @@ maybe_as_yaml <- function(x) {
 `[.yaml` <- `[[.yaml`
 
 # @importFrom utils str
-str.yaml <- function(x, ...) {
-  cat("YAML ")
-  str(unclass(x), ...)
-}
+# str.yaml <- function(x, ...) {
+#   cat("YAML ")
+#   str(unclass(x), ...)
+# }
 
 registerS3method("print", "yaml", print.yaml)
 registerS3method("$", "yaml", `$.yaml`)
