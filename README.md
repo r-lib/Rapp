@@ -162,3 +162,8 @@ Some other packages in this space:
 - [optparse](https://github.com/trevorld/r-optparse)
 - [argparse](https://github.com/trevorld/r-argparse)
 - [argparser](https://cran.r-project.org/web/packages/argparser/index.html)
+
+Also, some interesting examples of other approaches to exporting cli interfaces from R packages:
+
+- [renv](https://github.com/rstudio/renv/blob/main/inst/bin/renv)
+- [bspm](https://github.com/Enchufa2/bspm/blob/master/R/scripts.R)
