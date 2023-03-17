@@ -162,7 +162,7 @@ Some other packages in this space:
 - [docopt](https://github.com/docopt/docopt.R)
 - [optparse](https://github.com/trevorld/r-optparse)
 - [argparse](https://github.com/trevorld/r-argparse)
-- [argparser](https://cran.r-project.org/web/packages/argparser/index.html)
+- [argparser](https://CRAN.R-project.org/package=argparser) 
 
 Also, some interesting examples of other approaches to exporting cli interfaces from R packages:
 
