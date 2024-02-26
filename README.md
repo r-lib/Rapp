@@ -131,13 +131,19 @@ package.
 -   Place your app in the `exec` folder in your package, e.g:
     `exec/myapp`. Apps are automatically installed as executable.
 -   Instruct your users to add executables from Rapp and your package to
-    their PATH. On Linux and macOS, add the following to .bashrc or
+    their `PATH`. On Linux and macOS, add the following to .bashrc or
     .zshrc (or equivalent)
 
-``` bash
-export PATH=$(Rscript -e 'cat(system.file("exec", package = "Rapp"))'):$PATH
-export PATH=$(Rscript -e 'cat(system.file("exec", package = "my.package.name"))'):$PATH
-```
+    ``` bash
+    export PATH=$(Rscript -e 'cat(system.file("exec", package = "Rapp"))'):$PATH
+    export PATH=$(Rscript -e 'cat(system.file("exec", package = "my.package.name"))'):$PATH
+    ```
+-   If [`rig`](https://github.com/r-lib/rig) is already on the `PATH`, 
+    you can also use `rig` to run a script in a packages `exec` directory:
+    
+    ``` bash
+    rig run <pkg>::<script>
+    ```
 
 # Windows
 
