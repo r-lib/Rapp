@@ -1,5 +1,6 @@
 
-# Rapp
+
+# Rapp <a href="https://github.com/t-kalinowski/Rapp"><img src="tools/logo2.png" align="right" height="138" alt="R app homepage" /></a>
 
 <!-- badges: start -->
 
