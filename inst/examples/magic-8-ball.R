@@ -3,12 +3,16 @@
 #| description: |
 #|   Ask a yes-no question and get your answer.
 
-#| description: question you want to ask. The default
+#| description: The question you want to ask.
 question <- NULL
 
 if(is.null(question)) {
-  cat("question: ")
-  question <- readLines(file("stdin"), 1)
+  question <- if(interactive()) {
+    readline("question: ")
+  } else {
+    cat("question: ")
+    question <- readLines(file("stdin"), 1)
+  }
 } else {
   cat("question:", question, "\n")
 }
