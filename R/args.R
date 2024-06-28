@@ -17,7 +17,7 @@ process_args <- function(args, app) {
       break
 
     if (a == "--help") {
-      print_app_help(app, yaml = TRUE) #"--yaml" %in% args)
+      print_app_help(app, yaml = "--yaml" %in% readLines(args))
       if (interactive()) return(invisible(FALSE))
       else q("no")
     }
@@ -94,7 +94,7 @@ process_args <- function(args, app) {
       "string" =  "character",
       "bool" =  "logical",
       "float" =  "double",
-      "int" =  "integer",
+      "integer" =  "integer",
       "any"
     )
 
@@ -166,20 +166,85 @@ process_args <- function(args, app) {
 
 print_app_help <- function(app, yaml = TRUE) {
   app <- as_app(app)
+  if (yaml) {
 
-  if(!isTRUE(yaml))
-    .NotYetImplemented()
+    x <- c(app$data,
+           list(options = app$opts),
+           list(arguments = app$args))
+    for(nm in names(x$options))
+      x$options[[nm]]$.val_pos_in_exprs <- NULL
 
-  x <- c(app$data,
-         list(options = app$opts),
-         list(arguments = app$args))
-  for(nm in names(x$options))
-    x$options[[nm]]$.val_pos_in_exprs <- NULL
+    for(nm in names(x$arguments))
+      x$arguments[[nm]]$.val_pos_in_exprs <- NULL
 
-  for(nm in names(x$arguments))
-    x$arguments[[nm]]$.val_pos_in_exprs <- NULL
+    print.yaml(x)
+    return()
+  }
 
-  print.yaml(x)
+  app_name <- app$data$name %||% basename(app$filepath)
+  usage <- paste0(collapse = " ", c(
+    "Usage:", app_name,
+    if (length(app$opts)) "[options]",
+    if (length(app$args)) local({ # "<arguments>"
+      x <- paste0(sprintf("<%s>", names(app$args)), collapse = " ")
+      x <- sub("<...", "...<", x, fixed = TRUE)
+      x <- sub("...>", ">...", x, fixed = TRUE)
+      x <- paste0("[", x, "]")
+      x
+    })
+  ))
+  description <- app$data$description
+
+  options <- imap_chr(app$opts, function(opt, name) {
+
+    if (opt$arg_type == "switch") {
+      true <- paste0("--", name)
+      false <- paste0("--no-", name)
+      default <- if (opt$default) true else false
+      header <- sprintf("  %s | %s  (Default: %s)", true, false, default)
+      description <- if (length(opt$description))
+        strwrap(opt$description, 70, indent = 6, exdent = 6)
+      out <- paste0(c(header, description), collapse = "\n")
+      return(out)
+    }
+
+    if (opt$arg_type == "option") {
+      default <- opt$default
+      type <- opt$val_type
+      if (type == "string")
+        default <- deparse1(default)
+      header <- sprintf("  --%s <value>  (Default: %s, Type: %s)", name, default, type)
+      description <- if (length(opt$description))
+        strwrap(opt$description, 70, indent = 6, exdent = 6)
+      out <- paste0(c(header, description), collapse = "\n")
+      return(out)
+    }
+
+    # noisy safe fallback (shouldn't happen)
+    opt$.val_pos_in_exprs <- NULL
+    yaml::as.yaml(opt)
+  })
+
+  ## omit positional args without a description (they appear in usage)
+  args <- do.call(c, imap(app$args, function(arg, name) {
+
+    if (!length(arg$description)) return()
+
+    description <- if (length(arg$description))
+      strwrap(arg$description, 70, indent = 6, exdent = 6)
+    header <- paste0("  ", sub("^\\.\\.\\.|\\.\\.\\.$", "", name))
+    paste0(c(header, description), collapse = "\n")
+  }))
+
+  if (length(options))
+    options <- c("\nOptions:", options)
+
+  if (length(args))
+    args <- c("\nArguments:", args)
+
+  if (length(description))
+    description <- c(description, "")
+
+  writeLines(c(description, usage, options, args))
+  return()
 }
-
-

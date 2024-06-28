@@ -1,11 +1,11 @@
 #!/usr/bin/env Rapp
 #| name: flip-coin
 #| description: |
-#|   flip a coin.
+#|   Flip a coin.
 
 
-#| description: number of coin flips
-n <- 1
+#| description: Number of coin flips
+n <- 1L
 
 sep <- " "
 wrap <- TRUE
