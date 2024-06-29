@@ -1,18 +1,25 @@
 #!/usr/bin/env Rapp
+#| description: |
+#|   Remove duplicate values from a file or input
+
 
 #| description: remove duplicates in reverse order
 from_last <- FALSE
 
-input <- NULL # optional positional arg
-output <- NA_character_ # option
+#| description: Filepath. If omitted, output is written to stdout.
+output <- NA_character_ # scalar constant == optional option
 
-if(is.null(input))
+#| description: Filepath. If omitted, input is read from stdin.
+input <- c() # 0-length constant == optional positional arg
+
+
+
+if(!length(input))
   input <- file("stdin")
 
 if(is.na(output))
   output <- stdout()
 
-# message("from_last = ", from_last)
 
 readLines(input) |>
   unique(fromLast = from_last) |>

@@ -17,7 +17,6 @@ test_that("examples work", {
     system(cmd, input = input, intern = TRUE)
   }
 
-  # browser()
   expect_equal(
     run_app("unique.R", input = c("a", "b", "c", "c", "b", "a")),
     c("a", "b", "c")
@@ -44,4 +43,3 @@ test_that("examples work", {
   )
 
 })
-
