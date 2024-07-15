@@ -3,7 +3,7 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/t-kalinowski/Rapp/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/t-kalinowski/Rapp/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/r-lib/Rapp/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-lib/Rapp/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 Rapp (short for "R application") makes it fun to write and share command

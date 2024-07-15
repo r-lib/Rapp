@@ -19,7 +19,7 @@ Run an R app.
 }
 \details{
 See the package README for full details.
-https://github.com/t-kalinowski/Rapp
+https://github.com/r-lib/Rapp
 }
 \examples{
 # For the example, place 'Rapp', the package examples, and 'R' on the PATH

@@ -166,7 +166,7 @@ get_app_inputs <- function(app) {
 #'
 #' @details
 #' See the package README for full details.
-#' https://github.com/t-kalinowski/Rapp
+#' https://github.com/r-lib/Rapp
 #'
 #' @export
 #' @examples
