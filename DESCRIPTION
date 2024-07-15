@@ -1,6 +1,6 @@
 Package: Rapp
 Title: Easily Build Command Line Applications 
-Version: 0.1.0.9000
+Version: 0.2.0
 Authors@R:
     person("Tomasz", "Kalinowski", role = c("aut", "cre"),
            email = "tomasz@posit.co")
