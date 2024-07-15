@@ -1,3 +1,5 @@
+# Rapp (development version)
+
 # Rapp 0.2.0
 
 * Updated default `--help` output.
