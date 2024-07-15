@@ -182,4 +182,4 @@ Some other packages in this space:
 Also, some interesting examples of other approaches to exporting cli interfaces from R packages:
 
 - [renv](https://github.com/rstudio/renv/blob/main/inst/bin/renv)
-- [bspm](https://github.com/Enchufa2/bspm/blob/master/R/scripts.R)
+- [bspm](https://github.com/cran4linux/bspm/blob/master/R/scripts.R)
