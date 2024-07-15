@@ -4,3 +4,4 @@
 ^\.github$
 ^CRAN-SUBMISSION$
 ^tools$
+^cran-comments\.md$
