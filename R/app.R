@@ -139,7 +139,10 @@ get_app_inputs <- function(app) {
       while (is_hashpipe[anno_start - 1L])
         subtract(anno_start) <- 1L
 
-      anno <- parse_hashpipe_yaml(lines[anno_start:anno_end])
+      anno <- parse_hashpipe_yaml(lines[anno_start:anno_end],
+                                  handlers = list("bool#yes"= identity,
+                                                  "bool#no" = identity))
+
       arg <- utils::modifyList(arg, anno)
     }
 

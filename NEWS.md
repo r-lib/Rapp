@@ -1,5 +1,7 @@
 # Rapp (development version)
 
+* Added support for short opts (#4, #5).
+
 # Rapp 0.2.0
 
 * Updated default `--help` output.

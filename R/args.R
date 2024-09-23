@@ -10,6 +10,12 @@ process_args <- function(args, app) {
     on.exit(close(args))
   }
 
+  short_opt_to_long_opt <- local({
+    table <- unlist(lapply(app$opts, function(opt) opt$short))
+    table <- setNames(as.list(sprintf("--%s", names(table))),
+                      sprintf("-%s", table))
+    function(short_opt) table[[short_opt]]
+  })
   positional_args <- character()
   while(length(a <- readLines(args, 1L))) {
 
@@ -42,9 +48,12 @@ process_args <- function(args, app) {
       next
     }
 
-    if(arg_type == "short-opt") {
-      # convert to a long opt, possibly pushBack()ing val to args
-      .NotYetImplemented()
+    if (arg_type == "short-opt") {
+      long_name <- short_opt_to_long_opt(a)
+      if (!is.null(long_name)) {
+        pushBack(long_name, args)
+        next
+      }
     }
 
     # resolve these values in this block
