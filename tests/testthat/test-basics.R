@@ -43,7 +43,7 @@ test_that("examples work", {
   )
 
   expect_all_equal <- function(...) {
-    if(...length()<2) stop("not enough args")
+    if(...length() < 2) stop("not enough args")
     for(i in 2:...length()) {
       expect_equal(..1, ...elt(i))
     }
