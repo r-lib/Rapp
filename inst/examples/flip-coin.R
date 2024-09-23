@@ -5,18 +5,20 @@
 
 
 #| description: Number of coin flips
-n <- 1L
+#| short: n
+flips <- 1L
 
 sep <- " "
 wrap <- TRUE
 
-cat(sample(c("heads", "tails"), n, TRUE),
+cat(sample(c("heads", "tails"), flips, TRUE),
     sep = sep, fill = wrap)
 
 
-# Rapp flip-coin.R
-# Rapp flip-coin.R --n 3
-# Rapp flip-coin.R --n=30
-# Rapp flip-coin.R --n=30 --wrap
-# Rapp flip-coin.R --n 30 --no-wrap --sep __
-# Rapp flip-coin.R --n 30 --no-wrap
+# flip-coin.R
+# flip-coin.R --flips 3
+# flip-coin.R -n 3
+# flip-coin.R --flips=30
+# flip-coin.R --flips=30 --wrap
+# flip-coin.R -n 30 --no-wrap --sep __
+# flip-coin.R -n 30 --no-wrap
