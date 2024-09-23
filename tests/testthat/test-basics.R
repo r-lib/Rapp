@@ -42,4 +42,19 @@ test_that("examples work", {
     c("c", "b", "a")
   )
 
+  expect_all_equal <- function(...) {
+    if(...length()<2) stop("not enough args")
+    for(i in 2:...length()) {
+      expect_equal(..1, ...elt(i))
+    }
+  }
+
+  expect_all_equal(
+    "tails tails tails",
+    run_app("flip-coin.R --flips 3 --seed 1234"),
+    run_app("flip-coin.R --flips=3 --seed 1234"),
+    run_app("flip-coin.R -n 3 --seed 1234"),
+    run_app("flip-coin.R -n 3 --seed=1234")
+  )
+
 })

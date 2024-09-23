@@ -11,6 +11,10 @@ flips <- 1L
 sep <- " "
 wrap <- TRUE
 
+seed <- NA_integer_
+if (!is.na(seed))
+  set.seed(seed)
+
 cat(sample(c("heads", "tails"), flips, TRUE),
     sep = sep, fill = wrap)
 
