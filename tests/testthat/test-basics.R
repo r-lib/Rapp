@@ -57,4 +57,8 @@ test_that("examples work", {
     run_app("flip-coin.R -n 3 --seed=1234")
   )
 
+  expect_snapshot(
+    writeLines(run_app("flip-coin.R --help"))
+  )
+
 })
