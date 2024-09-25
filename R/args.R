@@ -220,9 +220,14 @@ print_app_help <- function(app, yaml = TRUE) {
     if (opt$arg_type == "option") {
       default <- opt$default
       type <- opt$val_type
+      short_name <- opt$short
       if (type == "string")
         default <- deparse1(default)
-      header <- sprintf("  --%s <value>  (Default: %s, Type: %s)", name, default, type)
+      header <- if (is.null(short_name)) {
+        sprintf("  --%s <value>  (Default: %s, Type: %s)", name, default, type)
+      } else {
+        sprintf("  -%s, --%s <value>  (Default: %s, Type: %s)", short_name, name, default, type)
+      }
       description <- if (length(opt$description))
         strwrap(opt$description, 70, indent = 6, exdent = 6)
       out <- paste0(c(header, description), collapse = "\n")
