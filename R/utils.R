@@ -39,3 +39,25 @@ map_chr <- function(.x, .f, ...) {
   names(out) <- names(.x)
   out
 }
+
+map_lgl <- function(.x, .f, ...) {
+  out <- vapply(X = .x, FUN = .f, FUN.VALUE = TRUE, USE.NAMES = FALSE)
+  names(out) <- names(.x)
+  out
+}
+
+parent.pkg <- function(env = parent.frame(2)) {
+  if (isNamespace(env <- topenv(env))) {
+    as.character(getNamespaceName(env))
+  } else {
+    NULL
+  }
+}
+
+is_windows <- function() {
+  identical(.Platform$OS.type, "windows")
+}
+
+compact <- function(x) {
+  x[lengths(x) > 0]
+}
