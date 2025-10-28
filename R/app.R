@@ -1,15 +1,16 @@
-
 as_app <- function(x, complete = TRUE) {
-  if(inherits(x, "Rapp"))
+  if (inherits(x, "Rapp")) {
     return(x)
+  }
 
   # TODO: present a nice error message in case of parse errors
   filepath <- x
   lines <- readLines(filepath)
   exprs <- parse(
-    text = lines, keep.source = TRUE,
-    srcfile = srcfilecopy(filepath, lines,
-                          file.mtime(filepath), isFile = TRUE))
+    text = lines,
+    keep.source = TRUE,
+    srcfile = srcfilecopy(filepath, lines, file.mtime(filepath), isFile = TRUE)
+  )
 
   app <- new.env(parent = emptyenv())
   attr(app, "class") <- "Rapp"
@@ -19,7 +20,7 @@ as_app <- function(x, complete = TRUE) {
   app$line_is_hashpipe <- startsWith(lines, "#| ")
   app$exprs <- exprs
 
-  if(complete) {
+  if (complete) {
     app$data <- get_app_data(app)
     inputs <- get_app_inputs(app)
     app$opts <- inputs$opts
@@ -31,29 +32,28 @@ as_app <- function(x, complete = TRUE) {
 
 
 get_app_data <- function(app) {
-
   app <- as_app(app, complete = FALSE)
 
   data <-
-    if (app$line_is_hashpipe[1] ||
-        startsWith(app$lines[1], "#!/") && app$line_is_hashpipe[2]) {
+    if (
+      app$line_is_hashpipe[1] ||
+        startsWith(app$lines[1], "#!/") && app$line_is_hashpipe[2]
+    ) {
       # allow frontmatter to start on 2nd line if first line is a shebang
 
       hashpipe_start <- which.max(app$line_is_hashpipe)
-      hashpipe_end <- which.min(c(TRUE, app$line_is_hashpipe[-1L])) -1L
+      hashpipe_end <- which.min(c(TRUE, app$line_is_hashpipe[-1L])) - 1L
 
       parse_hashpipe_yaml(app$lines[hashpipe_start:hashpipe_end])
     } else {
       as_yaml(list())
     }
 
-
   data
 }
 
 
 get_app_inputs <- function(app) {
-
   app <- as_app(app, complete = FALSE)
   lines <- app$lines
   exprs <- app$exprs
@@ -66,47 +66,58 @@ get_app_inputs <- function(app) {
   for (i in seq_along(exprs)) {
     e <- exprs[[i]]
 
-    if (!is.call(e))
+    if (!is.call(e)) {
       next
+    }
 
     op <- e[[1L]]
-    if (op != quote(`=`) && op != quote(`<-`))
+    if (op != quote(`=`) && op != quote(`<-`)) {
       next
+    }
 
-    if (typeof(e[[2L]]) != "symbol")
+    if (typeof(e[[2L]]) != "symbol") {
       next
+    }
 
     name <- as.character(e[[2L]])
 
     # already encountered this same symbol as a flag earlier
-    if (name %in% names(args) ||
-        name %in% names(opts))
+    if (name %in% names(args) || name %in% names(opts)) {
       next
+    }
 
     default <- e[[3L]]
     if (is.call(default)) {
-
-      if(!is.symbol(call_sym <- default[[1]]))
+      if (!is.symbol(call_sym <- default[[1]])) {
         next
+      }
 
       call_sym <- as.character(call_sym)
 
-      if(!call_sym %in% c("c", "character", "+"))
+      if (!call_sym %in% c("c", "character", "+")) {
         next
+      }
 
-      if(all.names(default) %in% c("c", "character", "-", "+"))
+      if (all.names(default) %in% c("c", "character", "-", "+")) {
         default <- eval(default, envir = baseenv())
+      }
       ## TODO: complex are `+` calls, eval, all else, next
       ## TODO: special syntax for var len values? `vals <- c("a", "b")`, injected as `[a,b]`
     }
 
-    if (!typeof(default) %in%
-        c("double", "integer", "character", "logical", "NULL"))
+    if (
+      !typeof(default) %in%
+        c("double", "integer", "character", "logical", "NULL")
+    ) {
       next
+    }
 
-    if (!(identical(length(default), 1L) ||
-          identical(length(default), 0L)))
+    if (
+      !(identical(length(default), 1L) ||
+        identical(length(default), 0L))
+    ) {
       next
+    }
 
     ## three types of cli args:
     ##   --foo bar  (option: option that takes a val)
@@ -125,10 +136,13 @@ get_app_inputs <- function(app) {
         "integer" = "integer",
         "NULL" = "string"
       ),
-      arg_type =
-        if (isTRUE(default) || isFALSE(default)) "switch"
-      else if (length(default)) "option"
-      else "positional",
+      arg_type = if (isTRUE(default) || isFALSE(default)) {
+        "switch"
+      } else if (length(default)) {
+        "option"
+      } else {
+        "positional"
+      },
       .val_pos_in_exprs = c(i, 3L) # pos 3 in call expr: `<-`(name, 'val')
     )
 
@@ -136,27 +150,27 @@ get_app_inputs <- function(app) {
     # look for adjacent anno hints about this flag
     if (is_hashpipe[lineno - 1L]) {
       anno_start <- anno_end <- lineno - 1L
-      while (is_hashpipe[anno_start - 1L])
+      while (is_hashpipe[anno_start - 1L]) {
         subtract(anno_start) <- 1L
+      }
 
-      anno <- parse_hashpipe_yaml(lines[anno_start:anno_end],
-                                  handlers = list("bool#yes"= identity,
-                                                  "bool#no" = identity))
+      anno <- parse_hashpipe_yaml(
+        lines[anno_start:anno_end],
+        handlers = list("bool#yes" = identity, "bool#no" = identity)
+      )
 
       arg <- utils::modifyList(arg, anno)
     }
 
-    if (arg$arg_type == "positional")
+    if (arg$arg_type == "positional") {
       args[[name]] <- arg
-    else
+    } else {
       opts[[name]] <- arg
-
+    }
   }
-
 
   list(args = args, opts = opts)
 }
-
 
 
 #' Run an R app.
@@ -201,13 +215,15 @@ get_app_inputs <- function(app) {
 #' Sys.setenv(PATH = old_path)
 run <- function(app, args = commandArgs(TRUE)) {
   args <- textConnection(args)
-  if(missing(app))
+  if (missing(app)) {
     app <- readLines(args, 1L)
+  }
 
   app <- as_app(app)
 
-  if (process_args(args, app))
+  if (process_args(args, app)) {
     eval(app$exprs, new.env(parent = globalenv()))
+  }
 
   invisible()
 }

@@ -3,7 +3,6 @@
 #| description: |
 #|   Flip a coin.
 
-
 #| description: Number of coin flips
 #| short: n
 flips <- 1L
@@ -12,12 +11,11 @@ sep <- " "
 wrap <- TRUE
 
 seed <- NA_integer_
-if (!is.na(seed))
+if (!is.na(seed)) {
   set.seed(seed)
+}
 
-cat(sample(c("heads", "tails"), flips, TRUE),
-    sep = sep, fill = wrap)
-
+cat(sample(c("heads", "tails"), flips, TRUE), sep = sep, fill = wrap)
 
 # flip-coin.R
 # flip-coin.R --flips 3
