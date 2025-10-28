@@ -102,7 +102,10 @@ install_one_package <- function(
     created <- c(created, list(Rapp = install_rapp_launcher(destdir)))
   }
 
-  orphaned <- setdiff(existing, created)
+  orphaned <- setdiff(
+    normalizePath(as.character(existing)),
+    normalizePath(created)
+  )
   for (o in orphaned) {
     file.remove(o)
     message("deleted: ", o)
@@ -157,8 +160,8 @@ launcher_path <- function(app_path, destdir) {
   name <- sub("\\.[rR]$", "", basename(app_path))
   switch(
     .Platform$OS.type,
-    windows = file.path(destdir, paste0(name, ".bat"), fsep = "\\"),
-    unix = file.path(destdir, name)
+    windows = path(destdir, paste0(name, ".bat")),
+    unix = path(destdir, name)
   )
 }
 
@@ -200,8 +203,8 @@ launcher_contents <- function(app_path, package) {
   lines <- switch(
     .Platform$OS.type,
     "windows" = c(
-      paste("::", sentinel),
       "@echo off",
+      paste("::", sentinel),
       "setlocal",
       sprintf(
         r"("%s/Rscript.exe" %s -e Rapp::run() "%s" %%*))",
@@ -229,8 +232,8 @@ launcher_contents <- function(app_path, package) {
 install_rapp_launcher <- function(destdir) {
   target <- switch(
     .Platform$OS.type,
-    windows = file.path(destdir, "Rapp.bat", fsep = "\\"),
-    unix = file.path(destdir, "Rapp")
+    windows = path(destdir, "Rapp.bat"),
+    unix = path(destdir, "Rapp")
   )
 
   sentinel <- sprintf(
@@ -241,8 +244,8 @@ install_rapp_launcher <- function(destdir) {
   lines <- switch(
     .Platform$OS.type,
     windows = c(
-      paste("::", sentinel),
       "@echo off",
+      paste("::", sentinel),
       "setlocal",
       sprintf(
         r"("%s/Rscript.exe" -e Rapp::run() %%*)",
@@ -279,7 +282,14 @@ list_existing_rapp_launchers <- function(destdir) {
 }
 
 get_rapp_launcher_package <- function(path) {
-  expected_header <- charToRaw("#!/bin/sh")
+  expected_header <- switch(
+    .Platform$OS.type,
+    unix = charToRaw("#!/bin/sh"),
+    windows = {
+      endsWith(path, ".bat") || return(NA_character_)
+      charToRaw("@echo off")
+    }
+  )
   header <- tryCatch(
     readBin(path, "raw", length(expected_header)),
     error = function(e) NULL,
@@ -303,6 +313,9 @@ get_rapp_launcher_package <- function(path) {
 
 # Ensure a directory is first on the user PATH (Windows)
 ensure_path_windows <- function(destdir = rapp_install_dir()) {
+  if (Sys.getenv("RAPP_NO_MODIFY_PATH") != "") {
+    return(FALSE)
+  }
   stopifnot(.Platform$OS.type == "windows")
   destdir <- normalizePath(destdir, winslash = "\\", mustWork = TRUE)
 
@@ -342,4 +355,8 @@ ensure_path_windows <- function(destdir = rapp_install_dir()) {
 
 get_env_win_registry <- function(name) {
   utils::readRegistry("Environment", hive = "HCU", view = "default")[[name]]
+}
+
+path <- function(...) {
+  normalizePath(file.path(...), mustWork = FALSE)
 }

@@ -19,3 +19,20 @@ setup_fake_rapp_package <- function(base, suffix, package = "Rapp") {
 
   list(lib = lib_dir, exec = exec_dir, package = package)
 }
+
+
+path <- function(...) {
+  normalizePath(file.path(...), mustWork = FALSE)
+}
+
+normalize_paths <- function(paths) {
+  normalizePath(paths, mustWork = FALSE)
+}
+
+expect_same_path <- function(actual, expected) {
+  testthat::expect_equal(normalize_paths(actual), normalize_paths(expected))
+}
+
+expect_same_paths_set <- function(actual, expected) {
+  testthat::expect_setequal(normalize_paths(actual), normalize_paths(expected))
+}
