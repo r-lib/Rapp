@@ -131,22 +131,43 @@ first_arg      <- c()
 last_arg       <- c()
 ```
 
+## Installing launchers
+
+Run `Rapp::install_pkg_cli_apps()` after installing a package to create
+lightweight launchers for every Rapp in its `exec/`
+directory.
+
+```r
+Rapp::install_pkg_cli_apps("mypackage")
+```
+
+You can either include the commnand in install instructions, export your own thin wrapper:
+
+```r
+mypackage::install_cli_apps()
+```
+
+App launchers are written to `destdir`, which defaults to the first available
+location from `RAPP_INSTALL_DIR`, `XDG_BIN_HOME`, `XDG_DATA_HOME/../bin`, or
+`~/.local/bin`. On Windows the directory is added to `PATH`; on macOS and
+Linux the directory generally is already present on `PATH` (you may need to
+restart your shell if the Rapp installer created the directory). Use the `destdir` argument if you
+prefer an alternate location.
+
 ## Shipping an Rapp as part of an R package
 
 You can easily share your R app command line executable as part of an R
 package.
 
--   Add {Rapp} as a dependency in your DESCRIPTION
--   Place your app in the `exec` folder in your package, e.g:
-    `exec/myapp`. Apps are automatically installed as executable.
--   Instruct your users to add executables from Rapp and your package to
-    their `PATH`. On Linux and macOS, add the following to .bashrc or
-    .zshrc (or equivalent)
-
-    ``` bash
-    export PATH=$(Rscript -e 'cat(system.file("exec", package = "Rapp"))'):$PATH
-    export PATH=$(Rscript -e 'cat(system.file("exec", package = "my.package.name"))'):$PATH
-    ```
+-   Add {Rapp} as a dependency in your DESCRIPTION.
+-   Place your app in the `exec` folder in your package
+    (for example `exec/myapp`). Apps are automatically installed as
+    executables.
+-   Encourage users to run
+    `Rapp::install_pkg_cli_apps(c("your.package.name"))` after
+    installing your package so the launchers land in a directory on
+    their `PATH`. This keeps existing launchers up to date and deletes
+    ones that have been removed from your package.
 -   If [`rig`](https://github.com/r-lib/rig) is already on the `PATH`,
     you can also use `rig` to run a script in a packages `exec` directory:
 
@@ -156,8 +177,23 @@ package.
 
 # Windows
 
-Rapp works on Windows. However, because there is no native support for
-`!#` shebang executable on Windows, you must invoke Rapp directly.
+Rapp works on Windows. Running `install_pkg_cli_apps()` creates `.bat`
+wrappers for each app and installs a top-level `Rapp.bat`, adding their
+location to `PATH`. After that, you can invoke apps from R packages just like on other
+platforms:
+
+``` cmd
+flip-coin --n 3
+```
+
+Because windows does not natively support shebangs, to invoke an Rapp developed outside
+an R package, you'll need to invoke the `Rapp` front-end directly:
+
+```cmd
+Rapp path/to/flip-coin.R --n 3
+```
+
+You can also call the launcher explicitly:
 
 ``` cmd
 Rapp flip-coin --n 3
