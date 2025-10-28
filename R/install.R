@@ -59,6 +59,10 @@ install_pkg_cli_apps <- function(
     dir.create(destdir, recursive = TRUE) ||
     stop("Failed to create directory: ", destdir)
 
+  if (is_windows()) {
+    ensure_path_windows(destdir)
+  }
+
   existing <- list_existing_rapp_launchers(destdir)
 
   names(package) <- package
@@ -120,30 +124,32 @@ list_package_apps <- function(package, lib.loc = NULL) {
 
 
 rapp_install_dir <- function() {
-  env <- Sys.getenv("RAPP_INSTALL_DIR", NA_character_)
-  if (!is.na(env) && nzchar(env)) {
-    return(normalizePath(env, mustWork = FALSE))
-  }
+  getenv <- function(x) Sys.getenv(x, NA_character_)
+  is_set <- function(x) !is.na(x) && nzchar(x)
 
-  switch(
-    .Platform$OS.type,
-    windows = {
-      base <- Sys.getenv("LOCALAPPDATA", "") # this should probably resolve to $HOME/.local/bin
-      base <- if (nzchar(base)) {
-        normalizePath(base, mustWork = FALSE)
-      } else {
-        normalizePath(file.path("~", "AppData", "Local"), mustWork = FALSE)
+  path <- if (is_set(p <- getenv("RAPP_BIN_DIR"))) {
+    p
+  } else if (is_set(p <- getenv("XDG_BIN_HOME"))) {
+    p
+  } else if (is_set(p <- getenv("XDG_DATA_HOME"))) {
+    file.path(dirname(p), "bin")
+  } else {
+    switch(
+      .Platform$OS.type,
+      unix = "~/.local/bin",
+      windows = {
+        base <- if (is_set(p <- getenv("LOCALAPPDATA"))) {
+          p
+        } else if (is_set(p <- getenv("USERPROFILE"))) {
+          file.path(p, "AppData", "Local")
+        } else {
+          path.expand("~/AppData/Local")
+        }
+        file.path(base, "Programs", "R", "Rapp", "bin")
       }
-      normalizePath(
-        file.path(base, "Programs", "Rapp", "bin"),
-        mustWork = FALSE
-      )
-    },
-    unix = {
-      xdg <- Sys.getenv("XDG_BIN_HOME", "~/.local/bin")
-      normalizePath(xdg, mustWork = FALSE)
-    }
-  )
+    )
+  }
+  normalizePath(path, mustWork = FALSE)
 }
 
 
@@ -151,7 +157,7 @@ launcher_path <- function(app_path, destdir) {
   name <- sub("\\.[rR]$", "", basename(app_path))
   switch(
     .Platform$OS.type,
-    windows = file.path(destdir, paste0(name, ".bat")),
+    windows = file.path(destdir, paste0(name, ".bat"), fsep = "\\"),
     unix = file.path(destdir, name)
   )
 }
@@ -223,7 +229,7 @@ launcher_contents <- function(app_path, package) {
 install_rapp_launcher <- function(destdir) {
   target <- switch(
     .Platform$OS.type,
-    windows = file.path(destdir, "Rapp.bat"),
+    windows = file.path(destdir, "Rapp.bat", fsep = "\\"),
     unix = file.path(destdir, "Rapp")
   )
 
@@ -239,7 +245,7 @@ install_rapp_launcher <- function(destdir) {
       "@echo off",
       "setlocal",
       sprintf(
-        r"("%s/Rscript.exe" --default-packages=base -e Rapp::run() %%*)",
+        r"("%s/Rscript.exe" -e Rapp::run() %%*)",
         R.home("bin")
       )
     ),
@@ -247,7 +253,7 @@ install_rapp_launcher <- function(destdir) {
       "#!/bin/sh",
       paste("#", sentinel),
       sprintf(
-        r"(exec %s/Rscript --default-packages=base -e 'Rapp::run()' "$@")",
+        r"(exec %s/Rscript -e 'Rapp::run()' "$@")",
         R.home("bin")
       )
     )
@@ -292,4 +298,48 @@ get_rapp_launcher_package <- function(path) {
     lines[2]
   )
   if (identical(pkg, lines[2])) NA_character_ else pkg
+}
+
+
+# Ensure a directory is first on the user PATH (Windows)
+ensure_path_windows <- function(destdir = rapp_install_dir()) {
+  stopifnot(.Platform$OS.type == "windows")
+  destdir <- normalizePath(destdir, winslash = "\\", mustWork = TRUE)
+
+  # Check if we're already on PATH. If we are, do nothing
+  # Read current PATH from HKCU\Environment
+  path <- get_env_win_registry("Path")
+  path <- strsplit(path, ";", fixed = TRUE)[[1L]]
+  path <- path[nzchar(path)]
+  path <- unique(path)
+
+  path_norm <- function(x) tolower(normalizePath(x, mustWork = FALSE))
+  present <- path_norm(destdir) %in% path_norm(path)
+  if (present) {
+    return(FALSE)
+  }
+
+  # We are not on the PATH yet, we have to add it
+  # Pass the new path entry via envvar to avoid quoting and encoding shenanigans
+  # also, propogate the new updated PATH from the registry to this R session
+  old <- Sys.getenv("RAPP_NEW_PATH_ENTRY", NA_character_)
+  Sys.setenv("RAPP_NEW_PATH_ENTRY" = destdir)
+  on.exit({
+    if (is.na(old)) {
+      Sys.unsetenv("RAPP_NEW_PATH_ENTRY")
+    } else {
+      Sys.setenv("RAPP_NEW_PATH_ENTRY" = old)
+    }
+    Sys.setenv("PATH" = get_env_win_registry("Path"))
+  })
+
+  script <- shQuote(utils::shortPathName(
+    system.file("add-path-entry.ps1", package = "Rapp")
+  ))
+  args <- c("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script)
+  system2("powershell", args)
+}
+
+get_env_win_registry <- function(name) {
+  utils::readRegistry("Environment", hive = "HCU", view = "default")[[name]]
 }
