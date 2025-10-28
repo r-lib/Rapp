@@ -26,9 +26,11 @@ Invisibly returns the paths of launchers that were (re)written.
 \description{
 \code{install_pkg_cli_apps()} scans an installed package's \verb{exec/} directory for
 \code{.R} scripts whose shebang references \code{Rapp} (for example, \verb{#!/usr/bin/env Rapp} or
-\verb{#!/usr/bin/env -S Rscript -e 'Rapp::run()'}). Each discovered
-script gets a lightweight wrapper in \code{destdir} that invokes \code{Rscript} to run the Rapp. Optional \verb{#| launcher:} front
-matter in the script lets authors tune the \code{Rscript} flags.
+\verb{#!/usr/bin/env -S Rscript -e 'Rapp::run()'}) or \code{Rscript} directly (for example,
+\verb{#!/usr/bin/env Rscript}). Each discovered script gets a lightweight wrapper in
+\code{destdir} that invokes \code{Rscript} to run the app. \code{Rapp} scripts are launched via
+\code{Rapp::run()}, while conventional scripts execute via \code{Rscript}. Optional
+\verb{#| launcher:} front matter in the script lets authors tune the \code{Rscript} flags.
 }
 \details{
 Launchers are regenerated on every run, and any obsolete launchers
