@@ -2,7 +2,6 @@
 #| description: |
 #|   Remove duplicate values from a file or input
 
-
 #| description: remove duplicates in reverse order
 from_last <- FALSE
 
@@ -13,18 +12,18 @@ output <- NA_character_ # scalar constant == optional option
 input <- c() # 0-length constant == optional positional arg
 
 
-
-if(!length(input))
+if (!length(input)) {
   input <- file("stdin")
+}
 
-if(is.na(output))
+if (is.na(output)) {
   output <- stdout()
+}
 
 
 readLines(input) |>
   unique(fromLast = from_last) |>
   writeLines(output)
-
 
 ## `uniq` only removes adjacent duplicate entries.
 ## `unique.R` removes duplicates from the whole stream.

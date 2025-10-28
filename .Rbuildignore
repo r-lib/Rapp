@@ -5,3 +5,5 @@
 ^CRAN-SUBMISSION$
 ^tools$
 ^cran-comments\.md$
+^[.]?air[.]toml$
+^\.vscode$

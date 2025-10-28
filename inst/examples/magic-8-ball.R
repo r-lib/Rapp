@@ -6,8 +6,8 @@
 #| description: The question you want to ask.
 question <- NULL
 
-if(is.null(question)) {
-  question <- if(interactive()) {
+if (is.null(question)) {
+  question <- if (interactive()) {
     readline("question: ")
   } else {
     cat("question: ")

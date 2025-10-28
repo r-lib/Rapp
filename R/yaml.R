@@ -1,15 +1,16 @@
 #' @export
 print.yaml <- function(x, file = "", ..., append = FALSE) {
   out <- encode_yaml(x, ...)
-  for (f in file)
+  for (f in file) {
     cat(out, file = f, sep = "\n", append = append)
+  }
 
   invisible(out)
 }
 
 read_yaml <- function(...) maybe_as_yaml(yaml::read_yaml(...))
 
-parse_yaml <-  function(...) maybe_as_yaml(yaml::yaml.load(...))
+parse_yaml <- function(...) maybe_as_yaml(yaml::yaml.load(...))
 
 parse_hashpipe_yaml <- function(x, ...) {
   stopifnot(startsWith(x, "#| "))
@@ -20,11 +21,13 @@ parse_hashpipe_yaml <- function(x, ...) {
 as_yaml <- function(x) maybe_as_yaml(as.list(x))
 
 encode_yaml <- function(x, ...) {
-  as_yaml_args <- utils::modifyList(list(
-    precision = 16L,
-    handlers = list(complex = as.character)
-  ),
-  list(...))
+  as_yaml_args <- utils::modifyList(
+    list(
+      precision = 16L,
+      handlers = list(complex = as.character)
+    ),
+    list(...)
+  )
   out <- do.call(yaml::as.yaml, c(list(x), as_yaml_args))
   out <- strsplit(out, "\n", fixed = TRUE)[[1L]]
   out
@@ -34,13 +37,16 @@ encode_yaml <- function(x, ...) {
 #   as_yaml(rlang::dots_list(..., .named = TRUE))
 
 maybe_as_yaml <- function(x) {
-  if (is.null(x))
+  if (is.null(x)) {
     return(NULL)
+  }
 
-  if(is.atomic(x) && length(x) != 1L)
+  if (is.atomic(x) && length(x) != 1L) {
     x <- as.list(x)
-  if(is.list(x))
+  }
+  if (is.list(x)) {
     class(x) <- "yaml"
+  }
   x
 }
 
