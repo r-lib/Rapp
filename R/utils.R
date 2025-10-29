@@ -8,13 +8,6 @@ str_drop_prefix <- function(x, prefix) {
   substr(x, as.integer(prefix) + 1L, .Machine$integer.max)
 }
 
-`subtract<-` <- function(x, value) x - value
-
-`append<-` <- function(x, after = length(x), value) {
-  append(x, values = value, after = after)
-}
-
-`%||%` <- function(x, y) if (is.null(x)) y else x
 
 imap <- function(.x, .f, ...) {
   out <- .mapply(.f, list(.x, names(.x) %||% seq_along(.x)), list(...))
@@ -54,10 +47,11 @@ parent.pkg <- function(env = parent.frame(2)) {
   }
 }
 
-is_windows <- function() {
-  identical(.Platform$OS.type, "windows")
-}
+is_windows <- function() identical(.Platform$OS.type, "windows")
+compact <- function(x) x[lengths(x) > 0]
+`%||%` <- function(x, y) if (is.null(x)) y else x
+`subtract<-` <- function(x, value) x - value
 
-compact <- function(x) {
-  x[lengths(x) > 0]
+`append<-` <- function(x, after = NULL, value) {
+  if (is.null(after)) c(x, value) else append(x, value, after)
 }

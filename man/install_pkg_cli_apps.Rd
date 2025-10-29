@@ -7,7 +7,8 @@
 install_pkg_cli_apps(
   package = parent.pkg() \%||\% rownames(utils::installed.packages()),
   destdir = NULL,
-  lib.loc = NULL
+  lib.loc = NULL,
+  overwrite = NA
 )
 }
 \arguments{
@@ -19,6 +20,10 @@ run inside a package; otherwise all installed packages.}
 \item{lib.loc}{Additional library paths forwarded to \code{\link[base:system.file]{base::system.file()}}
 while locating package scripts. Discovery happens at install time; written
 launchers embed absolute script paths.}
+
+\item{overwrite}{Whether to replace an existing executable. \code{TRUE} always
+overwrites, \code{FALSE} never overwrites non-Rapp executables, and \code{NA}
+(the default) prompts interactively and otherwise skips.}
 }
 \value{
 Invisibly returns the paths of launchers that were (re)written.
@@ -39,6 +44,11 @@ destination. Launchers are POSIX shell scripts on Unix-like systems and
 \code{.bat} files on Windows. Front-matter options such as \code{vanilla},
 \code{no-environ}, and \code{default_packages} map directly to the corresponding
 \code{Rscript} arguments.
+
+When \code{overwrite} is \code{NA}, files previously written by Rapp are always
+replaced while other executables trigger a confirmation prompt (skipped in
+non-interactive sessions). A warning is emitted when skipping an existing
+executable.
 
 If \code{destdir} is not provided, it is resolved in this order:
 \itemize{
