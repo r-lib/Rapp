@@ -3,6 +3,16 @@ process_args <- function(args, app) {
   app_opts <- app$opts
   app_args <- app$args
   app_commands <- app$commands
+  app_meta <- if (length(app$data)) {
+    prune_empty(as.list(unclass(app$data)))
+  }
+  help_scope <- list(list(
+    name = app$data$name %||% basename(app$filepath),
+    opts = app$opts,
+    args = app$args,
+    commands = app$commands %||% list(),
+    meta = app_meta
+  ))
 
   if (!inherits(args, "connection")) {
     args <- textConnection(args)
@@ -25,7 +35,11 @@ process_args <- function(args, app) {
     }
 
     if (a == "--help") {
-      print_app_help(app, yaml = "--yaml" %in% readLines(args))
+      print_app_help(
+        app,
+        yaml = "--yaml" %in% readLines(args),
+        scope = help_scope
+      )
       return(if (interactive()) invisible(FALSE) else q("no"))
     }
 
@@ -45,6 +59,16 @@ process_args <- function(args, app) {
       command <- app_commands[[a]]
       append(app_opts) <- command$opts
       append(app_args) <- command$args
+      command_meta <- if (!is.null(command$meta)) {
+        prune_empty(as.list(unclass(command$meta)))
+      }
+      help_scope[[length(help_scope) + 1L]] <- list(
+        name = a,
+        opts = command$opts,
+        args = command$args,
+        commands = command$commands %||% list(),
+        meta = command_meta
+      )
       app_commands <- command$commands
       next
     }
@@ -190,117 +214,4 @@ process_args <- function(args, app) {
   }
 
   invisible(TRUE)
-}
-
-
-print_app_help <- function(app, yaml = TRUE) {
-  app <- as_app(app)
-  if (yaml) {
-    x <- c(app$data, list(options = app$opts), list(arguments = app$args))
-    for (nm in names(x$options)) {
-      x$options[[nm]]$.val_pos_in_exprs <- NULL
-    }
-
-    for (nm in names(x$arguments)) {
-      x$arguments[[nm]]$.val_pos_in_exprs <- NULL
-    }
-
-    print.yaml(x)
-    return()
-  }
-
-  app_name <- app$data$name %||% basename(app$filepath)
-  usage <- paste0(
-    collapse = " ",
-    c(
-      "Usage:",
-      app_name,
-      if (length(app$opts)) "[options]",
-      if (length(app$args)) {
-        local({
-          # "<arguments>"
-          x <- paste0(sprintf("<%s>", names(app$args)), collapse = " ")
-          x <- sub("<...", "...<", x, fixed = TRUE)
-          x <- sub("...>", ">...", x, fixed = TRUE)
-          x <- paste0("[", x, "]")
-          x
-        })
-      }
-    )
-  )
-  description <- app$data$description
-
-  options <- imap_chr(app$opts, function(opt, name) {
-    if (opt$arg_type == "switch") {
-      true <- paste0("--", name)
-      false <- paste0("--no-", name)
-      default <- if (opt$default) true else false
-      header <- sprintf("  %s | %s  (Default: %s)", true, false, default)
-      description <- if (length(opt$description)) {
-        strwrap(opt$description, 70, indent = 6, exdent = 6)
-      }
-      out <- paste0(c(header, description), collapse = "\n")
-      return(out)
-    }
-
-    if (opt$arg_type == "option") {
-      default <- opt$default
-      type <- opt$val_type
-      short_name <- opt$short
-      if (type == "string") {
-        default <- deparse1(default)
-      }
-      header <- if (is.null(short_name)) {
-        sprintf("  --%s <value>  (Default: %s, Type: %s)", name, default, type)
-      } else {
-        sprintf(
-          "  -%s, --%s <value>  (Default: %s, Type: %s)",
-          short_name,
-          name,
-          default,
-          type
-        )
-      }
-      description <- if (length(opt$description)) {
-        strwrap(opt$description, 70, indent = 6, exdent = 6)
-      }
-      out <- paste0(c(header, description), collapse = "\n")
-      return(out)
-    }
-
-    # noisy safe fallback (shouldn't happen)
-    opt$.val_pos_in_exprs <- NULL
-    yaml::as.yaml(opt)
-  })
-
-  ## omit positional args without a description (they appear in usage)
-  args <- do.call(
-    c,
-    imap(app$args, function(arg, name) {
-      if (!length(arg$description)) {
-        return()
-      }
-
-      description <- if (length(arg$description)) {
-        strwrap(arg$description, 70, indent = 6, exdent = 6)
-      }
-      header <- paste0("  ", sub("^\\.\\.\\.|\\.\\.\\.$", "", name))
-      paste0(c(header, description), collapse = "\n")
-    })
-  )
-
-  if (length(options)) {
-    options <- c("\nOptions:", options)
-  }
-
-  if (length(args)) {
-    args <- c("\nArguments:", args)
-  }
-
-  if (length(description)) {
-    description <- c(description, "")
-  }
-
-  writeLines(c(description, usage, options, args))
-  return()
 }
