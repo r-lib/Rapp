@@ -157,10 +157,7 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
       continuation <- strrep(" ", indent + flag_width + 2L)
       initial <- paste0(padded_flag, "  ")
       pieces <- entry$pieces
-      if (
-        length(pieces) >= 2L &&
-        startsWith(pieces[[2L]], "[")
-      ) {
+      if (length(pieces) >= 2L && startsWith(pieces[[2L]], "[")) {
         combined <- paste(pieces[[1L]], pieces[[2L]], collapse = " ")
         fit <- strwrap(
           combined,
@@ -400,7 +397,7 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
     }
     if (!length(header_lines)) {
       header_lines <- wrap_lines(
-        sprintf("%s command", tail(full_command, 1L))
+        sprintf("%s command", utils::tail(full_command, 1L))
       )
     }
   }
@@ -480,8 +477,8 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
   sections <- unlist(sections, recursive = FALSE, use.names = FALSE)
   sections <- sections[lengths(sections) > 0L | sections == ""]
   # trim trailing blank lines
-  while (length(sections) && tail(sections, 1L) == "") {
-    sections <- head(sections, -1L)
+  while (length(sections) && utils::tail(sections, 1L) == "") {
+    sections <- utils::head(sections, -1L)
   }
   writeLines(sections)
   return()
