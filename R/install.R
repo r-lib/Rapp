@@ -1,12 +1,16 @@
 #' Install CLI launchers for package scripts
 #'
 #' `install_pkg_cli_apps()` scans an installed package's `exec/` directory for
-#' `.R` scripts whose shebang references `Rapp` (for example, `#!/usr/bin/env Rapp` or
-#' `#!/usr/bin/env -S Rscript -e 'Rapp::run()'`) or `Rscript` directly (for example,
-#' `#!/usr/bin/env Rscript`). Each discovered script gets a lightweight wrapper in
-#' `destdir` that invokes `Rscript` to run the app. `Rapp` scripts are launched via
-#' `Rapp::run()`, while conventional scripts execute via `Rscript`. Optional
-#' `#| launcher:` front matter in the script lets authors tune the `Rscript` flags.
+#' `.R` scripts whose shebang line invokes `Rapp` (for example, `#!/usr/bin/env
+#' Rapp`) or `Rscript` (for example, `#!/usr/bin/env Rscript`). Each discovered
+#' script gets a lightweight launcher in `destdir` that invokes `Rapp` or
+#' `Rscript` to run the app. The launcher encodes the absolute path to the R
+#' binary this function is called from.
+#'
+#' Optional `#| launcher:` front matter in the script lets authors tune the
+#' `Rscript` flags. By default, for both `Rscript` and `Rapp`, R is invoked with
+#' `--default-packages=base,<pkg>`, where `<pkg>` is the package providing the
+#' executable.
 #'
 #' @param package Package names to process. Defaults to the calling package when
 #'   run inside a package; otherwise all installed packages.
@@ -15,34 +19,43 @@
 #'   while locating package scripts. Discovery happens at install time; written
 #'   launchers embed absolute script paths.
 #' @param overwrite Whether to replace an existing executable. `TRUE` always
-#'   overwrites, `FALSE` never overwrites non-Rapp executables, and `NA`
-#'   (the default) prompts interactively and otherwise skips.
+#'   overwrites, `FALSE` never overwrites non-Rapp executables, and `NA` (the
+#'   default) prompts interactively and otherwise skips.
 #'
 #' @return Invisibly returns the paths of launchers that were (re)written.
 #'
-#' @details Launchers are regenerated on every run, and any obsolete launchers
-#'   for the same package are removed. `RAPP_INSTALL_DIR` overrides the default
-#'   destination. Launchers are POSIX shell scripts on Unix-like systems and
-#'   `.bat` files on Windows. Front-matter options such as `vanilla`,
-#'   `no-environ`, and `default_packages` map directly to the corresponding
-#'   `Rscript` arguments.
+#' @details
 #'
-#'   When `overwrite` is `NA`, files previously written by Rapp are always
-#'   replaced while other executables trigger a confirmation prompt (skipped in
-#'   non-interactive sessions). A warning is emitted when skipping an existing
-#'   executable.
+#' Launchers are regenerated on every run, and any obsolete launchers for the
+#' same package are removed. `RAPP_INSTALL_DIR` overrides the default
+#' destination. Launchers are POSIX shell scripts on Unix-like systems and
+#' `.bat` files on Windows. Front-matter options such as `vanilla`,
+#' `no-environ`, and `default_packages` map directly to the corresponding
+#' `Rscript` arguments.
 #'
-#'   If `destdir` is not provided, it is resolved in this order:
+#' When `overwrite` is `NA`, files previously written by Rapp are always
+#' replaced while other executables trigger a confirmation prompt (skipped in
+#' non-interactive sessions). A warning is emitted when skipping an existing
+#' executable.
+#'
+#' If `destdir` is not provided, it is resolved in this order:
 #'   - env var `RAPP_INSTALL_DIR`
 #'   - env var `XDG_BIN_HOME`
 #'   - env var `XDG_DATA_HOME/../bin`
-#'   - `~/.local/bin` (The default install location)
+#'   - the default location:
+#'     - macOS and Linux: `~/.local/bin`,
+#'     - Windows: `%LOCALAPPDATA%\Programs\R\Rapp\bin`
 #'
-#'   On Windows, the location is explicitly added to `PATH` (it generally is not
-#'   by default). On macOS or Linux, `~/.local/bin` is typically on `PATH` if it
-#'   exists. Note: some shells add `~/.local/bin` to `PATH` only if it exists at
-#'   login. If `install_pkg_cli_apps()` created the directory, you may need to
-#'   restart the shell for the new apps to be found on `PATH`.
+#' On Windows, the resolved `destdir` is explicitly added to `PATH` (it
+#' generally is not by default). To disable adding it to the `PATH`, set envvar
+#' `RAPP_NO_MODIFY_PATH=1`.
+#'
+#' On macOS or Linux, `~/.local/bin` is typically already on `PATH` if it
+#' exists. Note: some shells add `~/.local/bin` to `PATH` only if it exists at
+#' login. If `install_pkg_cli_apps()` created the directory, you may need to
+#' restart the shell for the new apps to be found on `PATH`.
+#'
+#' Example setting `launcher` args:
 #'
 #' ```r
 #' #!/usr/bin/env Rapp
