@@ -17,7 +17,7 @@ as_app <- function(x, complete = TRUE) {
 
   app$filepath <- filepath
   app$lines <- lines
-  app$line_is_hashpipe <- startsWith(lines, "#| ")
+  app$line_is_hashpipe <- grepl("^\\s*#\\| ", lines)
   app$exprs <- exprs
 
   if (complete) {
@@ -106,8 +106,13 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
         branches,
         seq_along(branches) + 2L,
         \(branch, branch_idx) {
-          stopifnot(is.call(branch), identical(branch[[1]], quote(`{`)))
-          get_app_inputs(app, as.list(branch), pos = c(pos, i, branch_idx))
+          # stopifnot(is.call(branch) && identical(branch[[1]], quote(`{`)))
+          inputs <-
+            get_app_inputs(app, as.list(branch), pos = c(pos, i, branch_idx))
+
+          anno <- parse_expr_anno(getSrcLineNo(branch), lines, is_hashpipe)
+          inputs$meta <- anno
+          inputs
         }
       )
       switch_expr <- e[[2L]]

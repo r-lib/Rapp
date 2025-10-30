@@ -13,6 +13,7 @@ read_yaml <- function(...) maybe_as_yaml(yaml::read_yaml(...))
 parse_yaml <- function(...) maybe_as_yaml(yaml::yaml.load(...))
 
 parse_hashpipe_yaml <- function(x, ...) {
+  x <- sub("^[ \t]+", "", x, perl = TRUE)
   stopifnot(startsWith(x, "#| "))
   x <- substr(x, 4L, .Machine$integer.max)
   parse_yaml(x, ...)
