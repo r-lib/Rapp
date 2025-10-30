@@ -1,9 +1,9 @@
 # Rapp (development version)
 
+* Added support for commands in Rapp applications (#8, #11).
 * Added support for short opts (#4, #5).
-* New `install_pkg_cli_apps()` helper installs launchers on the `PATH` for Rapps
-  in a package's `exec/` directory, prunes removed apps, and installs a
-  top-level `Rapp` launcher alongside them.
+* New `install_pkg_cli_apps()` installs Rapps and R scripts
+  in a package's `exec/` directory on the users `PATH` (#7, #3).
 
 # Rapp 0.2.0
 

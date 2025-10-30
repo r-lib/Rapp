@@ -2,6 +2,7 @@
 % Please edit documentation in R/install.R
 \name{install_pkg_cli_apps}
 \alias{install_pkg_cli_apps}
+\alias{uninstall_pkg_cli_apps}
 \title{Install CLI launchers for package scripts}
 \usage{
 install_pkg_cli_apps(
@@ -10,6 +11,8 @@ install_pkg_cli_apps(
   lib.loc = NULL,
   overwrite = NA
 )
+
+uninstall_pkg_cli_apps(package = parent.pkg(), destdir = NULL)
 }
 \arguments{
 \item{package}{Package names to process. Defaults to the calling package when
@@ -22,24 +25,27 @@ while locating package scripts. Discovery happens at install time; written
 launchers embed absolute script paths.}
 
 \item{overwrite}{Whether to replace an existing executable. \code{TRUE} always
-overwrites, \code{FALSE} never overwrites non-Rapp executables, and \code{NA}
-(the default) prompts interactively and otherwise skips.}
+overwrites, \code{FALSE} never overwrites non-Rapp executables, and \code{NA} (the
+default) prompts interactively and otherwise skips.}
 }
 \value{
 Invisibly returns the paths of launchers that were (re)written.
 }
 \description{
 \code{install_pkg_cli_apps()} scans an installed package's \verb{exec/} directory for
-\code{.R} scripts whose shebang references \code{Rapp} (for example, \verb{#!/usr/bin/env Rapp} or
-\verb{#!/usr/bin/env -S Rscript -e 'Rapp::run()'}) or \code{Rscript} directly (for example,
-\verb{#!/usr/bin/env Rscript}). Each discovered script gets a lightweight wrapper in
-\code{destdir} that invokes \code{Rscript} to run the app. \code{Rapp} scripts are launched via
-\code{Rapp::run()}, while conventional scripts execute via \code{Rscript}. Optional
-\verb{#| launcher:} front matter in the script lets authors tune the \code{Rscript} flags.
+\code{.R} scripts whose shebang line invokes \code{Rapp} (for example, \verb{#!/usr/bin/env Rapp}) or \code{Rscript} (for example, \verb{#!/usr/bin/env Rscript}). Each discovered
+script gets a lightweight launcher in \code{destdir} that invokes \code{Rapp} or
+\code{Rscript} to run the app. The launcher encodes the absolute path to the R
+binary this function is called from.
 }
 \details{
-Launchers are regenerated on every run, and any obsolete launchers
-for the same package are removed. \code{RAPP_INSTALL_DIR} overrides the default
+Optional \verb{#| launcher:} front matter in the script lets authors tune the
+\code{Rscript} flags. By default, for both \code{Rscript} and \code{Rapp}, R is invoked with
+\verb{--default-packages=base,<pkg>}, where \verb{<pkg>} is the package providing the
+executable.
+
+Launchers are regenerated on every run, and any obsolete launchers for the
+same package are removed. \code{RAPP_INSTALL_DIR} overrides the default
 destination. Launchers are POSIX shell scripts on Unix-like systems and
 \code{.bat} files on Windows. Front-matter options such as \code{vanilla},
 \code{no-environ}, and \code{default_packages} map directly to the corresponding
@@ -55,14 +61,23 @@ If \code{destdir} is not provided, it is resolved in this order:
 \item env var \code{RAPP_INSTALL_DIR}
 \item env var \code{XDG_BIN_HOME}
 \item env var \code{XDG_DATA_HOME/../bin}
-\item \verb{~/.local/bin} (The default install location)
+\item the default location:
+\itemize{
+\item macOS and Linux: \verb{~/.local/bin},
+\item Windows: \verb{\%LOCALAPPDATA\%\\Programs\\R\\Rapp\\bin}
+}
 }
 
-On Windows, the location is explicitly added to \code{PATH} (it generally is not
-by default). On macOS or Linux, \verb{~/.local/bin} is typically on \code{PATH} if it
+On Windows, the resolved \code{destdir} is explicitly added to \code{PATH} (it
+generally is not by default). To disable adding it to the \code{PATH}, set envvar
+\code{RAPP_NO_MODIFY_PATH=1}.
+
+On macOS or Linux, \verb{~/.local/bin} is typically already on \code{PATH} if it
 exists. Note: some shells add \verb{~/.local/bin} to \code{PATH} only if it exists at
 login. If \code{install_pkg_cli_apps()} created the directory, you may need to
 restart the shell for the new apps to be found on \code{PATH}.
+
+Example setting \code{launcher} args:
 
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{#!/usr/bin/env Rapp
 #| description: About this app

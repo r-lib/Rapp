@@ -13,6 +13,7 @@ read_yaml <- function(...) maybe_as_yaml(yaml::read_yaml(...))
 parse_yaml <- function(...) maybe_as_yaml(yaml::yaml.load(...))
 
 parse_hashpipe_yaml <- function(x, ...) {
+  x <- sub("^[ \t]+", "", x, perl = TRUE)
   stopifnot(startsWith(x, "#| "))
   x <- substr(x, 4L, .Machine$integer.max)
   parse_yaml(x, ...)
@@ -20,17 +21,13 @@ parse_hashpipe_yaml <- function(x, ...) {
 
 as_yaml <- function(x) maybe_as_yaml(as.list(x))
 
-encode_yaml <- function(x, ...) {
-  as_yaml_args <- utils::modifyList(
-    list(
-      precision = 16L,
-      handlers = list(complex = as.character)
-    ),
-    list(...)
+encode_yaml <- function(x, ..., precision = 16L, handlers = list()) {
+  handlers[["complex"]] <- as.character
+  out <- do.call(
+    yaml::as.yaml,
+    list(x, ..., precision = precision, handlers = handlers)
   )
-  out <- do.call(yaml::as.yaml, c(list(x), as_yaml_args))
-  out <- strsplit(out, "\n", fixed = TRUE)[[1L]]
-  out
+  strsplit(out, "\n", fixed = TRUE)[[1L]]
 }
 
 # yaml <- function(...)

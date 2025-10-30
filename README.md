@@ -131,6 +131,81 @@ first_arg      <- c()
 last_arg       <- c()
 ```
 
+### Commands
+
+Use a `switch()` statement whose first argument is either a character
+scalar or an assignment (for example `switch("")` or `switch(command <- "", ...)`) to
+declare subcommands. The corresponding branch runs when the matching command is
+supplied on the command line. Declare command specific options and positional arguments with the same rules inside the branch.
+
+``` r
+#!/usr/bin/env Rapp
+#| name: todo
+#| description: Manage a simple todo list.
+
+store <- ".todo.yml"
+
+switch(
+  "",
+
+  #| summary: Display the todos
+  #| description: Print the contents of the todo list.
+  list = {
+    limit <- 30L
+    ...
+  },
+
+  #| summary: Add a new todo
+  add = {
+    task <- character()
+    ...
+  },
+
+  #| summary: Mark a task as completed
+  done = {
+    index <- 1L
+    ...
+  }
+)
+```
+
+The command shown above exposes a `todo` launcher with `list`, `add`, and
+`done` commands. Each command can declare its own options (`limit`,
+`index`) or positional arguments (`task`), and command metadata can be
+documented with the same hash-pipe annotations used for options.
+
+Command-line help reflects the available commands, and each command has
+its own help page:
+
+``` bash
+$ todo --help
+todo: Manage a simple todo list.
+
+Usage: todo [OPTIONS] <COMMAND>
+
+Commands:
+  list  Display the todos
+  add   Add a new todo
+  done  Mark a task as completed
+
+$ todo list --help
+Display the todos
+
+Usage: todo list [OPTIONS]
+
+Options:
+  --limit <LIMIT>  Maximum number of entries to display (-1 for all).
+                   [default: 30] [type: integer]
+
+Global options:
+  -s, --store <STORE>  Path to the todo list file.
+                       [default: ".todo.yml"] [type: string]
+```
+
+Commands can be nested by including additional `switch()` blocks inside a
+command branch; each level adds its own command-specific options, help,
+and positional arguments.
+
 ## Installing launchers
 
 Run `Rapp::install_pkg_cli_apps()` after installing a package to create
