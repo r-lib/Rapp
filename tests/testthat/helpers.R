@@ -77,13 +77,37 @@ build_help_scope <- function(app, command_path = character()) {
   scope
 }
 
-capture_help_lines <- function(app_path, command_path = character()) {
+capture_help_lines <- function(
+  app_path,
+  command_path = character(),
+  full = FALSE
+) {
   app <- Rapp:::as_app(app_path)
   scope <- build_help_scope(app, command_path)
   lines <- capture.output(Rapp:::print_app_help(
     app,
     yaml = FALSE,
     scope = scope
+  ))
+  if (length(lines) && identical(tail(lines, 1L), "NULL")) {
+    lines <- head(lines, -1L)
+  }
+  lines
+}
+
+capture_help_yaml <- function(
+  app_path,
+  command_path = character(),
+  full = FALSE,
+  variant = NULL
+) {
+  app <- Rapp:::as_app(app_path)
+  scope <- build_help_scope(app, command_path)
+  lines <- capture.output(Rapp:::print_app_help(
+    app,
+    yaml = TRUE,
+    scope = scope,
+    full = full
   ))
   if (length(lines) && identical(tail(lines, 1L), "NULL")) {
     lines <- head(lines, -1L)

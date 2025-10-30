@@ -1,8 +1,7 @@
 # examples work
 
     Code
-      cat(capture_help_lines(system.file("examples/flip-coin.R", package = "Rapp")),
-      sep = "\n")
+      writeLines(run_app("flip-coin.R --help"))
     Output
       flip-coin: Flip a coin.
       

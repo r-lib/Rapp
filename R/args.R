@@ -34,11 +34,11 @@ process_args <- function(args, app) {
       break
     }
 
-    if (a == "--help") {
+    if (a %in% c("--help", "--help-yaml")) {
       print_app_help(
         app,
-        yaml = "--yaml" %in% readLines(args),
-        scope = help_scope
+        scope = help_scope,
+        yaml = a == "--help-yaml" || "--yaml" %in% readLines(args)
       )
       return(if (interactive()) invisible(FALSE) else q("no"))
     }
@@ -170,7 +170,7 @@ process_args <- function(args, app) {
   if (length(positional_args)) {
     # we've parsed all the command line args,
     # we can now match positional args
-    specs <- app_args
+    specs <- app_args %||% structure(list(), names = character())
 
     collector <- which(
       endsWith(names(specs), "...") |
