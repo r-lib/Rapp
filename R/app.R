@@ -183,10 +183,7 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
     )
 
     # look for adjacent anno hints about this flag
-    anno <- parse_expr_anno(
-      getSrcLineNo(exprs[i]),
-      is_hashpipe
-    )
+    anno <- parse_expr_anno(getSrcLineNo(exprs[i]), lines, is_hashpipe)
     if (length(anno)) {
       arg[names(anno)] <- anno
     }
@@ -207,7 +204,7 @@ getSrcLineNo <- function(x) {
   attr(x, "srcref", TRUE)[[1L]][[1L]]
 }
 
-parse_expr_anno <- function(lineno, is_hashpipe) {
+parse_expr_anno <- function(lineno, lines, is_hashpipe) {
   anno_start <- anno_end <- lineno - 1L
   is_hashpipe[anno_end] || return(NULL)
   while (anno_start > 1L && is_hashpipe[anno_start - 1L]) {

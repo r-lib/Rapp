@@ -1,0 +1,104 @@
+simple_app <- path("apps", "simple-commands.R")
+nested_app <- path("apps", "nested-commands.R")
+
+capture_simple_env <- function(args = character()) {
+  app <- Rapp:::as_app(simple_app)
+  Rapp:::process_args(args, app)
+  run_env <- new.env(parent = baseenv())
+  capture.output(
+    for (expr in app$exprs) {
+      eval(expr, run_env)
+    }
+  )
+  as.list(run_env, all.names = TRUE)
+}
+
+capture_nested_env <- function(args = character()) {
+  app <- Rapp:::as_app(nested_app)
+  Rapp:::process_args(args, app)
+  run_env <- new.env(parent = baseenv())
+  capture.output(
+    for (expr in app$exprs) {
+      eval(expr, run_env)
+    }
+  )
+  as.list(run_env, all.names = TRUE)
+}
+
+test_that("simple app uses defaults without args", {
+  env <- capture_simple_env()
+  expect_identical(env$cmd, "")
+  expect_identical(env$global_opt, "global_opt_default")
+})
+
+test_that("global option is recognised before and after a command", {
+  env_pre <- capture_simple_env(c("--global-opt", "override", "cmd1"))
+  env_post <- capture_simple_env(c("cmd1", "--global-opt", "late"))
+
+  expect_identical(env_pre$global_opt, "override")
+  expect_identical(env_post$global_opt, "late")
+})
+
+test_that("cmd1 command-specific option overrides defaults", {
+  default_env <- capture_simple_env("cmd1")
+  override_env <- capture_simple_env(c("cmd1", "--cmd1-opt", "custom"))
+
+  expect_identical(default_env$cmd1_opt, "cmd1_opt_default")
+  expect_identical(override_env$cmd1_opt, "custom")
+})
+
+test_that("cmd2 positional arguments and options map correctly", {
+  default_env <- capture_simple_env("cmd2")
+  expect_identical(default_env$cmd2_opt, "cmd2_opt_default")
+  expect_length(default_env$cmd2_positional, 0)
+
+  override_env <- capture_simple_env(c(
+    "cmd2",
+    "--cmd2-opt=custom",
+    "alpha",
+    "beta"
+  ))
+  expect_identical(override_env$cmd2_opt, "custom")
+  expect_identical(override_env$cmd2_positional, "alpha")
+  expect_identical(override_env$cmd2_positional2, "beta")
+})
+
+test_that("cmd2 rejects extra positional arguments", {
+  expect_error(
+    capture_simple_env(c("cmd2", "one", "two", "three")),
+    "Arguments not recognized"
+  )
+})
+
+test_that("parent command executes without nested selection", {
+  env <- capture_nested_env("parent")
+  expect_identical(env$top_cmd, "parent")
+  expect_identical(env$child_cmd, "")
+  expect_identical(env$parent_opt, "parent-default")
+})
+
+test_that("nested command options and switches cascade correctly", {
+  env <- capture_nested_env(
+    c(
+      "--top-opt",
+      "override",
+      "parent",
+      "--no-parent-switch",
+      "--parent-opt",
+      "pval",
+      "child2",
+      "--child2-opt",
+      "C2",
+      "--child2-switch",
+      "payload"
+    )
+  )
+
+  expect_identical(env$top_opt, "override")
+  expect_identical(env$parent_switch, FALSE)
+  expect_identical(env$parent_opt, "pval")
+  expect_identical(env$child_cmd, "child2")
+  expect_identical(env$child2_opt, "C2")
+  expect_identical(env$child2_switch, TRUE)
+  expect_identical(env$child2_arg, "payload")
+})

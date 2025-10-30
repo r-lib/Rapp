@@ -11,9 +11,9 @@ process_args <- function(args, app) {
 
   short_opt_to_long_opt <- function(short_opt) {
     short <- str_drop_prefix(short_opt, "-")
-    for (i in seq_along(opts)) {
+    for (i in seq_along(app_opts)) {
       if (identical(short, app_opts[[i]]$short)) {
-        return(names(app_opts)[[i]])
+        return(paste0("--", names(app_opts)[[i]]))
       }
     }
   }
