@@ -2,6 +2,7 @@
 % Please edit documentation in R/install.R
 \name{install_pkg_cli_apps}
 \alias{install_pkg_cli_apps}
+\alias{uninstall_pkg_cli_apps}
 \title{Install CLI launchers for package scripts}
 \usage{
 install_pkg_cli_apps(
@@ -10,6 +11,8 @@ install_pkg_cli_apps(
   lib.loc = NULL,
   overwrite = NA
 )
+
+uninstall_pkg_cli_apps(package = parent.pkg(), destdir = NULL)
 }
 \arguments{
 \item{package}{Package names to process. Defaults to the calling package when

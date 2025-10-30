@@ -74,7 +74,14 @@ install_pkg_cli_apps <- function(
     ensure_path_windows(destdir)
   }
 
+  # existing Rapp launchers we're either overwriting or deleting
   existing <- list_existing_rapp_launchers(destdir)
+
+  package <- if ("Rapp" %in% package) {
+    c(setdiff(package, "Rapp"), "Rapp")
+  } else {
+    unique(package)
+  }
 
   names(package) <- package
   created <- lapply(package, function(pkg) {
@@ -88,6 +95,27 @@ install_pkg_cli_apps <- function(
   })
 
   invisible(if (length(package) == 1L) created[[1L]] else compact(created))
+}
+
+#' @export
+#' @rdname install_pkg_cli_apps
+uninstall_pkg_cli_apps <- function(
+  package = parent.pkg(),
+  destdir = NULL
+) {
+  existing <- list_existing_rapp_launchers(destdir %||% rapp_install_dir())
+  if (!is.null(package)) {
+    existing <- existing[names(existing) %in% package]
+  }
+  if ("Rapp" %in% names(existing)) {
+    existing <- existing[c(setdiff(names(existing), "Rapp"), "Rapp")]
+  }
+  invisible(imap(existing, function(paths, pkg) {
+    file.remove(paths)
+    msg <- sprintf("deleted: %s (from package %s)", paths, pkg)
+    message(paste0(msg, collapse = "\n"))
+    paths
+  }))
 }
 
 
@@ -112,15 +140,14 @@ install_one_package <- function(
       script <- launcher_contents(app_path, package)
       writeLines(script, target)
       Sys.chmod(target, mode = "0755") # set executable
-      message("created: ", target)
+      message("created: ", target, " (from package ", package, ")")
       target
     }
   )
   created <- created[!is.na(created)]
 
   if (package == "Rapp") {
-    append(created[["Rapp"]]) <-
-      install_rapp_launcher(destdir, overwrite = overwrite)
+    append(created) <- install_rapp_launcher(destdir, overwrite = overwrite)
   }
 
   orphaned <- setdiff(
@@ -344,7 +371,7 @@ install_rapp_launcher <- function(destdir, overwrite = NA) {
       paste("::", sentinel),
       "setlocal",
       sprintf(
-        r"("%s/Rscript.exe" -e Rapp::run() %%*)",
+        r"("%s/Rscript.exe" --default-packages=base -e Rapp::run() %%*)",
         R.home("bin")
       )
     ),
@@ -352,7 +379,7 @@ install_rapp_launcher <- function(destdir, overwrite = NA) {
       "#!/bin/sh",
       paste("#", sentinel),
       sprintf(
-        r"(exec %s/Rscript -e 'Rapp::run()' "$@")",
+        r"(exec %s/Rscript --default-packages=base -e 'Rapp::run()' "$@")",
         R.home("bin")
       )
     )
@@ -360,7 +387,7 @@ install_rapp_launcher <- function(destdir, overwrite = NA) {
 
   writeLines(lines, target)
   Sys.chmod(target, mode = "0755")
-  message("created: ", target)
+  message("created: ", target, " (from package Rapp)")
   target
 }
 
