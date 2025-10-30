@@ -25,6 +25,7 @@ as_app <- function(x, complete = TRUE) {
     inputs <- get_app_inputs(app)
     app$opts <- inputs$opts
     app$args <- inputs$args
+    app$commands <- inputs$commands
   }
 
   app
@@ -34,34 +35,56 @@ as_app <- function(x, complete = TRUE) {
 get_app_data <- function(app) {
   app <- as_app(app, complete = FALSE)
 
-  data <-
-    if (
-      app$line_is_hashpipe[1] ||
-        startsWith(app$lines[1], "#!/") && app$line_is_hashpipe[2]
-    ) {
-      # allow frontmatter to start on 2nd line if first line is a shebang
+  data <- if (
+    app$line_is_hashpipe[1] ||
+      startsWith(app$lines[1], "#!/") && app$line_is_hashpipe[2]
+  ) {
+    # allow frontmatter to start on 2nd line if first line is a shebang
 
-      hashpipe_start <- which.max(app$line_is_hashpipe)
-      hashpipe_end <- which.min(c(TRUE, app$line_is_hashpipe[-1L])) - 1L
+    hashpipe_start <- which.max(app$line_is_hashpipe)
+    hashpipe_end <- which.min(c(TRUE, app$line_is_hashpipe[-1L])) - 1L
 
-      parse_hashpipe_yaml(app$lines[hashpipe_start:hashpipe_end])
-    } else {
-      as_yaml(list())
-    }
+    parse_hashpipe_yaml(app$lines[hashpipe_start:hashpipe_end])
+  } else {
+    as_yaml(list())
+  }
 
   data
 }
 
 
-get_app_inputs <- function(app) {
+is_simple_assignment_call <- function(e) {
+  is.call(e) || return(FALSE)
+  op <- e[[1L]]
+  if (!identical(op, quote(`=`)) && !identical(op, quote(`<-`))) {
+    return(FALSE)
+  }
+  if (typeof(e[[2L]]) != "symbol") {
+    return(FALSE)
+  }
+  TRUE
+}
+
+is_command_switch <- function(e) {
+  if (!identical(e[[1L]], quote(switch))) {
+    return(FALSE)
+  }
+  switch_expr <- e[[2L]]
+  typeof(switch_expr) == "character" || is_simple_assignment_call(switch_expr)
+}
+
+.simple_call_syms <-
+  c("+", "-", "c", "character", "integer", "double", "numeric")
+
+.simple_typeofs <- c("double", "integer", "character", "logical", "NULL")
+
+get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
   app <- as_app(app, complete = FALSE)
   lines <- app$lines
-  exprs <- app$exprs
   is_hashpipe <- app$line_is_hashpipe
 
   # 0-length names to force a yaml mapping if no flags.
-  opts <- structure(list(), names = character())
-  args <- structure(list(), names = character())
+  opts <- args <- commands <- structure(list(), names = character())
 
   for (i in seq_along(exprs)) {
     e <- exprs[[i]]
@@ -70,12 +93,31 @@ get_app_inputs <- function(app) {
       next
     }
 
-    op <- e[[1L]]
-    if (op != quote(`=`) && op != quote(`<-`)) {
+    if (is_command_switch(e)) {
+      if (length(commands)) {
+        stop("Only one app command switch() block allowed per expression level")
+      }
+      branches <- as.list(e)[-(1:2)]
+      if (".val_pos_in_exprs" %in% names(branches)) {
+        stop('command name ".val_pos_in_exprs" not permitted.')
+      }
+
+      commands <- map2(
+        branches,
+        seq_along(branches) + 2L,
+        \(branch, branch_idx) {
+          stopifnot(is.call(branch), identical(branch[[1]], quote(`{`)))
+          get_app_inputs(app, as.list(branch), pos = c(pos, i, branch_idx))
+        }
+      )
+      switch_expr <- e[[2L]]
+      commands$.val_pos_in_exprs <-
+        c(pos, i, 2L, if (is.call(switch_expr)) 3L)
+
       next
     }
 
-    if (typeof(e[[2L]]) != "symbol") {
+    if (!is_simple_assignment_call(e)) {
       next
     }
 
@@ -94,28 +136,21 @@ get_app_inputs <- function(app) {
 
       call_sym <- as.character(call_sym)
 
-      if (!call_sym %in% c("c", "character", "+")) {
+      if (!call_sym %in% .simple_call_syms) {
         next
       }
 
-      if (all.names(default) %in% c("c", "character", "-", "+")) {
+      if (all.names(default) %in% .simple_call_syms) {
         default <- eval(default, envir = baseenv())
       }
-      ## TODO: complex are `+` calls, eval, all else, next
       ## TODO: special syntax for var len values? `vals <- c("a", "b")`, injected as `[a,b]`
     }
 
-    if (
-      !typeof(default) %in%
-        c("double", "integer", "character", "logical", "NULL")
-    ) {
+    if (!typeof(default) %in% .simple_typeofs) {
       next
     }
 
-    if (
-      !(identical(length(default), 1L) ||
-        identical(length(default), 0L))
-    ) {
+    if (!length(default) %in% 0L:1L) {
       next
     }
 
@@ -124,7 +159,8 @@ get_app_inputs <- function(app) {
     ##   --foo      (switch: bool flag)
     ##   foo        (positional arg)
     ## bonus:
-    ##   -f         (short form of opt and switch) (NotYetImplemented())
+    ##   -f         (short form of opt and switch)
+    ##   foo        (command, which potentially adds scope)
 
     arg <- list(
       default = default,
@@ -143,23 +179,16 @@ get_app_inputs <- function(app) {
       } else {
         "positional"
       },
-      .val_pos_in_exprs = c(i, 3L) # pos 3 in call expr: `<-`(name, 'val')
+      .val_pos_in_exprs = c(pos, i, 3L) # pos 3 in call expr: `<-`(name, 'val')
     )
 
-    lineno <- utils::getSrcLocation(exprs[i], "line")
     # look for adjacent anno hints about this flag
-    if (is_hashpipe[lineno - 1L]) {
-      anno_start <- anno_end <- lineno - 1L
-      while (is_hashpipe[anno_start - 1L]) {
-        subtract(anno_start) <- 1L
-      }
-
-      anno <- parse_hashpipe_yaml(
-        lines[anno_start:anno_end],
-        handlers = list("bool#yes" = identity, "bool#no" = identity)
-      )
-
-      arg <- utils::modifyList(arg, anno)
+    anno <- parse_expr_anno(
+      getSrcLineNo(exprs[i]),
+      is_hashpipe
+    )
+    if (length(anno)) {
+      arg[names(anno)] <- anno
     }
 
     if (arg$arg_type == "positional") {
@@ -169,7 +198,25 @@ get_app_inputs <- function(app) {
     }
   }
 
-  list(args = args, opts = opts)
+  compact(list(args = args, opts = opts, commands = commands))
+}
+
+getSrcLineNo <- function(x) {
+  # simple fast path of utils::getSrcLocation(x, "line") for a single expression.
+  # avoid loading utils just for Rapp::run()
+  attr(x, "srcref", TRUE)[[1L]][[1L]]
+}
+
+parse_expr_anno <- function(lineno, is_hashpipe) {
+  anno_start <- anno_end <- lineno - 1L
+  is_hashpipe[anno_end] || return(NULL)
+  while (anno_start > 1L && is_hashpipe[anno_start - 1L]) {
+    anno_start <- anno_start - 1L
+  }
+  parse_hashpipe_yaml(
+    lines[anno_start:anno_end],
+    handlers = list("bool#yes" = identity, "bool#no" = identity)
+  )
 }
 
 

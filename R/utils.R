@@ -27,6 +27,22 @@ imap_chr <- function(.x, .f, ...) {
   out
 }
 
+map2 <- function(.x, .y, .f, ...) {
+  out <- .mapply(.f, list(.x, .y), list(...))
+  if (length(.x) == length(out)) {
+    names(out) <- names(.x)
+  }
+  out
+}
+
+prune_empty <- function(x) {
+  if (is.list(x)) {
+    x <- lapply(x, prune_empty)
+  }
+  x <- x[lengths(x) > 0L]
+  if (length(x)) x else NULL
+}
+
 map_chr <- function(.x, .f, ...) {
   out <- vapply(X = .x, FUN = .f, FUN.VALUE = "", USE.NAMES = FALSE)
   names(out) <- names(.x)

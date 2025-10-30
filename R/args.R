@@ -1,19 +1,23 @@
 process_args <- function(args, app) {
   app <- as_app(app)
+  app_opts <- app$opts
+  app_args <- app$args
+  app_commands <- app$commands
 
   if (!inherits(args, "connection")) {
     args <- textConnection(args)
     on.exit(close(args))
   }
 
-  short_opt_to_long_opt <- local({
-    table <- unlist(lapply(app$opts, function(opt) opt$short))
-    table <- setNames(
-      as.list(sprintf("--%s", names(table))),
-      sprintf("-%s", table)
-    )
-    function(short_opt) table[[short_opt]]
-  })
+  short_opt_to_long_opt <- function(short_opt) {
+    short <- str_drop_prefix(short_opt, "-")
+    for (i in seq_along(opts)) {
+      if (identical(short, app_opts[[i]]$short)) {
+        return(names(app_opts)[[i]])
+      }
+    }
+  }
+
   positional_args <- character()
   while (length(a <- readLines(args, 1L))) {
     if (a == "--" || a == "--args") {
@@ -22,11 +26,7 @@ process_args <- function(args, app) {
 
     if (a == "--help") {
       print_app_help(app, yaml = "--yaml" %in% readLines(args))
-      if (interactive()) {
-        return(invisible(FALSE))
-      } else {
-        q("no")
-      }
+      return(if (interactive()) invisible(FALSE) else q("no"))
     }
 
     arg_type <-
@@ -34,18 +34,19 @@ process_args <- function(args, app) {
         "long-opt"
       } else if (startsWith(a, "-")) {
         "short-opt"
+      } else if (a %in% names(app_commands)) {
+        "command"
       } else {
-        # if (a %in% names(app$commands)) "command" else
         "positional-arg"
       }
 
     if (arg_type == "command") {
-      .NotYetImplemented()
-      # if(length(app$args)) {
-      #   pushBack(app$args, args)
-      #   app$args <- NULL
-      # }
-      return(process_args(args, app = app$commands[[a]]))
+      app$exprs[[app_commands$.val_pos_in_exprs]] <- a
+      command <- app_commands[[a]]
+      append(app_opts) <- command$opts
+      append(app_args) <- command$args
+      app_commands <- command$commands
+      next
     }
 
     if (arg_type == "positional-arg") {
@@ -70,18 +71,18 @@ process_args <- function(args, app) {
       name <- substring(a, 3, equals_idx - 1L)
       name <- gsub("-", "_", name, fixed = TRUE)
       val <- str_drop_prefix(a, equals_idx)
-      spec <- app$opts[[name]]
+      spec <- app_opts[[name]]
     } else {
       # --name
       name <- str_drop_prefix(a, "--")
       name <- gsub("-", "_", name, fixed = TRUE)
 
-      spec <- app$opts[[name]]
+      spec <- app_opts[[name]]
 
       # if flag not known, maybe this is a switch flag
       if (is.null(spec) && startsWith(a, "--no-")) {
         alt_name <- str_drop_prefix(name, "no_")
-        spec <- app$opts[[alt_name]]
+        spec <- app_opts[[alt_name]]
         if (!is.null(spec)) {
           val <- "false"
           name <- alt_name
@@ -145,7 +146,7 @@ process_args <- function(args, app) {
   if (length(positional_args)) {
     # we've parsed all the command line args,
     # we can now match positional args
-    specs <- app$args
+    specs <- app_args
 
     collector <- which(
       endsWith(names(specs), "...") |
@@ -171,7 +172,7 @@ process_args <- function(args, app) {
       }
     }
 
-    if (length(specs) != length(positional_args)) {
+    if (length(specs) < length(positional_args)) {
       stop(
         "Arguments not recognized: ",
         paste0(positional_args[-seq_along(specs)], collapse = " ")

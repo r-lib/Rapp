@@ -20,17 +20,13 @@ parse_hashpipe_yaml <- function(x, ...) {
 
 as_yaml <- function(x) maybe_as_yaml(as.list(x))
 
-encode_yaml <- function(x, ...) {
-  as_yaml_args <- utils::modifyList(
-    list(
-      precision = 16L,
-      handlers = list(complex = as.character)
-    ),
-    list(...)
+encode_yaml <- function(x, ..., precision = 16L, handlers = list()) {
+  handlers[["complex"]] <- as.character
+  out <- do.call(
+    yaml::as.yaml,
+    list(x, ..., precision = precision, handlers = handlers)
   )
-  out <- do.call(yaml::as.yaml, c(list(x), as_yaml_args))
-  out <- strsplit(out, "\n", fixed = TRUE)[[1L]]
-  out
+  strsplit(out, "\n", fixed = TRUE)[[1L]]
 }
 
 # yaml <- function(...)
