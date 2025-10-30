@@ -29,8 +29,8 @@
         help  
       
       Options:
-        -s, --store <STORE>  Path to the todo list file. [default: ".todo.yml"]
-                             [type: string]
+        -s, --store <STORE>  Path to the todo list file.
+                             [default: ".todo.yml"] [type: string]
       
       For help with a specific command, run: `todo <command> --help`.
 
@@ -64,12 +64,12 @@
       Usage: todo list [OPTIONS]
       
       Options:
-        --limit <LIMIT>  Maximum number of entries to display (-1 for all). [default:
-                         30] [type: integer]
+        --limit <LIMIT>  Maximum number of entries to display (-1 for all).
+                         [default: 30] [type: integer]
       
       Global options:
-        -s, --store <STORE>  Path to the todo list file. [default: ".todo.yml"]
-                             [type: string]
+        -s, --store <STORE>  Path to the todo list file.
+                             [default: ".todo.yml"] [type: string]
 
 ---
 
@@ -83,12 +83,12 @@
       Usage: todo done [OPTIONS]
       
       Options:
-        -i, --index <INDEX>  Index of the task to complete. [default: 1] [type:
-                             integer]
+        -i, --index <INDEX>  Index of the task to complete.
+                             [default: 1] [type: integer]
       
       Global options:
-        -s, --store <STORE>  Path to the todo list file. [default: ".todo.yml"]
-                             [type: string]
+        -s, --store <STORE>  Path to the todo list file.
+                             [default: ".todo.yml"] [type: string]
 
 ---
 
@@ -101,13 +101,13 @@
       
       Options:
         --child2-opt <CHILD2-OPT>       [default: "child2-default"] [type: string]
-        --child2-switch / --no-child2-switch  [default: false] Enable with
-                                        `--child2-switch`.
+        --child2-switch / --no-child2-switch  [default: false]
+                                        Enable with `--child2-switch`.
       
       Parent options:
         --parent-opt <PARENT-OPT>       [default: "parent-default"] [type: string]
-        --parent-switch / --no-parent-switch  [default: true] Disable with
-                                        `--no-parent-switch`.
+        --parent-switch / --no-parent-switch  [default: true]
+                                        Disable with `--no-parent-switch`.
       
       Global options:
         --top-opt <TOP-OPT>  [default: "top-default"] [type: string]

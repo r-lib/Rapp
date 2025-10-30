@@ -124,9 +124,16 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
       flag <- paste(flag, "/", toggle_flag)
     }
 
-    info <- c(description, details)
-    info <- paste(info, collapse = " ")
-    list(flag = flag, info = trimws(info))
+    meta_idx <- grepl("^\\[", details)
+    meta <- trimws(paste(details[meta_idx], collapse = " "))
+    extra <- trimws(paste(details[!meta_idx], collapse = " "))
+    desc <- trimws(paste(description, collapse = " "))
+    pieces <- c(
+      if (nzchar(desc)) desc else NULL,
+      if (nzchar(meta)) meta else NULL,
+      if (nzchar(extra)) extra else NULL
+    )
+    list(flag = flag, pieces = pieces)
   }
   format_option_block <- function(opts) {
     opts <- ensure_list(opts)
@@ -136,36 +143,61 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
 
     entries <- imap(opts, format_option_entry)
     flags <- vapply(entries, "[[", "", "flag")
-    infos <- vapply(entries, "[[", "", "info")
-    width <- getOption("width", 79L)
     flag_width <- min(max(nchar(flags)), 30L)
     indent <- 2L
-    info_width <- width - indent - flag_width - 2L
-
+    total_width <- getOption("width", 79L)
     out <- character()
-    for (i in seq_along(entries)) {
-      flag <- flags[[i]]
-      info <- infos[[i]]
-      padded_flag <- sprintf("%s%-*s", strrep(" ", indent), flag_width, flag)
-      wrapped <- if (nzchar(info)) {
-        strwrap(info, width = info_width)
-      } else {
-        ""
-      }
-      if (!length(wrapped)) {
-        wrapped <- ""
-      }
-      out <- c(
-        out,
-        paste0(padded_flag, "  ", wrapped[[1L]])
+    for (entry in entries) {
+      padded_flag <- sprintf(
+        "%s%-*s",
+        strrep(" ", indent),
+        flag_width,
+        entry$flag
       )
-      if (length(wrapped) > 1L) {
-        continuation <- paste0(
-          strrep(" ", indent + flag_width + 2L),
-          wrapped[-1L]
+      continuation <- strrep(" ", indent + flag_width + 2L)
+      initial <- paste0(padded_flag, "  ")
+      pieces <- entry$pieces
+      if (
+        length(pieces) >= 2L &&
+        startsWith(pieces[[2L]], "[")
+      ) {
+        combined <- paste(pieces[[1L]], pieces[[2L]], collapse = " ")
+        fit <- strwrap(
+          combined,
+          width = total_width,
+          initial = initial,
+          prefix = continuation
         )
-        out <- c(out, continuation)
+        if (length(fit) == 1L) {
+          pieces <- c(combined, pieces[-(1:2)])
+        }
       }
+      if (length(pieces) >= 2L) {
+        candidate <- paste(pieces[[1L]], pieces[[2L]], collapse = " ")
+        line_candidate <- paste0(initial, candidate)
+        if (nchar(line_candidate) <= total_width) {
+          pieces <- c(candidate, pieces[-(1:2)])
+        }
+      }
+      info_lines <- character()
+      if (!length(pieces)) {
+        info_lines <- initial
+      } else {
+        for (i in seq_along(pieces)) {
+          piece <- pieces[[i]]
+          wrapped <- strwrap(
+            piece,
+            width = total_width,
+            initial = if (i == 1L) initial else continuation,
+            prefix = continuation
+          )
+          if (!length(wrapped)) {
+            wrapped <- if (i == 1L) initial else continuation
+          }
+          info_lines <- c(info_lines, wrapped)
+        }
+      }
+      out <- c(out, info_lines)
     }
     out
   }
