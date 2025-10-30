@@ -1,9 +1,9 @@
-
-# Rapp <img src="man/figures/logo.png" align="right" height="138" alt="" />
+# Rapp <img src="man/figures/logo.png" align="right" height="138"/>
 
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/r-lib/Rapp/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-lib/Rapp/actions/workflows/R-CMD-check.yaml)
+
 <!-- badges: end -->
 
 Rapp (short for "R application") makes it fun to write and share command
@@ -65,8 +65,8 @@ Application options and arguments work like this:
 
 ### Options
 
-Simple assignments of scalar literals at the top level of the R script
-are automatically treated as command line *options*.
+Simple assignments of scalar (length-1) literals at the top level of the
+R script are automatically treated as command line *options*.
 
 ``` r
 n <- 1
@@ -113,11 +113,11 @@ my-app --echo=0      # FALSE
 
 ### Positional Arguments
 
-Simple assignments of length-0 objects at the top level of an R script
-become positional arguments. If the R symbol has a `...` suffix or
-prefix, it becomes a collector for a variable number of positional
-arguments. Positional arguments always come into the R app as character
-strings.
+Simple assignments of length-0 objects (`c()`, `NULL`, `character()`,
+etc.) at the top level of an R script become positional arguments. If
+the R symbol has a `...` suffix or prefix, it becomes a collector for a
+variable number of positional arguments. Positional arguments always
+come into the R app as character strings.
 
 ``` r
 args... <- c()
@@ -134,9 +134,11 @@ last_arg       <- c()
 ### Commands
 
 Use a `switch()` statement whose first argument is either a character
-scalar or an assignment (for example `switch("")` or `switch(command <- "", ...)`) to
-declare subcommands. The corresponding branch runs when the matching command is
-supplied on the command line. Declare command specific options and positional arguments with the same rules inside the branch.
+scalar or an assignment (for example `switch("")` or
+`switch(command <- "", ...)`) to declare commands. The corresponding
+branch runs when the matching command is supplied on the command line.
+Declare command specific options and positional arguments with the same
+rules inside the branch.
 
 ``` r
 #!/usr/bin/env Rapp
@@ -169,8 +171,8 @@ switch(
 )
 ```
 
-The command shown above exposes a `todo` launcher with `list`, `add`, and
-`done` commands. Each command can declare its own options (`limit`,
+The command shown above exposes a `todo` launcher with `list`, `add`,
+and `done` commands. Each command can declare its own options (`limit`,
 `index`) or positional arguments (`task`), and command metadata can be
 documented with the same hash-pipe annotations used for options.
 
@@ -202,32 +204,49 @@ Global options:
                        [default: ".todo.yml"] [type: string]
 ```
 
-Commands can be nested by including additional `switch()` blocks inside a
-command branch; each level adds its own command-specific options, help,
-and positional arguments.
+Commands can be nested by including additional `switch()` blocks inside
+a command branch; each level adds its own command-specific options,
+help, and positional arguments.
 
 ## Installing launchers
 
-Run `Rapp::install_pkg_cli_apps()` after installing a package to create
-lightweight launchers for every Rapp in its `exec/`
+Run `Rapp::install_pkg_cli_apps("Rapp")` to install `Rapp` on the
+`PATH`.
+
+If you are shipping Rapps via an R package, you can call
+`Rapp::install_pkg_cli_apps("mypackage")` to create lightweight
+launchers for every Rapp (and Rscript shebang) in the packages `exec/`
 directory.
 
-```r
+``` r
 Rapp::install_pkg_cli_apps("mypackage")
 ```
 
-You can either include the commnand in install instructions, export your own thin wrapper:
+You can either include the command in install instructions, or export
+your own thin wrapper:
 
-```r
-mypackage::install_cli_apps()
+``` r
+#' Install `mypackage` cli applications.
+#' 
+#' @inheritDotParams Rapp::install_pkg_cli_apps -package -lib.loc
+#' @export
+#' @examples
+#' \dontrun{
+#' mypackage::install_cli()
+#' }
+install_cli <- function(...) {
+  Rapp::install_pkg_cli_apps(package = "mypackage", lib.loc = NULL, ...)
+}
 ```
 
-App launchers are written to `destdir`, which defaults to the first available
-location from `RAPP_INSTALL_DIR`, `XDG_BIN_HOME`, `XDG_DATA_HOME/../bin`, or
-`~/.local/bin`. On Windows the directory is added to `PATH`; on macOS and
-Linux the directory generally is already present on `PATH` (you may need to
-restart your shell if the Rapp installer created the directory). Use the `destdir` argument if you
-prefer an alternate location.
+App launchers are written to `destdir`, which defaults to the first
+available location from `RAPP_INSTALL_DIR`, `XDG_BIN_HOME`,
+`XDG_DATA_HOME/../bin`, or the default location, `~/.local/bin` on macOS
+and Linux and `%LOCALAPPDATA%\Programs\R\Rapp\bin` on Windows. On
+Windows the directory is automatically added to `PATH`; on macOS and
+Linux the directory generally is already present on `PATH` (you may need
+to restart your shell if the Rapp installer created the directory). Use
+the `destdir` argument if you prefer an alternate location.
 
 ## Shipping an Rapp as part of an R package
 
@@ -235,16 +254,20 @@ You can easily share your R app command line executable as part of an R
 package.
 
 -   Add {Rapp} as a dependency in your DESCRIPTION.
--   Place your app in the `exec` folder in your package
-    (for example `exec/myapp`). Apps are automatically installed as
-    executables.
+
+-   Place your app in the `exec` folder in your package (for example
+    `exec/myapp`). Apps are automatically installed as executables.
+
 -   Encourage users to run
-    `Rapp::install_pkg_cli_apps(c("your.package.name"))` after
-    installing your package so the launchers land in a directory on
-    their `PATH`. This keeps existing launchers up to date and deletes
-    ones that have been removed from your package.
+    `Rapp::install_pkg_cli_apps(c("your.package.name"))` or your own
+    exported wrapper `your.package.name::install_cli()` after installing
+    your package so the launchers land in a directory on their `PATH`.
+    This keeps existing launchers up to date and also deletes old
+    launchers for apps that have been removed from your package.
+
 -   If [`rig`](https://github.com/r-lib/rig) is already on the `PATH`,
-    you can also use `rig` to run a script in a packages `exec` directory:
+    you can also use `rig` to run a script in a packages `exec`
+    directory:
 
     ``` bash
     rig run <pkg>::<script>
@@ -254,43 +277,39 @@ package.
 
 Rapp works on Windows. Running `install_pkg_cli_apps()` creates `.bat`
 wrappers for each app and installs a top-level `Rapp.bat`, adding their
-location to `PATH`. After that, you can invoke apps from R packages just like on other
-platforms:
+location to `PATH`. After that, you can invoke apps from R packages just
+like on other platforms:
 
 ``` cmd
 flip-coin --n 3
 ```
 
-Because windows does not natively support shebangs, to invoke an Rapp developed outside
-an R package, you'll need to invoke the `Rapp` front-end directly:
-
-```cmd
-Rapp path/to/flip-coin.R --n 3
-```
-
-You can also call the launcher explicitly:
+Because windows does not natively support shebangs, to invoke an Rapp
+developed outside an R package, you'll need to invoke the `Rapp`
+front-end directly (after calling `Rapp::install_pkg_cli_apps("Rapp")`):
 
 ``` cmd
-Rapp flip-coin --n 3
+Rapp path/to/flip-coin.R --n 3
 ```
 
 ## More examples
 
 See the `inst/examples` folder for more example R apps.
 
-
 ## Other Approaches
 
-This package is just one set of ideas for how to build command line apps in R.
-Some other packages in this space:
+This package is just one set of ideas for how to build command line apps
+in R. Some other packages in this space:
 
-- [littler](https://github.com/eddelbuettel/littler) (typically paired with one of the below)
-- [docopt](https://github.com/docopt/docopt.R)
-- [optparse](https://github.com/trevorld/r-optparse)
-- [argparse](https://github.com/trevorld/r-argparse)
-- [argparser](https://CRAN.R-project.org/package=argparser)
+-   [littler](https://github.com/eddelbuettel/littler) (typically paired
+    with one of the below)
+-   [docopt](https://github.com/docopt/docopt.R)
+-   [optparse](https://github.com/trevorld/r-optparse)
+-   [argparse](https://github.com/trevorld/r-argparse)
+-   [argparser](https://CRAN.R-project.org/package=argparser)
 
-Also, some interesting examples of other approaches to exporting cli interfaces from R packages:
+Also, some interesting examples of other approaches to exporting cli
+interfaces from R packages:
 
-- [renv](https://github.com/rstudio/renv/blob/main/inst/bin/renv)
-- [bspm](https://github.com/cran4linux/bspm/blob/master/R/scripts.R)
+-   [renv](https://github.com/rstudio/renv/blob/main/inst/bin/renv)
+-   [bspm](https://github.com/cran4linux/bspm/blob/master/R/scripts.R)
