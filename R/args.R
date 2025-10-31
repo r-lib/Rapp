@@ -30,7 +30,6 @@ process_args <- function(args, app) {
 
   positional_args <- character()
   while (length(a <- readLines(args, 1L))) {
-    # browser()
     if (a == "--" || a == "--args") {
       break
     }
@@ -163,16 +162,9 @@ process_args <- function(args, app) {
         warning = identity
       )
     }
-    # else {
-    #   parsed <- parse_yaml(val)
-    #   if (!is.null(parsed)) {
-    #     val <- parsed
-    #   }
-    # }
 
     # val can be NULL
     if (identical(spec$action, "append")) {
-      # browser()
       expr <- app$exprs[[spec$.val_pos_in_exprs]]
       if (!is.call(expr)) {
         expr <- if (isTRUE(is.na(expr))) expr <- quote(c()) else call("c", expr)

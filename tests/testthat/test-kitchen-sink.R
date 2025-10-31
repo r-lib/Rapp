@@ -28,17 +28,20 @@ test_that("kitchen sink defaults apply", {
 })
 
 test_that("options, append actions, and parsing behave as expected", {
-  env <- capture_kitchen_env(c(
-    "--opt-replace", "override",
-    "--opt-append", "alpha",
-    "-p", "beta",
-    "--opt-switch",
-    "--opt-integer", "7",
-    "--opt-numeric", "3.14",
-    "--opt-yaml-parsed", "{answer: [1, 2]}",
-    "--opt-yaml-literal", "[keep, literal]",
+  # fmt: table
+  args <- c(
+    "--opt-replace"      , "override"         ,
+    "--opt-append"       , "alpha"            ,
+    "-p"                 , "beta"             ,
+    "--opt-switch"       ,
+    "--opt-integer"      , "7"                ,
+    "--opt-numeric"      , "3.14"             ,
+    "--opt-yaml-parsed"  , "{answer: [1, 2]}" ,
+    "--opt-yaml-literal" , "[keep, literal]"  ,
     "main-target"
-  ))
+  )
+
+  env <- capture_kitchen_env(args)
 
   expect_identical(env$opt_replace, "override")
   expect_identical(env$opt_append, c("alpha", "beta"))
@@ -65,12 +68,14 @@ test_that("summary command overrides defaults and appends filters", {
   expect_identical(env$summary_target, "summary-default")
   expect_null(env$summary_filter)
 
-  env_overrides <- capture_kitchen_env(c(
-    "summary",
-    "--summary-target", "explicit",
-    "--summary-filter", "a",
-    "--summary-filter", "b"
-  ))
+  # fmt: table
+  args <- c(
+    "summary"          , "--summary-target" ,
+    "explicit"         ,
+    "--summary-filter" , "a"                ,
+    "--summary-filter" , "b"
+  )
+  env_overrides <- capture_kitchen_env(args)
   expect_identical(env_overrides$summary_target, "explicit")
   expect_identical(env_overrides$summary_filter, c("a", "b"))
 })

@@ -388,7 +388,11 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
     if (length(title)) {
       header_lines <- wrap_lines(title)
       if (length(desc)) {
-        header_lines <- c(header_lines, "", wrap_lines(sprintf("%s: %s", app_name, desc)))
+        header_lines <- c(
+          header_lines,
+          "",
+          wrap_lines(sprintf("%s: %s", app_name, desc))
+        )
       }
     } else if (length(desc)) {
       header_lines <- wrap_lines(sprintf("%s: %s", app_name, desc))

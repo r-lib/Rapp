@@ -86,5 +86,8 @@ test_that("launcher name is used in help when provided", {
   withr::local_envvar(RAPP_LAUNCHER_NAME = "launcher-test")
   lines <- capture_help_lines(app_path)
   expect_true("Usage: launcher-test [OPTIONS]" %in% lines)
-  expect_identical(Sys.getenv("RAPP_LAUNCHER_NAME", NA_character_), NA_character_)
+  expect_identical(
+    Sys.getenv("RAPP_LAUNCHER_NAME", NA_character_),
+    NA_character_
+  )
 })

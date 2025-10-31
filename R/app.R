@@ -155,15 +155,10 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
 
     default <- e[[3L]]
     if (is.call(default)) {
-      if (
-        identical_any(
-          default,
-          quote(c()), # as raw strings
-          quote(list()) # parsed yaml objects
-          # quote(I(c()))
-        )
-      ) {
+      if (identical_any(default, quote(c()), quote(list()))) {
         # leave as call, append opt or positional collector
+        # c() collects args strings as-is
+        # list() collects (maybe)parsed yaml objects
       } else {
         # maybe a numeric literal
         if (!is.symbol(call_sym <- default[[1L]])) {
@@ -200,8 +195,14 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
     ##   -f         (short form of opt and switch)
     ##   foo        (command, which potentially adds scope)
 
+    is_collector <-
+      is.call(default) || # c() or list()
+      startsWith(name, "...") ||
+      endsWith(name, "...")
+
     arg <- list(
       default = default,
+
       val_type = switch(
         typeof(default),
         "character" = "string",
@@ -209,10 +210,12 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
         "double" = "float",
         "integer" = "integer",
         "language" = {
+          # c() or list()
           if (identical(default[[1L]], quote(c))) "string" else "any"
-        }, # c() or list()
+        },
         "NULL" = "string"
       ),
+
       arg_type = if (identical(default, TRUE) || identical(default, FALSE)) {
         "switch"
       } else if (is.null(default)) {
@@ -222,10 +225,8 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
       } else {
         "option"
       },
-      # call or collector
-      # } else if (length(default)) {
-      # "positional" # NULL
-      action = if (is.call(default)) "append" else "replace",
+
+      action = if (is_collector) "append" else "replace",
       .val_pos_in_exprs = c(pos, i, 3L) # pos 3 in call expr: `<-`(name, 'val')
     )
 
