@@ -4,7 +4,7 @@
 #|   Flip a coin.
 
 #| description: Number of coin flips
-#| short: n
+#| short: 'n'
 flips <- 1L
 
 sep <- " "
