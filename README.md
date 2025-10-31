@@ -56,6 +56,20 @@ options:
 arguments: {}
 ```
 
+### Quick start
+
+``` r
+# Install the package (skip if you already have it)
+install.packages("Rapp")
+
+# Add the launchers to your PATH
+Rapp::install_pkg_cli_apps("Rapp")
+```
+
+On macOS and Linux, make your script executable (`chmod +x flip-coin.R`)
+and run it directly. On Windows, or if you prefer, call the front end
+explicitly: `Rapp flip-coin.R --n 3`.
+
 Application options and arguments work like this:
 
 | Script declaration | CLI usage | Effect |
@@ -112,6 +126,8 @@ my-app --echo=no     # FALSE
 my-app --echo=false  # FALSE
 my-app --echo=0      # FALSE
 ```
+
+### Annotations
 
 Hash-pipe annotations are parsed as YAML values. Quote scalars such as
 `'n'` or `'yes'` when you need a literal string instead of YAML's boolean
@@ -227,6 +243,23 @@ Commands can be nested by including additional `switch()` blocks inside
 a command branch; each level adds its own command-specific options,
 help, and positional arguments.
 
+### Running interactively
+
+While developing, you can drive the app directly from R:
+
+``` r
+Rapp::run("path/to/app.R", c("--help", "--verbose"))
+```
+
+Pass a character vector of arguments exactly as you would supply them on
+the command line. Inside the app you can drop `browser()` statements to
+pause execution and inspect state while `Rapp::run()` executes.
+
+``` r
+# inside your script
+if (interactive()) browser()
+```
+
 ## Installing launchers
 
 Run `Rapp::install_pkg_cli_apps("Rapp")` to install `Rapp` on the
@@ -265,7 +298,28 @@ and Linux and `%LOCALAPPDATA%\Programs\R\Rapp\bin` on Windows. On
 Windows the directory is automatically added to `PATH`; on macOS and
 Linux the directory generally is already present on `PATH` (you may need
 to restart your shell if the Rapp installer created the directory). Use
-the `destdir` argument if you prefer an alternate location.
+the `destdir` argument if you prefer an alternate location. If you are
+working with a standalone `.R` file on Windows, call the launcher
+explicitly (`Rapp path\\to\\flip-coin.R --n 3`) because native shebangs
+are not supported.
+
+### Using package `exec/` directories directly
+
+Launchers are optional. You can add a package's `exec/` directory to your
+`PATH` and run the scripts in place. For example, after installing
+{Rapp}:
+
+``` bash
+export PATH="$(Rscript -e 'cat(normalizePath(system.file("exec", package = "Rapp")))'):$PATH"
+```
+
+On Windows, run `Rscript -e "cat(normalizePath(system.file('exec', package = 'Rapp')))"` to
+print the directory and add it to `PATH` via *System Properties →
+Environment Variables*.
+
+With the directory on `PATH`, any script beginning with `#!/usr/bin/env
+Rapp` can be executed directly without creating additional launcher
+binaries.
 
 ## Shipping an Rapp as part of an R package
 
