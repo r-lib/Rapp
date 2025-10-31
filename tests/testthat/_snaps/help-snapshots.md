@@ -128,20 +128,24 @@
           default: 1
           val_type: integer
           arg_type: option
+          action: replace
           description: Number of coin flips
           short: 'n'
         sep:
           default: ' '
           val_type: string
           arg_type: option
+          action: replace
         wrap:
           default: yes
           val_type: bool
           arg_type: switch
+          action: replace
         seed:
           default: .na.integer
           val_type: integer
           arg_type: option
+          action: replace
       arguments: ~
 
 ---
@@ -161,6 +165,7 @@
           default: .todo.yml
           val_type: string
           arg_type: option
+          action: replace
           description: Path to the todo list file.
           short: s
       arguments: ~
@@ -179,6 +184,7 @@
           default: top-default
           val_type: string
           arg_type: option
+          action: replace
       arguments: ~
 
 # --help --yaml snapshots
@@ -197,20 +203,24 @@
           default: 1
           val_type: integer
           arg_type: option
+          action: replace
           description: Number of coin flips
           short: 'n'
         sep:
           default: ' '
           val_type: string
           arg_type: option
+          action: replace
         wrap:
           default: yes
           val_type: bool
           arg_type: switch
+          action: replace
         seed:
           default: .na.integer
           val_type: integer
           arg_type: option
+          action: replace
       arguments: ~
 
 ---
@@ -230,6 +240,7 @@
           default: .todo.yml
           val_type: string
           arg_type: option
+          action: replace
           description: Path to the todo list file.
           short: s
       arguments: ~
@@ -248,5 +259,6 @@
           default: top-default
           val_type: string
           arg_type: option
+          action: replace
       arguments: ~
 

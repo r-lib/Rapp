@@ -9,9 +9,9 @@ switch(
     cat("cmd1 called!\n")
   },
   cmd2 = {
-    cmd2_positional <- character()
+    cmd2_positional <- NULL
     cmd2_opt <- "cmd2_opt_default"
-    cmd2_positional2 <- character()
+    cmd2_positional2 <- NULL
     cat("cmd2 called!\n")
   },
   help = {}

@@ -31,7 +31,7 @@ switch(
   #| description: Append a task description to the todo list.
   add = {
     #| description: Task description to add.
-    task <- character()
+    task <- NULL
     if (!length(task)) {
       stop("Please supply a task description.", call. = FALSE)
     }

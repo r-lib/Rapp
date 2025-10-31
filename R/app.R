@@ -89,6 +89,18 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
   for (i in seq_along(exprs)) {
     e <- exprs[[i]]
 
+    # foo <- NULL   default positional arg  `APP <FOO>`
+    # foo <- <TRUE|FALSE>   default switch  `APP --foo` or `APP --no-foo`
+    # foo <- <string|float|int literal>  default opt  `APP --foo val`
+    # foo <- <c()|list()>   default opt with action: append   `APP --foo val1  --foo val2`
+    #
+    # switch(<string-literal>, ...)  command
+    #
+    # questioning:
+    # foo <- <integer()|character()|numeric()>  ## undefined ... maybe same as `foo <- c()` with coersion?
+    # foo    same as `foo <- NULL` but with required: true (no default)?
+    #
+
     if (!is.call(e)) {
       next
     }
@@ -135,24 +147,27 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
 
     default <- e[[3L]]
     if (is.call(default)) {
-      if (!is.symbol(call_sym <- default[[1]])) {
-        next
+      if (
+        identical_any(
+          default,
+          quote(c()), # as raw strings
+          quote(list()) # parsed yaml objects
+          # quote(I(c()))
+        )
+      ) {
+        # leave as call, append opt or positional collector
+      } else {
+        # maybe a numeric literal
+        if (!is.symbol(call_sym <- default[[1L]])) {
+          next
+        }
+        call_sym <- as.character(call_sym)
+        if (call_sym %in% c("+", "-") && all.names(default) %in% c("+", "-")) {
+          default <- eval(default, envir = baseenv())
+        } else {
+          next
+        }
       }
-
-      call_sym <- as.character(call_sym)
-
-      if (!call_sym %in% .simple_call_syms) {
-        next
-      }
-
-      if (all.names(default) %in% .simple_call_syms) {
-        default <- eval(default, envir = baseenv())
-      }
-      ## TODO: special syntax for var len values? `vals <- c("a", "b")`, injected as `[a,b]`
-    }
-
-    if (!typeof(default) %in% .simple_typeofs) {
-      next
     }
 
     if (!length(default) %in% 0L:1L) {
@@ -175,15 +190,24 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
         "logical" = "bool",
         "double" = "float",
         "integer" = "integer",
+        "language" = {
+          if (identical(default[[1L]], quote(c))) "string" else "any"
+        }, # c() or list()
         "NULL" = "string"
       ),
-      arg_type = if (isTRUE(default) || isFALSE(default)) {
+      arg_type = if (identical(default, TRUE) || identical(default, FALSE)) {
         "switch"
-      } else if (length(default)) {
-        "option"
-      } else {
+      } else if (is.null(default)) {
         "positional"
+      } else if (startsWith(name, "...") || endsWith(name, "...")) {
+        "positional"
+      } else {
+        "option"
       },
+      # call or collector
+      # } else if (length(default)) {
+      # "positional" # NULL
+      action = if (is.call(default)) "append" else "replace",
       .val_pos_in_exprs = c(pos, i, 3L) # pos 3 in call expr: `<-`(name, 'val')
     )
 
@@ -201,6 +225,13 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
   }
 
   compact(list(args = args, opts = opts, commands = commands))
+}
+
+identical_any <- function(x, ...) {
+  for (i in seq_len(...length())) {
+    if (identical(x, ...elt(i))) return(TRUE)
+  }
+  FALSE
 }
 
 getSrcLineNo <- function(x) {

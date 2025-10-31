@@ -63,6 +63,20 @@ arguments: {}
 
 Application options and arguments work like this:
 
+| Script declaration | CLI usage | Effect |
+| --- | --- | --- |
+| `foo <- NULL` | `APP <FOO>` | Positional argument with a default value |
+| `foo <- TRUE` / `foo <- FALSE` | `APP --foo` / `APP --no-foo` | Boolean switch |
+| `foo <- 1`, `foo <- 1.5`, `foo <- "value"` | `APP --foo VALUE` | Single-value option |
+| `foo <- c()` / `foo <- list()` | `APP --foo value1 --foo value2` | Repeatable option that appends each value |
+
+```text
+# foo <- NULL   default positional arg  `APP <FOO>`
+# foo <- <TRUE|FALSE>   default switch  `APP --foo` or `APP --no-foo`
+# foo <- <string|float|int literal>  default opt  `APP --foo val`
+# foo <- <c()|list()>   default opt with action: append   `APP --foo val1  --foo val2`
+```
+
 ### Options
 
 Simple assignments of scalar (length-1) literals at the top level of the
@@ -111,24 +125,40 @@ my-app --echo=false  # FALSE
 my-app --echo=0      # FALSE
 ```
 
-### Positional Arguments
+Hash-pipe annotations are parsed as YAML values. Quote scalars such as
+`'n'` or `'yes'` when you need a literal string instead of YAML's boolean
+interpretation.
 
-Simple assignments of length-0 objects (`c()`, `NULL`, `character()`,
-etc.) at the top level of an R script become positional arguments. If
-the R symbol has a `...` suffix or prefix, it becomes a collector for a
-variable number of positional arguments. Positional arguments always
-come into the R app as character strings.
+Assigning `c()` or `list()` now declares a repeatable option. Each time
+the option is supplied, its value is appended in order. For example:
 
 ``` r
-args... <- c()
+pattern <- c()
+```
+
+becomes:
+
+``` bash
+ls-r --pattern alpha --pattern ".*\\.txt$"
+```
+
+### Positional Arguments
+
+Assigning `NULL` to a symbol declares a positional argument. If the symbol has a `...` suffix or prefix, it becomes
+a collector for a variable number of positional arguments. Positional
+arguments always come into the R app as character strings. Mark a
+positional argument as required with `#| required: true` (this only adjusts help output, you'll still need to throw an appropriate error form your app).
+
+``` r
+args... <- NULL
 ```
 
 or
 
 ``` r
-first_arg      <- c()
-...middle_args <- c()
-last_arg       <- c()
+first_arg      <- NULL
+...middle_args <- NULL
+last_arg       <- NULL
 ```
 
 ### Commands
@@ -159,7 +189,7 @@ switch(
 
   #| summary: Add a new todo
   add = {
-    task <- character()
+    task <- NULL
     ...
   },
 
@@ -227,7 +257,7 @@ your own thin wrapper:
 
 ``` r
 #' Install `mypackage` cli applications.
-#' 
+#'
 #' @inheritDotParams Rapp::install_pkg_cli_apps -package -lib.loc
 #' @export
 #' @examples
