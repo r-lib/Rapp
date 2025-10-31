@@ -18,6 +18,8 @@
     Code
       writeLines(system2("todo", "--help", stdout = TRUE))
     Output
+      Manage a simple todo list.
+      
       todo: Manage a simple todo list.
       
       Usage: todo [OPTIONS] <COMMAND>
@@ -159,6 +161,7 @@
         - utils
         - yaml
       name: todo
+      title: Manage a simple todo list.
       description: Manage a simple todo list.
       options:
         store:
@@ -234,6 +237,7 @@
         - utils
         - yaml
       name: todo
+      title: Manage a simple todo list.
       description: Manage a simple todo list.
       options:
         store:

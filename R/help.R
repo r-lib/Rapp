@@ -271,8 +271,8 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
     entries <- lapply(command_names, function(name) {
       command <- commands[[name]]
       meta <- command$meta %||% list()
-      summary <- meta$summary %||% meta$description %||% ""
-      list(name = name, summary = summary)
+      label <- meta$title %||% meta$description %||% ""
+      list(name = name, label = label)
     })
 
     names_column <- vapply(entries, "[[", "", "name")
@@ -289,9 +289,9 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
         name_width,
         entry$name
       )
-      summary <- entry$summary
-      wrapped <- if (nzchar(summary)) {
-        strwrap(summary, width = desc_width)
+      label <- entry$label
+      wrapped <- if (nzchar(label)) {
+        strwrap(label, width = desc_width)
       } else {
         ""
       }
@@ -383,25 +383,28 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
 
   header_lines <- character()
   if (length(scope) == 1L) {
-    desc <- current_meta$description %||% current_meta$summary
-    if (length(desc)) {
-      header_lines <- wrap_lines(
-        sprintf("%s: %s", app_name, desc)
-      )
+    title <- current_meta$title
+    desc <- current_meta$description
+    if (length(title)) {
+      header_lines <- wrap_lines(title)
+      if (length(desc)) {
+        header_lines <- c(header_lines, "", wrap_lines(sprintf("%s: %s", app_name, desc)))
+      }
+    } else if (length(desc)) {
+      header_lines <- wrap_lines(sprintf("%s: %s", app_name, desc))
     } else {
       header_lines <- app_name
     }
   } else {
-    summary <- current_meta$summary
+    title <- current_meta$title
     description <- current_meta$description
-    if (length(summary)) {
-      header_lines <- wrap_lines(summary)
-    }
-    if (length(description)) {
-      if (length(header_lines)) {
-        header_lines <- c(header_lines, "")
+    if (length(title)) {
+      header_lines <- wrap_lines(title)
+      if (length(description)) {
+        header_lines <- c(header_lines, "", wrap_lines(description))
       }
-      header_lines <- c(header_lines, wrap_lines(description))
+    } else if (length(description)) {
+      header_lines <- wrap_lines(description)
     }
     if (!length(header_lines)) {
       header_lines <- wrap_lines(

@@ -173,6 +173,7 @@ rules inside the branch.
 ``` r
 #!/usr/bin/env Rapp
 #| name: todo
+#| title: Manage a simple todo list.
 #| description: Manage a simple todo list.
 
 store <- ".todo.yml"
@@ -180,20 +181,20 @@ store <- ".todo.yml"
 switch(
   "",
 
-  #| summary: Display the todos
+  #| title: Display the todos
   #| description: Print the contents of the todo list.
   list = {
     limit <- 30L
     ...
   },
 
-  #| summary: Add a new todo
+  #| title: Add a new todo
   add = {
     task <- NULL
     ...
   },
 
-  #| summary: Mark a task as completed
+  #| title: Mark a task as completed
   done = {
     index <- 1L
     ...
