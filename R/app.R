@@ -20,6 +20,14 @@ as_app <- function(x, complete = TRUE) {
   app$line_is_hashpipe <- grepl("^\\s*#\\| ", lines)
   app$exprs <- exprs
 
+  if (!interactive()) {
+    launcher_name <- Sys.getenv("RAPP_LAUNCHER_NAME", NA_character_)
+    if (!is.na(launcher_name)) {
+      app$launcher_name <- launcher_name
+      Sys.unsetenv("RAPP_LAUNCHER_NAME")
+    }
+  }
+
   if (complete) {
     app$data <- get_app_data(app)
     inputs <- get_app_inputs(app)

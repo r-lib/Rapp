@@ -340,9 +340,8 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
     scope <- default_scope(app)
   }
 
-  launcher_name <- Sys.getenv("RAPP_LAUNCHER_NAME", NA_character_)
-  if (!is.na(launcher_name)) {
-    scope[[1]]$name <- launcher_name
+  if (!is.null(app$launcher_name)) {
+    scope[[1]]$name <- app$launcher_name
   }
 
   current <- scope[[length(scope)]]
