@@ -14,8 +14,16 @@ test_that("ls app accepts same option multiple times", {
 
   # run_ls_app(c(dir, "-p", "alpha", "-p", "\\.txt$"))
 
-  # TODO: arg_type, we should be able to pass yaml-like name `arg-type`
-  # TODO: if action==append, then the help should indicate it can be supplied multiple times.
   expect_snapshot(run_ls_app(c(dir, "-p", "alpha", "-p", "\\.txt$")))
   expect_snapshot(run_ls_app(c(dir, "--pattern", "t$", "-p", "^beta")))
+
+  app <- Rapp:::as_app(ls_app)
+  expect_identical(app$args$root$arg_type, "positional")
+
+  help_lines <- capture_help_lines(ls_app)
+  expect_true(any(grepl(
+    "May be supplied multiple times\\.",
+    help_lines,
+    fixed = FALSE
+  )))
 })

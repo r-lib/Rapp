@@ -63,11 +63,27 @@ test_that("list-like annotations are parsed via yaml", {
       "",
       "#| arg_type: positional",
       "#| info: [alpha, beta]",
-      "root <- \"\""
+      "root <- ''"
     ),
     con = app_path
   )
 
   app <- Rapp:::as_app(app_path)
-  expect_identical(app$args$root$info, c("alpha", "beta"))
+  expect_identical(unclass(app$args$root$info), list("alpha", "beta"))
+})
+
+test_that("launcher name is used in help when provided", {
+  app_path <- tempfile("rapp-launcher-", fileext = ".R")
+  on.exit(unlink(app_path), add = TRUE)
+  writeLines(
+    c(
+      "#!/usr/bin/env Rapp",
+      "flag <- TRUE"
+    ),
+    con = app_path
+  )
+
+  withr::local_envvar(RAPP_LAUNCHER_NAME = "launcher-test")
+  lines <- capture_help_lines(app_path)
+  expect_true("Usage: launcher-test [OPTIONS]" %in% lines)
 })

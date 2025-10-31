@@ -124,6 +124,10 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
       flag <- paste(flag, "/", toggle_flag)
     }
 
+    if (identical(opt$action, "append")) {
+      details <- c(details, "May be supplied multiple times.")
+    }
+
     meta_idx <- grepl("^\\[", details)
     meta <- trimws(paste(details[meta_idx], collapse = " "))
     extra <- trimws(paste(details[!meta_idx], collapse = " "))
@@ -334,6 +338,11 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
 
   if (is.null(scope)) {
     scope <- default_scope(app)
+  }
+
+  launcher_name <- Sys.getenv("RAPP_LAUNCHER_NAME", NA_character_)
+  if (!is.na(launcher_name)) {
+    scope[[1]]$name <- launcher_name
   }
 
   current <- scope[[length(scope)]]

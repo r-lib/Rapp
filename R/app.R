@@ -246,10 +246,24 @@ parse_expr_anno <- function(lineno, lines, is_hashpipe) {
   while (anno_start > 1L && is_hashpipe[anno_start - 1L]) {
     anno_start <- anno_start - 1L
   }
-  parse_hashpipe_yaml(
+  normalize_anno_keys(parse_hashpipe_yaml(
     lines[anno_start:anno_end],
     handlers = list("bool#yes" = identity, "bool#no" = identity)
-  )
+  ))
+}
+
+normalize_anno_keys <- function(x) {
+  is.list(x) || return(x)
+
+  cls <- attr(x, "class", TRUE)
+  x <- lapply(x, normalize_anno_keys)
+
+  if (!is.null(nms <- names(x))) {
+    names(x) <- gsub("-", "_", nms, fixed = TRUE)
+  }
+
+  class(x) <- cls
+  x
 }
 
 

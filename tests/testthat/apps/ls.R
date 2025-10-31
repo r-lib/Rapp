@@ -10,7 +10,7 @@ pattern <- c()
 # message("filter patterns: ", paste0("`", pattern, "`", collapse = " "))
 
 #| description: Directory whose files will be listed.
-#| arg_type: positional
+#| arg-type: positional
 #| required: false
 root <- "."
 

@@ -254,7 +254,13 @@ launcher_contents <- function(app_path, package) {
     stop("Unsupported launcher type for ", app_path)
   }
 
-  rscript_opts <- get_app_data(app_path)$launcher
+  app_data <- get_app_data(app_path)
+  launcher_name <-
+    app_data$launcher$name %||%
+    app_data$name %||%
+    sub("\\.[rR]$", "", basename(app_path))
+
+  rscript_opts <- app_data$launcher
 
   default_packages <- rscript_opts$default_packages %||% c("base", package)
   default_packages <- if (length(default_packages)) {
@@ -296,6 +302,7 @@ launcher_contents <- function(app_path, package) {
       "@echo off",
       paste("::", sentinel),
       "setlocal",
+      sprintf('set "RAPP_LAUNCHER_NAME=%s"', launcher_name),
       paste0(cmd, collapse = " ")
     )
   } else {
@@ -309,6 +316,7 @@ launcher_contents <- function(app_path, package) {
     c(
       "#!/bin/sh",
       paste("#", sentinel),
+      sprintf("export RAPP_LAUNCHER_NAME='%s'", launcher_name),
       paste("exec", paste0(cmd, collapse = " "))
     )
   }

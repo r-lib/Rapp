@@ -39,9 +39,9 @@
     Code
       writeLines(system2("nested-commands", "--help", stdout = TRUE))
     Output
-      nested-commands.R
+      nested-commands
       
-      Usage: nested-commands.R [OPTIONS] <COMMAND>
+      Usage: nested-commands [OPTIONS] <COMMAND>
       
       Commands:
         parent  
@@ -50,7 +50,7 @@
       Options:
         --top-opt <TOP-OPT>  [default: "top-default"] [type: string]
       
-      For help with a specific command, run: `nested-commands.R <command> --help`.
+      For help with a specific command, run: `nested-commands <command> --help`.
 
 # command --help snapshots
 
@@ -97,7 +97,7 @@
     Output
       child2 command
       
-      Usage: nested-commands.R parent child2 [OPTIONS] [<CHILD2-ARG>]
+      Usage: nested-commands parent child2 [OPTIONS] [<CHILD2-ARG>]
       
       Options:
         --child2-opt <CHILD2-OPT>       [default: "child2-default"] [type: string]
