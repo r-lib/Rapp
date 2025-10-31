@@ -170,8 +170,18 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
           next
         }
         call_sym <- as.character(call_sym)
-        if (call_sym %in% c("+", "-") && all.names(default) %in% c("+", "-")) {
-          default <- eval(default, envir = baseenv())
+        if (call_sym %in% c("+", "-")) {
+          arg <- default[[2L]]
+          if (
+            length(default) == 2L &&
+              is.atomic(arg) &&
+              length(arg) == 1L &&
+              all(all.names(default) %in% c("+", "-"))
+          ) {
+            default <- eval(default, envir = baseenv())
+          } else {
+            next
+          }
         } else {
           next
         }

@@ -259,6 +259,9 @@ launcher_contents <- function(app_path, package) {
     app_data$launcher$name %||%
     app_data$name %||%
     sub("\\.[rR]$", "", basename(app_path))
+  # if (!nzchar(launcher_name) || !grepl("^[[:alnum:]_-]+$", launcher_name)) {
+  #   stop("Launcher name must match ^[[:alnum:]_-]+$")
+  # }
 
   rscript_opts <- app_data$launcher
 
@@ -302,7 +305,10 @@ launcher_contents <- function(app_path, package) {
       "@echo off",
       paste("::", sentinel),
       "setlocal",
-      sprintf('set "RAPP_LAUNCHER_NAME=%s"', launcher_name),
+      sprintf(
+        'set "RAPP_LAUNCHER_NAME=%s"',
+        shQuote(launcher_name, type = "cmd2")
+      ),
       paste0(cmd, collapse = " ")
     )
   } else {
@@ -316,7 +322,10 @@ launcher_contents <- function(app_path, package) {
     c(
       "#!/bin/sh",
       paste("#", sentinel),
-      sprintf("export RAPP_LAUNCHER_NAME='%s'", launcher_name),
+      sprintf(
+        "export RAPP_LAUNCHER_NAME=%s",
+        shQuote(launcher_name)
+      ),
       paste("exec", paste0(cmd, collapse = " "))
     )
   }
