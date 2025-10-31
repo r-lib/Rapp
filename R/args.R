@@ -51,7 +51,7 @@ process_args <- function(args, app) {
       } else if (a %in% names(app_commands)) {
         "command"
       } else {
-        "positional-arg"
+        "positional"
       }
 
     if (arg_type == "command") {
@@ -73,7 +73,7 @@ process_args <- function(args, app) {
       next
     }
 
-    if (arg_type == "positional-arg") {
+    if (arg_type == "positional") {
       append(positional_args) <- a
       next
     }
