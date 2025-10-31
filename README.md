@@ -10,13 +10,8 @@ Rapp (short for "R application") makes it fun to write and share command
 line applications in R.
 
 It is an alternative front end to R, a drop-in replacement for `Rscript`
-that does automatic handling of command line arguments. It converts a
-simple R script into a command line application with a rich and robust
-support for command line arguments.
-
-It aims to provides a seamless transition from interactive repl-driven
-development at the R console to non-interactive execution at the command
-line.
+that parses command line arguments automatically. The goal is to make it
+easy to build a polished CLI application from a simple R script.
 
 Here is a simple example Rapp:
 
@@ -70,14 +65,7 @@ Application options and arguments work like this:
 | `foo <- 1`, `foo <- 1.5`, `foo <- "value"` | `APP --foo VALUE` | Single-value option |
 | `foo <- c()` / `foo <- list()` | `APP --foo value1 --foo value2` | Repeatable option that appends each value |
 
-```text
-# foo <- NULL   default positional arg  `APP <FOO>`
-# foo <- <TRUE|FALSE>   default switch  `APP --foo` or `APP --no-foo`
-# foo <- <string|float|int literal>  default opt  `APP --foo val`
-# foo <- <c()|list()>   default opt with action: append   `APP --foo val1  --foo val2`
-```
-
-### Options
+## Options
 
 Simple assignments of scalar (length-1) literals at the top level of the
 R script are automatically treated as command line *options*.
@@ -142,7 +130,7 @@ becomes:
 ls-r --pattern alpha --pattern ".*\\.txt$"
 ```
 
-### Positional Arguments
+## Positional arguments
 
 Assigning `NULL` to a symbol declares a positional argument. If the symbol has a `...` suffix or prefix, it becomes
 a collector for a variable number of positional arguments. Positional
@@ -161,7 +149,7 @@ first_arg      <- NULL
 last_arg       <- NULL
 ```
 
-### Commands
+## Commands
 
 Use a `switch()` statement whose first argument is either a character
 scalar or an assignment (for example `switch("")` or
