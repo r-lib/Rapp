@@ -16,7 +16,7 @@ switch(
       child2 = {
         child2_opt <- "child2-default"
         child2_switch <- FALSE
-        child2_arg <- character()
+        child2_arg <- NULL
       },
       help = {}
     )

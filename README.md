@@ -10,13 +10,8 @@ Rapp (short for "R application") makes it fun to write and share command
 line applications in R.
 
 It is an alternative front end to R, a drop-in replacement for `Rscript`
-that does automatic handling of command line arguments. It converts a
-simple R script into a command line application with a rich and robust
-support for command line arguments.
-
-It aims to provides a seamless transition from interactive repl-driven
-development at the R console to non-interactive execution at the command
-line.
+that parses command line arguments automatically. The goal is to make it
+easy to build a polished CLI application from a simple R script.
 
 Here is a simple example Rapp:
 
@@ -61,9 +56,30 @@ options:
 arguments: {}
 ```
 
+### Quick start
+
+``` r
+# Install the package (skip if you already have it)
+install.packages("Rapp")
+
+# Add the launchers to your PATH
+Rapp::install_pkg_cli_apps("Rapp")
+```
+
+On macOS and Linux, make your script executable (`chmod +x flip-coin.R`)
+and run it directly. On Windows, or if you prefer, call the front end
+explicitly: `Rapp flip-coin.R --n 3`.
+
 Application options and arguments work like this:
 
-### Options
+| Script declaration | CLI usage | Effect |
+| --- | --- | --- |
+| `foo <- NULL` | `APP <FOO>` | Positional argument with a default value |
+| `foo <- TRUE` / `foo <- FALSE` | `APP --foo` / `APP --no-foo` | Boolean switch |
+| `foo <- 1`, `foo <- 1.5`, `foo <- "value"` | `APP --foo VALUE` | Single-value option |
+| `foo <- c()` / `foo <- list()` | `APP --foo value1 --foo value2` | Repeatable option that appends each value |
+
+## Options
 
 Simple assignments of scalar (length-1) literals at the top level of the
 R script are automatically treated as command line *options*.
@@ -111,27 +127,45 @@ my-app --echo=false  # FALSE
 my-app --echo=0      # FALSE
 ```
 
-### Positional Arguments
+### Annotations
 
-Simple assignments of length-0 objects (`c()`, `NULL`, `character()`,
-etc.) at the top level of an R script become positional arguments. If
-the R symbol has a `...` suffix or prefix, it becomes a collector for a
-variable number of positional arguments. Positional arguments always
-come into the R app as character strings.
+Hash-pipe annotations are parsed as YAML values. Quote scalars such as
+`'n'` or `'yes'` when you need a literal string instead of YAML's boolean
+interpretation.
+
+Assigning `c()` or `list()` now declares a repeatable option. Each time
+the option is supplied, its value is appended in order. For example:
 
 ``` r
-args... <- c()
+pattern <- c()
+```
+
+becomes:
+
+``` bash
+ls-r --pattern alpha --pattern ".*\\.txt$"
+```
+
+## Positional arguments
+
+Assigning `NULL` to a symbol declares a positional argument. If the symbol has a `...` suffix or prefix, it becomes
+a collector for a variable number of positional arguments. Positional
+arguments always come into the R app as character strings. Mark a
+positional argument as required with `#| required: true` (this only adjusts help output, you'll still need to throw an appropriate error form your app).
+
+``` r
+args... <- NULL
 ```
 
 or
 
 ``` r
-first_arg      <- c()
-...middle_args <- c()
-last_arg       <- c()
+first_arg      <- NULL
+...middle_args <- NULL
+last_arg       <- NULL
 ```
 
-### Commands
+## Commands
 
 Use a `switch()` statement whose first argument is either a character
 scalar or an assignment (for example `switch("")` or
@@ -143,6 +177,7 @@ rules inside the branch.
 ``` r
 #!/usr/bin/env Rapp
 #| name: todo
+#| title: Manage a simple todo list.
 #| description: Manage a simple todo list.
 
 store <- ".todo.yml"
@@ -150,20 +185,20 @@ store <- ".todo.yml"
 switch(
   "",
 
-  #| summary: Display the todos
+  #| title: Display the todos
   #| description: Print the contents of the todo list.
   list = {
     limit <- 30L
     ...
   },
 
-  #| summary: Add a new todo
+  #| title: Add a new todo
   add = {
-    task <- character()
+    task <- NULL
     ...
   },
 
-  #| summary: Mark a task as completed
+  #| title: Mark a task as completed
   done = {
     index <- 1L
     ...
@@ -208,6 +243,23 @@ Commands can be nested by including additional `switch()` blocks inside
 a command branch; each level adds its own command-specific options,
 help, and positional arguments.
 
+### Running interactively
+
+While developing, you can drive the app directly from R:
+
+``` r
+Rapp::run("path/to/app.R", c("--help", "--verbose"))
+```
+
+Pass a character vector of arguments exactly as you would supply them on
+the command line. Inside the app you can drop `browser()` statements to
+pause execution and inspect state while `Rapp::run()` executes.
+
+``` r
+# inside your script
+if (interactive()) browser()
+```
+
 ## Installing launchers
 
 Run `Rapp::install_pkg_cli_apps("Rapp")` to install `Rapp` on the
@@ -227,7 +279,7 @@ your own thin wrapper:
 
 ``` r
 #' Install `mypackage` cli applications.
-#' 
+#'
 #' @inheritDotParams Rapp::install_pkg_cli_apps -package -lib.loc
 #' @export
 #' @examples
@@ -246,7 +298,28 @@ and Linux and `%LOCALAPPDATA%\Programs\R\Rapp\bin` on Windows. On
 Windows the directory is automatically added to `PATH`; on macOS and
 Linux the directory generally is already present on `PATH` (you may need
 to restart your shell if the Rapp installer created the directory). Use
-the `destdir` argument if you prefer an alternate location.
+the `destdir` argument if you prefer an alternate location. If you are
+working with a standalone `.R` file on Windows, call the launcher
+explicitly (`Rapp path\\to\\flip-coin.R --n 3`) because native shebangs
+are not supported.
+
+### Using package `exec/` directories directly
+
+Launchers are optional. You can add a package's `exec/` directory to your
+`PATH` and run the scripts in place. For example, after installing
+{Rapp}:
+
+``` bash
+export PATH="$(Rscript -e 'cat(normalizePath(system.file("exec", package = "Rapp")))'):$PATH"
+```
+
+On Windows, run `Rscript -e "cat(normalizePath(system.file('exec', package = 'Rapp')))"` to
+print the directory and add it to `PATH` via *System Properties →
+Environment Variables*.
+
+With the directory on `PATH`, any script beginning with `#!/usr/bin/env
+Rapp` can be executed directly without creating additional launcher
+binaries.
 
 ## Shipping an Rapp as part of an R package
 

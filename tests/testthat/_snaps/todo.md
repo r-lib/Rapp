@@ -3,6 +3,8 @@
     Code
       cat(capture_help_lines(app_path), sep = "\n")
     Output
+      Manage a simple todo list.
+      
       todo: Manage a simple todo list.
       
       Usage: todo [OPTIONS] <COMMAND>

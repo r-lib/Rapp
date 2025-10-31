@@ -1,5 +1,6 @@
 #!/usr/bin/env Rapp
 #| name: todo
+#| title: Manage a simple todo list.
 #| description: Manage a simple todo list.
 
 #| description: Path to the todo list file.
@@ -9,7 +10,7 @@ store <- ".todo.yml"
 switch(
   command <- "",
 
-  #| summary: Display the todos
+  #| title: Display the todos
   #| description: Print the contents of the todo list.
   list = {
     #| description: Maximum number of entries to display (-1 for all).
@@ -27,11 +28,11 @@ switch(
     }
   },
 
-  #| summary: Add a new todo
+  #| title: Add a new todo
   #| description: Append a task description to the todo list.
   add = {
     #| description: Task description to add.
-    task <- character()
+    task <- NULL
     if (!length(task)) {
       stop("Please supply a task description.", call. = FALSE)
     }
@@ -48,7 +49,7 @@ switch(
     cat("Added:", task, "\n")
   },
 
-  #| summary: Mark a task as completed
+  #| title: Mark a task as completed
   #| description: Remove a task from the todo list using its index.
   done = {
     #| description: Index of the task to complete.

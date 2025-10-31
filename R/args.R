@@ -51,7 +51,7 @@ process_args <- function(args, app) {
       } else if (a %in% names(app_commands)) {
         "command"
       } else {
-        "positional-arg"
+        "positional"
       }
 
     if (arg_type == "command") {
@@ -73,8 +73,8 @@ process_args <- function(args, app) {
       next
     }
 
-    if (arg_type == "positional-arg") {
-      append(positional_args) <- a
+    if (arg_type == "positional") {
+      positional_args <- c(positional_args, a)
       next
     }
 
@@ -164,6 +164,16 @@ process_args <- function(args, app) {
     }
 
     # val can be NULL
+    if (identical(spec$action, "append")) {
+      expr <- app$exprs[[spec$.val_pos_in_exprs]]
+      if (!is.call(expr)) {
+        expr <- if (isTRUE(is.na(expr))) expr <- quote(c()) else call("c", expr)
+      }
+      expr[[length(expr) + 1L]] <- val
+      app$exprs[[spec$.val_pos_in_exprs]] <- expr
+      next
+    }
+
     app$exprs[[spec$.val_pos_in_exprs]] <- val
   }
 

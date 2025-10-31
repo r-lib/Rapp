@@ -3,16 +3,16 @@
 #|   Remove duplicate values from a file or input
 
 #| description: remove duplicates in reverse order
-from_last <- FALSE
+from_last <- FALSE # optional bool switch
 
 #| description: Filepath. If omitted, output is written to stdout.
 output <- NA_character_ # scalar constant == optional option
 
 #| description: Filepath. If omitted, input is read from stdin.
-input <- c() # 0-length constant == optional positional arg
+input <- NULL # NULL default == optional positional arg
 
 
-if (!length(input)) {
+if (is.null(input)) {
   input <- file("stdin")
 }
 

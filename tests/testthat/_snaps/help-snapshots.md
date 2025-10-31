@@ -18,6 +18,8 @@
     Code
       writeLines(system2("todo", "--help", stdout = TRUE))
     Output
+      Manage a simple todo list.
+      
       todo: Manage a simple todo list.
       
       Usage: todo [OPTIONS] <COMMAND>
@@ -39,9 +41,9 @@
     Code
       writeLines(system2("nested-commands", "--help", stdout = TRUE))
     Output
-      nested-commands.R
+      nested-commands
       
-      Usage: nested-commands.R [OPTIONS] <COMMAND>
+      Usage: nested-commands [OPTIONS] <COMMAND>
       
       Commands:
         parent  
@@ -50,7 +52,7 @@
       Options:
         --top-opt <TOP-OPT>  [default: "top-default"] [type: string]
       
-      For help with a specific command, run: `nested-commands.R <command> --help`.
+      For help with a specific command, run: `nested-commands <command> --help`.
 
 # command --help snapshots
 
@@ -97,7 +99,7 @@
     Output
       child2 command
       
-      Usage: nested-commands.R parent child2 [OPTIONS] [<CHILD2-ARG>]
+      Usage: nested-commands parent child2 [OPTIONS] [<CHILD2-ARG>]
       
       Options:
         --child2-opt <CHILD2-OPT>       [default: "child2-default"] [type: string]
@@ -128,20 +130,24 @@
           default: 1
           val_type: integer
           arg_type: option
+          action: replace
           description: Number of coin flips
           short: 'n'
         sep:
           default: ' '
           val_type: string
           arg_type: option
+          action: replace
         wrap:
           default: yes
           val_type: bool
           arg_type: switch
+          action: replace
         seed:
           default: .na.integer
           val_type: integer
           arg_type: option
+          action: replace
       arguments: ~
 
 ---
@@ -155,12 +161,14 @@
         - utils
         - yaml
       name: todo
+      title: Manage a simple todo list.
       description: Manage a simple todo list.
       options:
         store:
           default: .todo.yml
           val_type: string
           arg_type: option
+          action: replace
           description: Path to the todo list file.
           short: s
       arguments: ~
@@ -179,6 +187,7 @@
           default: top-default
           val_type: string
           arg_type: option
+          action: replace
       arguments: ~
 
 # --help --yaml snapshots
@@ -197,20 +206,24 @@
           default: 1
           val_type: integer
           arg_type: option
+          action: replace
           description: Number of coin flips
           short: 'n'
         sep:
           default: ' '
           val_type: string
           arg_type: option
+          action: replace
         wrap:
           default: yes
           val_type: bool
           arg_type: switch
+          action: replace
         seed:
           default: .na.integer
           val_type: integer
           arg_type: option
+          action: replace
       arguments: ~
 
 ---
@@ -224,12 +237,14 @@
         - utils
         - yaml
       name: todo
+      title: Manage a simple todo list.
       description: Manage a simple todo list.
       options:
         store:
           default: .todo.yml
           val_type: string
           arg_type: option
+          action: replace
           description: Path to the todo list file.
           short: s
       arguments: ~
@@ -248,5 +263,6 @@
           default: top-default
           val_type: string
           arg_type: option
+          action: replace
       arguments: ~
 

@@ -37,7 +37,6 @@ maybe_as_yaml <- function(x) {
   if (is.null(x)) {
     return(NULL)
   }
-
   if (is.atomic(x) && length(x) != 1L) {
     x <- as.list(x)
   }
