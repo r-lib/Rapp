@@ -234,7 +234,11 @@ rapp_install_dir <- function() {
 
 
 launcher_path <- function(app_path, destdir) {
-  name <- sub("\\.[rR]$", "", basename(app_path))
+  data <- get_app_data(app_path)
+  name <-
+    data$launcher$name %||%
+    data$name %||%
+    sub("\\.[rR]$", "", basename(app_path))
   switch(
     .Platform$OS.type,
     windows = path(destdir, paste0(name, ".bat")),
