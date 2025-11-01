@@ -4,6 +4,7 @@
 * Added support for short opts (#4, #5).
 * New `install_pkg_cli_apps()` installs Rapps and R scripts
   in a package's `exec/` directory on the users `PATH` (#7, #3).
+* Declaring `c()` or `list()` defaults now creates repeatable CLI options.
 
 # Rapp 0.2.0
 

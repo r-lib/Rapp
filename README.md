@@ -68,16 +68,16 @@ Rapp::install_pkg_cli_apps("Rapp")
 
 On macOS and Linux, make your script executable (`chmod +x flip-coin.R`)
 and run it directly. On Windows, or if you prefer, call the front end
-explicitly: `Rapp flip-coin.R --n 3`.
+explicitly with `Rapp flip-coin.R --n 3`.
 
 Application options and arguments work like this:
 
 | Script declaration | CLI usage | Effect |
 | --- | --- | --- |
-| `foo <- NULL` | `APP <FOO>` | Positional argument with a default value |
+| `foo <- NULL` | `APP [FOO]` | Optional positional argument |
 | `foo <- TRUE` / `foo <- FALSE` | `APP --foo` / `APP --no-foo` | Boolean switch |
-| `foo <- 1`, `foo <- 1.5`, `foo <- "value"` | `APP --foo VALUE` | Single-value option |
-| `foo <- c()` / `foo <- list()` | `APP --foo value1 --foo value2` | Repeatable option that appends each value |
+| `foo <- 1`, `foo <- "default"` | `APP --foo VALUE` | Single-value option |
+| `foo <- c()` / `foo <- list()` | `APP --foo value1 --foo value2` | Repeatable option that appends each value (`c()` keeps strings, `list()` parses YAML/JSON) |
 
 ## Options
 
@@ -94,7 +94,7 @@ becomes an option at the command line:
 flip-coin --n 1
 ```
 
-Option values passed from the command line are parsed as yaml/json, and
+Option values passed from the command line are parsed as YAML/JSON, and
 then coerced to the original R type. The following option value types
 are supported: int, float, string, and bool. Values can be supplied
 after the option, or as part of the option with `=`. The following two
@@ -134,16 +134,34 @@ Hash-pipe annotations are parsed as YAML values. Quote scalars such as
 interpretation.
 
 Assigning `c()` or `list()` now declares a repeatable option. Each time
-the option is supplied, its value is appended in order. For example:
+the option is supplied, its value is appended in order. Use `c()` when
+you want to keep the exact strings provided on the command line, and
+`list()` when you want Rapp to opportunistically parse values as
+YAML/JSON (so you can receive integers, booleans, lists, etc). For
+example, a repeatable filter option that keeps raw strings:
 
 ``` r
+#| description: File name patterns to include (repeatable).
 pattern <- c()
 ```
 
-becomes:
+can be invoked as:
 
 ``` bash
-ls-r --pattern alpha --pattern ".*\\.txt$"
+list-files --pattern '*.csv' --pattern sales-*
+```
+
+Or, to collect numeric limits and have them parsed back into integers:
+
+``` r
+#| description: Score thresholds (parsed as numbers, repeatable).
+threshold <- list()
+```
+
+which lets callers supply structured values:
+
+``` bash
+report --threshold 5 --threshold '[10, 20, 30]'
 ```
 
 ## Positional arguments
@@ -357,7 +375,7 @@ like on other platforms:
 flip-coin --n 3
 ```
 
-Because windows does not natively support shebangs, to invoke an Rapp
+Because Windows does not natively support shebangs, to invoke an Rapp
 developed outside an R package, you'll need to invoke the `Rapp`
 front-end directly (after calling `Rapp::install_pkg_cli_apps("Rapp")`):
 
