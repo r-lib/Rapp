@@ -273,8 +273,7 @@ parse_expr_anno <- function(lineno, lines, is_hashpipe) {
     anno_start <- anno_start - 1L
   }
   normalize_anno_keys(parse_hashpipe_yaml(
-    lines[anno_start:anno_end],
-    handlers = list("bool#yes" = identity, "bool#no" = identity)
+    lines[anno_start:anno_end]
   ))
 }
 

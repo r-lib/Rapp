@@ -177,7 +177,7 @@ process_args <- function(args, app) {
     app$exprs[[spec$.val_pos_in_exprs]] <- val
   }
 
-  if (length(positional_args)) {
+  if (length(positional_args) || length(app_args)) {
     # we've parsed all the command line args,
     # we can now match positional args
     specs <- app_args %||% structure(list(), names = character())
