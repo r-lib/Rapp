@@ -166,9 +166,10 @@ report --threshold 5 --threshold '[10, 20, 30]'
 Assigning `NULL` to a symbol declares a positional argument. If the
 symbol has a `...` suffix or prefix, it becomes a collector for a
 variable number of positional arguments. Positional arguments always
-come into the R app as character strings.
+come into the R app as character strings, and they are required by
+default unless you mark them as `required: false` via annotations.
 
-For example, this small `greet` app declares a `<NAME>` positional
+For example, this small `greet` app declares a required `<NAME>` positional
 argument and prints it:
 
 ``` r
@@ -188,20 +189,20 @@ Running it shows how positional arguments appear in `--help`:
 $ greet --help
 Greet someone.
 
-Usage: greet [<NAME>]
+Usage: greet <NAME>
 
 Arguments:
   <NAME>  Name to greet.
 ```
 
-To make the positional argument required in the usage line, add an
-annotation above the assignment:
+To make the positional argument optional, add an annotation above the
+assignment:
 
 ``` r
-#| required: true
+#| required: false
 name <- NULL
 ```
-This changes the usage to `Usage: greet <NAME>` (without brackets).
+This changes the usage to `Usage: greet [<NAME>]` (with brackets).
 
 ### Commands
 
