@@ -1,5 +1,4 @@
 #!/usr/bin/env Rapp
-#| name: flip-coin
 #| description: |
 #|   Flip a coin.
 
