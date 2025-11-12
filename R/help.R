@@ -381,47 +381,34 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
   usage_components <- c(usage_components, build_usage_args(current_args))
   usage_line <- paste("Usage:", paste(usage_components, collapse = " "))
 
-  header_lines <- character()
+  title <- current_meta$title
+  description <- current_meta$description
+
   if (length(scope) == 1L) {
-    title <- current_meta$title
-    desc <- current_meta$description
-    if (length(title)) {
-      header_lines <- wrap_lines(title)
-      if (length(desc)) {
-        header_lines <- c(
-          header_lines,
-          "",
-          wrap_lines(sprintf("%s: %s", app_name, desc))
-        )
-      }
-    } else if (length(desc)) {
-      header_lines <- wrap_lines(sprintf("%s: %s", app_name, desc))
-    } else {
-      header_lines <- app_name
+    if (is.null(description) && is.null(title)) {
+      description <- app_name
     }
-  } else {
-    title <- current_meta$title
-    description <- current_meta$description
-    if (length(title)) {
-      header_lines <- wrap_lines(title)
-      if (length(description)) {
-        header_lines <- c(header_lines, "", wrap_lines(description))
-      }
-    } else if (length(description)) {
-      header_lines <- wrap_lines(description)
-    }
-    if (!length(header_lines)) {
-      header_lines <- wrap_lines(
-        sprintf("%s command", utils::tail(full_command, 1L))
-      )
-    }
+  } else if (is.null(description) && is.null(title)) {
+    description <- sprintf("%s command", utils::tail(full_command, 1L))
   }
 
-  sections <- list(
-    header_lines,
-    "",
-    usage_line
-  )
+  title_lines <- if (!is.null(title)) wrap_lines(title) else character()
+  description_lines <- if (!is.null(description)) {
+    wrap_lines(description)
+  } else {
+    character()
+  }
+
+  intro_lines <- character()
+  if (length(title_lines)) {
+    intro_lines <- c(intro_lines, title_lines, "")
+  }
+  intro_lines <- c(intro_lines, usage_line)
+  if (length(description_lines)) {
+    intro_lines <- c(intro_lines, "", description_lines)
+  }
+
+  sections <- list(intro_lines)
 
   command_block <- format_command_block(current_commands)
   if (length(command_block)) {

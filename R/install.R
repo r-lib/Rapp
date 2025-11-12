@@ -405,7 +405,7 @@ install_rapp_launcher <- function(destdir, overwrite = NA) {
       paste("::", sentinel),
       "setlocal",
       sprintf(
-        r"("%s/Rscript.exe" --default-packages=base -e Rapp::run() %%*)",
+        r"("%s/Rscript.exe" -e Rapp::run() %%*)",
         R.home("bin")
       )
     ),
@@ -413,7 +413,7 @@ install_rapp_launcher <- function(destdir, overwrite = NA) {
       "#!/bin/sh",
       paste("#", sentinel),
       sprintf(
-        r"(exec %s/Rscript --default-packages=base -e 'Rapp::run()' "$@")",
+        r"(exec %s/Rscript -e 'Rapp::run()' "$@")",
         R.home("bin")
       )
     )

@@ -1,4 +1,4 @@
-# Rapp <img src="man/figures/logo.png" align="right" height="138"/>
+# Rapp <img src="man/figures/logo.png" alt="Rapp logo" align="right" height="138"/>
 
 <!-- badges: start -->
 
@@ -10,14 +10,18 @@ Rapp (short for "R application") makes it fun to write and share command
 line applications in R.
 
 It is an alternative front end to R, a drop-in replacement for `Rscript`
-that parses command line arguments automatically. The goal is to make it
-easy to build a polished CLI application from a simple R script.
+that automatically parses command line arguments into R values. The goal
+is to make it easy to build a polished CLI application from a simple R
+script.
 
-Here is a simple example Rapp:
+It aims to provide a seamless transition from interactive repl-driven
+development at the R console to non-interactive execution at the command
+line.
+
+Here is an example Rapp, a simple R script named `flip-coin.R`:
 
 ``` r
 #!/usr/bin/env Rapp
-#| name: flip-coin
 #| description: Flip a coin.
 
 #| description: Number of coin flips
@@ -26,25 +30,31 @@ n <- 1L
 cat(sample(c("heads", "tails"), n, TRUE), fill = TRUE)
 ```
 
-Then you can invoke it from the command line:
+You can invoke it from the command line:
 
 ``` bash
 $ flip-coin
 tails
+```
 
-$ flip-coin --n=3
+``` bash
+$ flip-coin --n 3
 tails heads tails
+```
 
+``` bash
 $ flip-coin --help
+Usage: flip-coin [OPTIONS]
+
 Flip a coin.
 
-Usage: flip-coin [options]
-
 Options:
-  --n <value>  (Default: 1, Type: integer)
-      Number of coin flips
+  --n <FLIPS>    Number of coin flips
+                 [default: 1] [type: integer]
+```
 
-$ flip-coin --help --yaml
+``` bash
+$ flip-coin --help-yaml
 name: flip-coin
 description: Flip a coin.
 options:
@@ -52,34 +62,28 @@ options:
     default: 1
     val_type: integer
     arg_type: option
+    action: replace
     description: Number of coin flips
-arguments: {}
 ```
 
-### Quick start
 
-``` r
-# Install the package (skip if you already have it)
-install.packages("Rapp")
 
-# Add the launchers to your PATH
-Rapp::install_pkg_cli_apps("Rapp")
-```
+## Defining the CLI
 
-On macOS and Linux, make your script executable (`chmod +x flip-coin.R`)
-and run it directly. On Windows, or if you prefer, call the front end
-explicitly with `Rapp flip-coin.R --n 3`.
+Rapp recognizes a small set of expression patterns at the top level of
+your script and converts them into command-line options, flags, positional
+arguments, and commands. The sections below cover the supported patterns.
 
-Application options and arguments work like this:
 
-| Script declaration | CLI usage | Effect |
-| --- | --- | --- |
-| `foo <- NULL` | `APP [FOO]` | Optional positional argument |
-| `foo <- TRUE` / `foo <- FALSE` | `APP --foo` / `APP --no-foo` | Boolean switch |
-| `foo <- 1`, `foo <- "default"` | `APP --foo VALUE` | Single-value option |
-| `foo <- c()` / `foo <- list()` | `APP --foo value1 --foo value2` | Repeatable option that appends each value (`c()` keeps strings, `list()` parses YAML/JSON) |
+### Help
 
-## Options
+All Rapps comes with built-in flags for help.
+
+-   `--help` shows usage, description, and options for the app (and for subcommands
+    when used after a command, e.g., `todo list --help`).
+-   `--help-yaml` prints machine-readable metadata for the app as YAML.
+
+### Options
 
 Simple assignments of scalar (length-1) literals at the top level of the
 R script are automatically treated as command line *options*.
@@ -94,11 +98,10 @@ becomes an option at the command line:
 flip-coin --n 1
 ```
 
-Option values passed from the command line are parsed as YAML/JSON, and
-then coerced to the original R type. The following option value types
-are supported: int, float, string, and bool. Values can be supplied
-after the option, or as part of the option with `=`. The following two
-usages are the same:
+Non-string option values passed from the command line are parsed as
+YAML/JSON, and then coerced to the original R type. Values can be
+supplied after the option flag, or as part of the option flag string
+with `=`. The following two usages are the same:
 
 ``` bash
 flip-coin --n=1
@@ -106,8 +109,8 @@ flip-coin --n 1
 ```
 
 Bool options, (that is, assignments of `TRUE` or `FALSE` in an R app)
-are a little different. They support usage as switches at the command
-line. For example in an R script:
+are a little different. They support usage as switches or toggles at the
+command line. For example in an R script:
 
 ``` r
 echo <- TRUE
@@ -127,18 +130,12 @@ my-app --echo=false  # FALSE
 my-app --echo=0      # FALSE
 ```
 
-### Annotations
-
-Hash-pipe annotations are parsed as YAML values. Quote scalars such as
-`'n'` or `'yes'` when you need a literal string instead of YAML's boolean
-interpretation.
-
-Assigning `c()` or `list()` now declares a repeatable option. Each time
-the option is supplied, its value is appended in order. Use `c()` when
-you want to keep the exact strings provided on the command line, and
-`list()` when you want Rapp to opportunistically parse values as
-YAML/JSON (so you can receive integers, booleans, lists, etc). For
-example, a repeatable filter option that keeps raw strings:
+Assigning `c()` or `list()` declares an option that can be supplied
+multiple times. Use `c()` when you want to keep the exact strings
+provided on the command line, and `list()` when you want Rapp to attempt
+to parse the supplied strings as YAML/JSON values and convert them into
+R objects. For example, a repeatable filter option that keeps raw
+strings:
 
 ``` r
 #| description: File name patterns to include (repeatable).
@@ -148,10 +145,10 @@ pattern <- c()
 can be invoked as:
 
 ``` bash
-list-files --pattern '*.csv' --pattern sales-*
+list-files --pattern '*.csv' --pattern 'sales-*'
 ```
 
-Or, to collect numeric limits and have them parsed back into integers:
+Or, to collect numeric limits and have them parsed into integers:
 
 ``` r
 #| description: Score thresholds (parsed as numbers, repeatable).
@@ -164,26 +161,50 @@ which lets callers supply structured values:
 report --threshold 5 --threshold '[10, 20, 30]'
 ```
 
-## Positional arguments
+### Positional arguments
 
-Assigning `NULL` to a symbol declares a positional argument. If the symbol has a `...` suffix or prefix, it becomes
-a collector for a variable number of positional arguments. Positional
-arguments always come into the R app as character strings. Mark a
-positional argument as required with `#| required: true` (this only adjusts help output, you'll still need to throw an appropriate error form your app).
+Assigning `NULL` to a symbol declares a positional argument. If the
+symbol has a `...` suffix or prefix, it becomes a collector for a
+variable number of positional arguments. Positional arguments always
+come into the R app as character strings, and they are required by
+default unless you mark them as `required: false` via annotations.
 
-``` r
-args... <- NULL
-```
-
-or
+For example, this small `greet` app declares a required `<NAME>` positional
+argument and prints it:
 
 ``` r
-first_arg      <- NULL
-...middle_args <- NULL
-last_arg       <- NULL
+#!/usr/bin/env Rapp
+#| name: greet
+#| description: Greet someone.
+
+#| description: Name to greet.
+name <- NULL
+
+cat("Hello ", name, "!\n", sep = "")
 ```
 
-## Commands
+Running it shows how positional arguments appear in `--help`:
+
+``` bash
+$ greet --help
+Greet someone.
+
+Usage: greet <NAME>
+
+Arguments:
+  <NAME>  Name to greet.
+```
+
+To make the positional argument optional, add an annotation above the
+assignment:
+
+``` r
+#| required: false
+name <- NULL
+```
+This changes the usage to `Usage: greet [<NAME>]` (with brackets).
+
+### Commands
 
 Use a `switch()` statement whose first argument is either a character
 scalar or an assignment (for example `switch("")` or
@@ -195,9 +216,11 @@ rules inside the branch.
 ``` r
 #!/usr/bin/env Rapp
 #| name: todo
-#| title: Manage a simple todo list.
+#| title: Todo manager
 #| description: Manage a simple todo list.
 
+#| description: Path to the todo list file.
+#| short: s
 store <- ".todo.yml"
 
 switch(
@@ -224,8 +247,8 @@ switch(
 )
 ```
 
-The command shown above exposes a `todo` launcher with `list`, `add`,
-and `done` commands. Each command can declare its own options (`limit`,
+The command shown above exposes a `todo` app with `list`, `add`, and
+`done` commands. Each command can declare its own options (`limit`,
 `index`) or positional arguments (`task`), and command metadata can be
 documented with the same hash-pipe annotations used for options.
 
@@ -234,19 +257,25 @@ its own help page:
 
 ``` bash
 $ todo --help
-todo: Manage a simple todo list.
+Todo manager
 
 Usage: todo [OPTIONS] <COMMAND>
+
+Manage a simple todo list.
 
 Commands:
   list  Display the todos
   add   Add a new todo
   done  Mark a task as completed
+```
 
+``` bash
 $ todo list --help
 Display the todos
 
 Usage: todo list [OPTIONS]
+
+Print the contents of the todo list.
 
 Options:
   --limit <LIMIT>  Maximum number of entries to display (-1 for all).
@@ -261,31 +290,110 @@ Commands can be nested by including additional `switch()` blocks inside
 a command branch; each level adds its own command-specific options,
 help, and positional arguments.
 
+Help output automatically includes any parent and global options for
+nested commands.
+
+### Annotations
+
+You can add YAML hash-pipe annotations in the script front matter or
+right above individual options. YAML annotations are primarily used to
+adjust help output. The entries you'll most commonly use are `title` and
+`description`. Another YAML annotation you can provide is `short`, a
+short option name. For example:
+
+``` r
+#!/usr/bin/env Rapp
+#| description: Flip a coin.
+
+#| description: Number of coin flips
+#| short: n
+n_flips <- 1L
+
+cat(sample(c("heads", "tails"), n_flips, TRUE))
+```
+
+then lets you supply the alias `-n` or the full option name `--n-flips`
+at the command line (note also the automatic mapping of snake case
+`n_flips` to kebab-case `--n-flips`).
+
+``` bash
+$ flip-coin --help
+Usage: flip-coin [OPTIONS]
+
+Flip a coin.
+
+Options:
+  -n, --n-flips <N-FLIPS>  Number of coin flips
+                           [default: 1] [type: integer]
+```
+
+``` bash
+$ flip-coin -n 3
+tails heads heads
+```
+
+Other YAML fields you can supply to change the behavior of Rapp
+
+- `val_type`: expected value type (`string`, `integer`, `float`, `bool`; `any`).
+- `arg_type`: how the input appears on the CLI (`option`, `switch`, `positional`).
+- `action`: whether values replace or accumulate (`replace` vs `append` for
+  repeatable options and collectors).
+
+## Summary
+
+Here is a summary table of different R expressions that Rapp treats as
+command line arguments.
+
+| R Expression | CLI surface |
+|----|----|
+| Assignment of scalar literal<br>`foo <- ""` | Option<br>`APP --foo value` |
+| Assignment of `NULL`<br>`foo <- NULL` | Positional Arg<br>`APP foo-value` |
+| Assignment of `TRUE` or `FALSE`<br>`foo <- TRUE` | Boolean switch<br>`APP --foo` or `APP --no-foo` |
+| Assignment of `c()` or `list()`<br>`foo <- c()` | Repeatable option<br>`APP --foo val1 --foo val2` |
+| Assignment of `NULL` to name with `...`<br>`args... <- NULL` | Positional Arg Collector<br>`APP foo bar baz` |
+| Switch with string literal<br>`switch("", cmd1 = {}, cmd2 = {})` | Commands<br>`APP cmd1 --help`<br>`APP cmd2 --help` |
+
 ### Running interactively
 
 While developing, you can drive the app directly from R:
 
 ``` r
-Rapp::run("path/to/app.R", c("--help", "--verbose"))
+Rapp::run("path/to/app.R", c("--help"))
+Rapp::run("path/to/app.R", c("--myopt", "my-opt-val"))
 ```
 
 Pass a character vector of arguments exactly as you would supply them on
 the command line. Inside the app you can drop `browser()` statements to
 pause execution and inspect state while `Rapp::run()` executes.
 
+### Installation
+
 ``` r
-# inside your script
-if (interactive()) browser()
+# Install the package
+install.packages("Rapp")
+
+# Add `Rapp` to your PATH
+Rapp::install_pkg_cli_apps("Rapp")
 ```
+
+Alternatively, install the development version:
+
+``` r
+# pak::pak("r-lib/Rapp")
+# remotes::install_github("r-lib/Rapp")
+```
+
+On macOS and Linux, make your Rapp script executable
+(`chmod +x flip-coin.R`) and run them directly. On Windows, or if you
+prefer, call the front end explicitly with `Rapp flip-coin.R --n 3`.
 
 ## Installing launchers
 
-Run `Rapp::install_pkg_cli_apps("Rapp")` to install `Rapp` on the
-`PATH`.
+`Rapp::install_pkg_cli_apps("Rapp")` installs `Rapp` on the `PATH`.
 
 If you are shipping Rapps via an R package, you can call
-`Rapp::install_pkg_cli_apps("mypackage")` to create lightweight
-launchers for every Rapp (and Rscript shebang) in the packages `exec/`
+`Rapp::install_pkg_cli_apps("mypackage")` to install lightweight
+launchers for every Rapp (and Rscript shebang) in the package's `exec/`
 directory.
 
 ``` r
@@ -300,11 +408,7 @@ your own thin wrapper:
 #'
 #' @inheritDotParams Rapp::install_pkg_cli_apps -package -lib.loc
 #' @export
-#' @examples
-#' \dontrun{
-#' mypackage::install_cli()
-#' }
-install_cli <- function(...) {
+install_mypackage_cli <- function(...) {
   Rapp::install_pkg_cli_apps(package = "mypackage", lib.loc = NULL, ...)
 }
 ```
@@ -318,26 +422,25 @@ Linux the directory generally is already present on `PATH` (you may need
 to restart your shell if the Rapp installer created the directory). Use
 the `destdir` argument if you prefer an alternate location. If you are
 working with a standalone `.R` file on Windows, call the launcher
-explicitly (`Rapp path\\to\\flip-coin.R --n 3`) because native shebangs
+explicitly (`Rapp path\to\flip-coin.R --n 3`) because native shebangs
 are not supported.
 
 ### Using package `exec/` directories directly
 
-Launchers are optional. You can add a package's `exec/` directory to your
-`PATH` and run the scripts in place. For example, after installing
-{Rapp}:
+Launchers are optional. You can add `Rapp` and a package's `exec/`
+directory to the `PATH` and run the apps directly from the package's
+installed directory. For example, after installing {Rapp}, you can place
+something like this in a shell startup script like `.bashrc`:
 
 ``` bash
 export PATH="$(Rscript -e 'cat(normalizePath(system.file("exec", package = "Rapp")))'):$PATH"
+export PATH="$(Rscript -e 'cat(normalizePath(system.file("exec", package = "mypackage")))'):$PATH"
 ```
 
-On Windows, run `Rscript -e "cat(normalizePath(system.file('exec', package = 'Rapp')))"` to
-print the directory and add it to `PATH` via *System Properties →
+On Windows, run
+`Rscript -e "cat(normalizePath(system.file('exec', package = 'Rapp')))"`
+to print the directory and add it to `PATH` via *System Properties →
 Environment Variables*.
-
-With the directory on `PATH`, any script beginning with `#!/usr/bin/env
-Rapp` can be executed directly without creating additional launcher
-binaries.
 
 ## Shipping an Rapp as part of an R package
 
@@ -349,22 +452,22 @@ package.
 -   Place your app in the `exec` folder in your package (for example
     `exec/myapp`). Apps are automatically installed as executables.
 
--   Encourage users to run
-    `Rapp::install_pkg_cli_apps(c("your.package.name"))` or your own
-    exported wrapper `your.package.name::install_cli()` after installing
-    your package so the launchers land in a directory on their `PATH`.
-    This keeps existing launchers up to date and also deletes old
-    launchers for apps that have been removed from your package.
+-   Encourage users to run `Rapp::install_pkg_cli_apps("mypackage")` or
+    your own exported wrapper `mypackage::install_mypackage_cli()` after
+    installing your package so the launchers land in a directory on
+    their `PATH`. `install_pkg_cli_apps()` keeps existing launchers up
+    to date and also deletes old launchers for apps that have been
+    removed from your package.
 
 -   If [`rig`](https://github.com/r-lib/rig) is already on the `PATH`,
-    you can also use `rig` to run a script in a packages `exec`
-    directory:
+    you can also use `rig` to run a script in a package's `exec`
+    directory (Stay tuned, improved rig support is in flight):
 
     ``` bash
     rig run <pkg>::<script>
     ```
 
-# Windows
+## Windows
 
 Rapp works on Windows. Running `install_pkg_cli_apps()` creates `.bat`
 wrappers for each app and installs a top-level `Rapp.bat`, adding their
@@ -385,7 +488,7 @@ Rapp path/to/flip-coin.R --n 3
 
 ## More examples
 
-See the `inst/examples` folder for more example R apps.
+See the [inst/examples](inst/examples) folder for more example R apps.
 
 ## Other Approaches
 

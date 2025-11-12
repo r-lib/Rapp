@@ -23,12 +23,18 @@ test_that("usage reflects positional argument requiredness", {
 
   usage_required <- make_app("true")
   usage_optional <- make_app("false")
+  # Default (no required annotation) should be required by default
+  app_path_default <- tempfile("rapp-usage-default-", fileext = ".R")
+  on.exit(unlink(app_path_default), add = TRUE)
+  writeLines(base_lines, con = app_path_default)
+  usage_default <- capture_help_lines(app_path_default)
 
   usage_line <- function(lines) {
     lines[startsWith(lines, "Usage: ")]
   }
 
   expect_match(usage_line(usage_required), " <ROOT>$")
+  expect_match(usage_line(usage_default), " <ROOT>$")
   expect_match(usage_line(usage_optional), " \\[<ROOT>\\]$")
 })
 
