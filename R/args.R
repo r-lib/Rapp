@@ -189,7 +189,8 @@ process_args <- function(args, app) {
     if (length(collector) > 1) {
       stop(
         "Only one collector positional arg permitted, encountered:",
-        paste(names(specs)[collector], collapse = ", ")
+        paste(names(specs)[collector], collapse = ", "),
+        call. = FALSE
       )
     }
 
@@ -197,7 +198,11 @@ process_args <- function(args, app) {
       specs[[collector]]$variadic <- TRUE
       n_short <- length(positional_args) - length(specs)
       if (n_short < 0) {
-        specs[[collector]] <- NULL
+        # If a collector is present but there aren't enough positional args,
+        # drop the collector slot only when it's not explicitly required.
+        if (!isTRUE(specs[[collector]]$required)) {
+          specs[[collector]] <- NULL
+        }
       } else if (n_short > 0) {
         collector_spec <- specs[collector]
         collector_spec[[1]]$action <- "append"
@@ -211,6 +216,23 @@ process_args <- function(args, app) {
         "Arguments not recognized: ",
         paste0(positional_args[-seq_along(specs)], collapse = " ")
       )
+    }
+
+    if (length(specs) != length(positional_args)) {
+      for (i in rev(seq_along(specs))) {
+        if (isFALSE(specs[[i]]$required)) {
+          specs[[i]] <- NULL
+        }
+        if (length(specs) == length(positional_args)) break
+      }
+      if (length(specs) != length(positional_args)) {
+        n_missing <- length(specs) - length(positional_args)
+        noun <- if (length(n_missing) == 1L) "argument" else "arguments"
+        nms <- names(specs[seq(to = length(specs), length.out = n_missing)])
+        nms <- toupper(gsub("_", "-", nms, fixed = TRUE))
+        nms <- paste0(nms, collapse = ", ")
+        stop(sprintf("Missing required %s: %s", noun, nms), call. = FALSE)
+      }
     }
 
     for (i in seq_along(positional_args)) {
