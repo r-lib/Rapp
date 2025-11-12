@@ -44,9 +44,9 @@ tails heads tails
 
 ``` bash
 $ flip-coin --help
-Flip a coin.
-
 Usage: flip-coin [OPTIONS]
+
+Flip a coin.
 
 Options:
   --n <FLIPS>    Number of coin flips
@@ -215,7 +215,7 @@ rules inside the branch.
 ``` r
 #!/usr/bin/env Rapp
 #| name: todo
-#| title: Manage a simple todo list.
+#| title: Todo manager
 #| description: Manage a simple todo list.
 
 #| description: Path to the todo list file.
@@ -256,9 +256,11 @@ its own help page:
 
 ``` bash
 $ todo --help
-todo: Manage a simple todo list.
+Todo manager
 
 Usage: todo [OPTIONS] <COMMAND>
+
+Manage a simple todo list.
 
 Commands:
   list  Display the todos
@@ -271,6 +273,8 @@ $ todo list --help
 Display the todos
 
 Usage: todo list [OPTIONS]
+
+Print the contents of the todo list.
 
 Options:
   --limit <LIMIT>  Maximum number of entries to display (-1 for all).
@@ -313,9 +317,9 @@ at the command line (note also the automatic mapping of snake case
 
 ``` bash
 $ flip-coin --help
-Flip a coin.
-
 Usage: flip-coin [OPTIONS]
+
+Flip a coin.
 
 Options:
   -n, --n-flips <N-FLIPS>  Number of coin flips

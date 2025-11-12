@@ -3,11 +3,11 @@
     Code
       cat(capture_help_lines(app_path), sep = "\n")
     Output
-      Manage a simple todo list.
-      
-      todo: Manage a simple todo list.
+      Todo manager
       
       Usage: todo [OPTIONS] <COMMAND>
+      
+      Manage a simple todo list.
       
       Commands:
         list  Display the todos
@@ -28,9 +28,9 @@
     Output
       Display the todos
       
-      Print the contents of the todo list.
-      
       Usage: todo list [OPTIONS]
+      
+      Print the contents of the todo list.
       
       Options:
         --limit <LIMIT>  Maximum number of entries to display (-1 for all).
@@ -47,9 +47,9 @@
     Output
       Mark a task as completed
       
-      Remove a task from the todo list using its index.
-      
       Usage: todo done [OPTIONS]
+      
+      Remove a task from the todo list using its index.
       
       Options:
         -i, --index <INDEX>  Index of the task to complete.

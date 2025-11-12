@@ -3,9 +3,9 @@
     Code
       writeLines(system2("flip-coin", "--help", stdout = TRUE))
     Output
-      Flip a coin.
-      
       Usage: flip-coin [OPTIONS]
+      
+      Flip a coin.
       
       Options:
         -n, --flips <FLIPS>  Number of coin flips [default: 1] [type: integer]
@@ -18,11 +18,11 @@
     Code
       writeLines(system2("todo", "--help", stdout = TRUE))
     Output
-      Manage a simple todo list.
-      
-      todo: Manage a simple todo list.
+      Todo manager
       
       Usage: todo [OPTIONS] <COMMAND>
+      
+      Manage a simple todo list.
       
       Commands:
         list  Display the todos
@@ -41,9 +41,9 @@
     Code
       writeLines(system2("nested-commands", "--help", stdout = TRUE))
     Output
-      nested-commands
-      
       Usage: nested-commands [OPTIONS] <COMMAND>
+      
+      nested-commands
       
       Commands:
         parent  
@@ -61,9 +61,9 @@
     Output
       Display the todos
       
-      Print the contents of the todo list.
-      
       Usage: todo list [OPTIONS]
+      
+      Print the contents of the todo list.
       
       Options:
         --limit <LIMIT>  Maximum number of entries to display (-1 for all).
@@ -80,9 +80,9 @@
     Output
       Mark a task as completed
       
-      Remove a task from the todo list using its index.
-      
       Usage: todo done [OPTIONS]
+      
+      Remove a task from the todo list using its index.
       
       Options:
         -i, --index <INDEX>  Index of the task to complete.
@@ -97,9 +97,9 @@
     Code
       writeLines(system2("nested-commands", "parent child2 --help", stdout = TRUE))
     Output
-      child2 command
-      
       Usage: nested-commands parent child2 [OPTIONS] <CHILD2-ARG>
+      
+      child2 command
       
       Options:
         --child2-opt <CHILD2-OPT>       [default: "child2-default"] [type: string]
@@ -161,7 +161,7 @@
         - utils
         - yaml
       name: todo
-      title: Manage a simple todo list.
+      title: Todo manager
       description: Manage a simple todo list.
       options:
         store:
@@ -237,7 +237,7 @@
         - utils
         - yaml
       name: todo
-      title: Manage a simple todo list.
+      title: Todo manager
       description: Manage a simple todo list.
       options:
         store:

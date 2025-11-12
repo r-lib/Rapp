@@ -1,6 +1,6 @@
 #!/usr/bin/env Rapp
 #| name: todo
-#| title: Manage a simple todo list.
+#| title: Todo manager
 #| description: Manage a simple todo list.
 
 #| description: Path to the todo list file.

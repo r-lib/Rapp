@@ -3,9 +3,9 @@
     Code
       writeLines(run_app("flip-coin.R --help"))
     Output
-      Flip a coin.
-      
       Usage: flip-coin [OPTIONS]
+      
+      Flip a coin.
       
       Options:
         -n, --flips <FLIPS>  Number of coin flips [default: 1] [type: integer]

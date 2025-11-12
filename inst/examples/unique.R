@@ -9,7 +9,8 @@ from_last <- FALSE # optional bool switch
 output <- NA_character_ # scalar constant == optional option
 
 #| description: Filepath. If omitted, input is read from stdin.
-input <- NULL # NULL default == optional positional arg
+#| required: false
+input <- NULL # NULL == positional arg; required by default unless `required: false`
 
 
 if (is.null(input)) {
