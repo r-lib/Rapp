@@ -4,16 +4,22 @@ global_opt <- "global_opt_default"
 
 switch(
   cmd <- "",
+
   cmd1 = {
     cmd1_opt <- "cmd1_opt_default"
     cat("cmd1 called!\n")
   },
+
   cmd2 = {
+    #| required: false
     cmd2_positional <- NULL
     cmd2_opt <- "cmd2_opt_default"
+
+    #| required: false
     cmd2_positional2 <- NULL
     cat("cmd2 called!\n")
   },
+
   help = {}
 )
 

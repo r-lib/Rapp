@@ -3,7 +3,7 @@
     Code
       writeLines(system2("flip-coin", "--help", stdout = TRUE))
     Output
-      flip-coin: Flip a coin.
+      Flip a coin.
       
       Usage: flip-coin [OPTIONS]
       
@@ -99,7 +99,7 @@
     Output
       child2 command
       
-      Usage: nested-commands parent child2 [OPTIONS] [<CHILD2-ARG>]
+      Usage: nested-commands parent child2 [OPTIONS] <CHILD2-ARG>
       
       Options:
         --child2-opt <CHILD2-OPT>       [default: "child2-default"] [type: string]

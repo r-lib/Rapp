@@ -27,10 +27,12 @@ opt_yaml_parsed <- "{}"
 opt_yaml_literal <- "[1,2]"
 
 #| description: optional arg
+#| required: false
 optional_positional <- NULL
 
 #| description: optional arg with non-null default
 #| arg-type: positional
+#| required: false
 optional_positional_default <- "foo"
 
 switch(
@@ -50,12 +52,14 @@ switch(
     detail_id <- NULL
 
     #| description: Optional detail payload.
+    #| required: false
     detail_payload <- NULL
   },
   #| title: Config Mode
   #| description: Update configuration inputs.
   config = {
     #| description: Optional config file path.
+    #| required: false
     config_path <- NULL
   },
   help = {}

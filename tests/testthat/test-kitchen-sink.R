@@ -1,4 +1,4 @@
-kitchen_app <- path("apps", "kitchen-sink.R")
+kitchen_app <- test_path("apps", "kitchen-sink.R")
 
 capture_kitchen_env <- function(args = character()) {
   app <- Rapp:::as_app(kitchen_app)
@@ -94,3 +94,6 @@ test_that("help output surfaces titles", {
   detail_lines <- capture_help_lines(kitchen_app, "detail")
   expect_identical(detail_lines[1], "Detail Mode")
 })
+
+# run(kitchen_app, "--help")
+# run(kitchen_app, "foo")

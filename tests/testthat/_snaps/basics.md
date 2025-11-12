@@ -3,7 +3,7 @@
     Code
       writeLines(run_app("flip-coin.R --help"))
     Output
-      flip-coin: Flip a coin.
+      Flip a coin.
       
       Usage: flip-coin [OPTIONS]
       
