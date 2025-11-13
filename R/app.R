@@ -239,7 +239,11 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
     # By default, positional arguments are required unless explicitly
     # annotated otherwise. This applies both to NULL-initialized
     # positionals and those explicitly marked via `#| arg-type: positional`.
-    if (identical(arg$arg_type, "positional") && is.null(arg$required)) {
+    if (
+      identical(arg$arg_type, "positional") &&
+        is.null(arg$required) &&
+        !(endsWith(name, "...") || startsWith(name, "..."))
+    ) {
       arg$required <- TRUE
     }
 
