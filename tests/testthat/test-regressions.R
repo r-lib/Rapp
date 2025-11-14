@@ -92,3 +92,21 @@ test_that("variadic positional collectors declared with c() accumulate args", {
 
   expect_output(Rapp::run(app_path, c("alpha", "beta", "gamma")), "ok")
 })
+
+test_that("leading variadic positional collectors accumulate args", {
+  app_path <- tempfile("rapp-leading-variadic-", fileext = ".R")
+  on.exit(unlink(app_path), add = TRUE)
+  writeLines(
+    c(
+      "#!/usr/bin/env Rapp",
+      "...extras <- NULL",
+      "suffix <- NULL",
+      "stopifnot(identical(...extras, c('alpha', 'beta')))",
+      "stopifnot(identical(suffix, 'gamma'))",
+      "cat('ok\\n')"
+    ),
+    con = app_path
+  )
+
+  expect_output(Rapp::run(app_path, c("alpha", "beta", "gamma")), "ok")
+})

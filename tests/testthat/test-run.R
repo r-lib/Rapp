@@ -26,20 +26,12 @@ run_cli_app <- function(app_path, args = character()) {
 }
 
 test_that("CLI invocation prints a hint before failing", {
-  skip_if(
-    testthat::is_parallel(),
-    "CLI snapshot runs only in single-process mode"
-  )
   result <- run_cli_app(erroring_app)
   expect_true(attr(result, "status") != 0L)
   expect_snapshot(writeLines(run_cli_app(erroring_app)))
 })
 
 test_that("CLI handles underscored commands", {
-  skip_if(
-    testthat::is_parallel(),
-    "CLI snapshot runs only in single-process mode"
-  )
   result <- run_cli_app(underscored_app, "foo-bar")
   expect_identical(attr(result, "status"), 0L)
   expect_snapshot(writeLines(run_cli_app(underscored_app, "foo-bar")))

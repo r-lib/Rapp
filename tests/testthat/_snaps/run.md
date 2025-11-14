@@ -14,4 +14,7 @@
       $cmd
       [1] "foo_bar"
       
+      $foo_bar_flag
+      [1] TRUE
+      
 
