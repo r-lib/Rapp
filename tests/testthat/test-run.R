@@ -32,7 +32,14 @@ test_that("CLI invocation prints a hint before failing", {
 })
 
 test_that("CLI handles underscored commands", {
-  result <- run_cli_app(underscored_app, "foo-bar")
-  expect_identical(attr(result, "status"), 0L)
-  expect_snapshot(writeLines(run_cli_app(underscored_app, "foo-bar")))
+  kebab_result <- run_cli_app(underscored_app, "foo-bar")
+  snake_result <- run_cli_app(underscored_app, "foo_bar")
+  expect_identical(attr(kebab_result, "status"), 0L)
+  expect_identical(attr(snake_result, "status"), 0L)
+  expect_snapshot({
+    cat("-- foo-bar --\n")
+    writeLines(kebab_result)
+    cat("\n-- foo_bar --\n")
+    writeLines(snake_result)
+  })
 })

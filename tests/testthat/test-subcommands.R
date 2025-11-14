@@ -105,3 +105,10 @@ test_that("snake case subcommands expose kebab-case cli names", {
   expect_true("foo-bar" %in% names(app$commands))
   expect_false("foo_bar" %in% names(app$commands))
 })
+
+test_that("underscored commands accept snake_case and kebab-case", {
+  snake_env <- capture_app_env(underscored_app, "foo_bar")
+  kebab_env <- capture_app_env(underscored_app, "foo-bar")
+  expect_identical(snake_env$foo_bar_flag, TRUE)
+  expect_identical(kebab_env$foo_bar_flag, TRUE)
+})
