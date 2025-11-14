@@ -197,6 +197,7 @@ process_args <- function(args, app) {
 
     if (length(collector)) {
       specs[[collector]]$variadic <- TRUE
+      specs[[collector]]$action <- "append"
       n_short <- length(positional_args) - length(specs)
       if (n_short < 0) {
         # If a collector is present but there aren't enough positional args,
