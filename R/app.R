@@ -346,10 +346,12 @@ run <- function(app, args = commandArgs(TRUE)) {
   app <- as_app(app)
 
   if (process_args(args, app)) {
-    eval(app$exprs, new.env(parent = globalenv()))
+    eval(app$exprs, env <- new.env(parent = globalenv()))
+  } else {
+    env <- NULL
   }
 
-  invisible()
+  invisible(env)
 }
 
 
