@@ -346,8 +346,33 @@ run <- function(app, args = commandArgs(TRUE)) {
   app <- as_app(app)
 
   if (process_args(args, app)) {
-    eval(app$exprs, new.env(parent = globalenv()))
+    tryCatch(
+      eval(app$exprs, new.env(parent = globalenv())),
+      error = function(e) {
+        if (interactive()) {
+          stop(e)
+        } else {
+          print_error_like_stop(e)
+          print_help_hint()
+          quit(save = "no", status = 1L, runLast = FALSE)
+        }
+      }
+    )
   }
 
   invisible()
+}
+
+print_error_like_stop <- function(err) {
+  call <- conditionCall(err)
+  prefix <- if (!is.null(call)) {
+    sprintf("Error in %s : ", deparse(call)[1])
+  } else {
+    "Error: "
+  }
+  cat(prefix, conditionMessage(err), "\n", file = stderr(), sep = "")
+}
+
+print_help_hint <- function() {
+  message("Hint: run with --help to view usage information.")
 }
