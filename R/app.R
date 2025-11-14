@@ -302,12 +302,18 @@ normalize_anno_keys <- function(x) {
 #' @param app A filepath to an Rapp.
 #' @param args character vector of command line args.
 #'
-#' @return `NULL`, invisibly. Called for its side effect.
+#' @return
+#'
+#' Mainly called for its side effect. For advanced or testing use, it invisibly
+#' returns the evaluation environment where the app’s expressions ran. If the
+#' app did not run (for example, when `--help` is used), it returns `NULL`
+#' invisibly.
+#'
 #' @export
 #'
 #' @details
-#' See the package README for full details.
-#' https://github.com/r-lib/Rapp
+#'
+#' See the package README for full details. <https://github.com/r-lib/Rapp>
 #'
 #' @export
 #' @examples
@@ -352,31 +358,4 @@ run <- function(app, args = commandArgs(TRUE)) {
   }
 
   invisible(env)
-}
-
-
-# tryCatch(
-#   eval(app$exprs, new.env(parent = globalenv())),
-#   error = function(e) {
-#     if (interactive() || !getOption("Rapp.quit_on_error", TRUE)) {
-#       stop(e)
-#     }
-#     print_error_like_stop(e)
-#     print_help_hint()
-#     quit(save = "no", status = 1L, runLast = FALSE)
-#   }
-# )
-
-print_error_like_stop <- function(err) {
-  call <- conditionCall(err)
-  prefix <- if (!is.null(call)) {
-    sprintf("Error in %s : ", deparse(call)[1])
-  } else {
-    "Error: "
-  }
-  cat(prefix, conditionMessage(err), "\n", file = stderr(), sep = "")
-}
-
-print_help_hint <- function() {
-  message("Hint: run with --help to view usage information.")
 }
