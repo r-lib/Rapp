@@ -135,6 +135,7 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
           inputs
         }
       )
+      names(commands) <- gsub("_", "-", names(commands), fixed = TRUE)
       switch_expr <- e[[2L]]
       commands$.val_pos_in_exprs <-
         c(pos, i, 2L, if (is.call(switch_expr)) 3L)
