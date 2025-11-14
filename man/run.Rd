@@ -12,14 +12,16 @@ run(app, args = commandArgs(TRUE))
 \item{args}{character vector of command line args.}
 }
 \value{
-\code{NULL}, invisibly. Called for its side effect.
+Mainly called for its side effect. For advanced or testing use, it invisibly
+returns the evaluation environment where the app’s expressions ran. If the
+app did not run (for example, when \code{--help} is used), it returns \code{NULL}
+invisibly.
 }
 \description{
 Run an R app.
 }
 \details{
-See the package README for full details.
-https://github.com/r-lib/Rapp
+See the package README for full details. \url{https://github.com/r-lib/Rapp}
 }
 \examples{
 # For the example, place 'Rapp', the package examples, and 'R' on the PATH

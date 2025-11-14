@@ -135,6 +135,7 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
           inputs
         }
       )
+      names(commands) <- gsub("_", "-", names(commands), fixed = TRUE)
       switch_expr <- e[[2L]]
       commands$.val_pos_in_exprs <-
         c(pos, i, 2L, if (is.call(switch_expr)) 3L)
@@ -239,7 +240,11 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
     # By default, positional arguments are required unless explicitly
     # annotated otherwise. This applies both to NULL-initialized
     # positionals and those explicitly marked via `#| arg-type: positional`.
-    if (identical(arg$arg_type, "positional") && is.null(arg$required)) {
+    if (
+      identical(arg$arg_type, "positional") &&
+        is.null(arg$required) &&
+        !(endsWith(name, "...") || startsWith(name, "..."))
+    ) {
       arg$required <- TRUE
     }
 
@@ -297,12 +302,18 @@ normalize_anno_keys <- function(x) {
 #' @param app A filepath to an Rapp.
 #' @param args character vector of command line args.
 #'
-#' @return `NULL`, invisibly. Called for its side effect.
+#' @return
+#'
+#' Mainly called for its side effect. For advanced or testing use, it invisibly
+#' returns the evaluation environment where the app’s expressions ran. If the
+#' app did not run (for example, when `--help` is used), it returns `NULL`
+#' invisibly.
+#'
 #' @export
 #'
 #' @details
-#' See the package README for full details.
-#' https://github.com/r-lib/Rapp
+#'
+#' See the package README for full details. <https://github.com/r-lib/Rapp>
 #'
 #' @export
 #' @examples
@@ -341,8 +352,10 @@ run <- function(app, args = commandArgs(TRUE)) {
   app <- as_app(app)
 
   if (process_args(args, app)) {
-    eval(app$exprs, new.env(parent = globalenv()))
+    eval(app$exprs, env <- new.env(parent = globalenv()))
+  } else {
+    env <- NULL
   }
 
-  invisible()
+  invisible(env)
 }

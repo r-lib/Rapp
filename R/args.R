@@ -48,14 +48,17 @@ process_args <- function(args, app) {
         "long-opt"
       } else if (startsWith(a, "-")) {
         "short-opt"
-      } else if (a %in% names(app_commands)) {
+      } else if (to_kebab_case(a) %in% names(app_commands)) {
         "command"
       } else {
         "positional"
       }
 
     if (arg_type == "command") {
-      app$exprs[[app_commands$.val_pos_in_exprs]] <- a
+      # in the R space, names are always snake_case
+      # in the app spec, names are always kebab-case
+      app$exprs[[app_commands$.val_pos_in_exprs]] <- to_snake_case(a)
+      a <- to_kebab_case(a)
       command <- app_commands[[a]]
       append(app_opts) <- command$opts
       append(app_args) <- command$args
@@ -196,6 +199,7 @@ process_args <- function(args, app) {
 
     if (length(collector)) {
       specs[[collector]]$variadic <- TRUE
+      specs[[collector]]$action <- "append"
       n_short <- length(positional_args) - length(specs)
       if (n_short < 0) {
         # If a collector is present but there aren't enough positional args,
@@ -238,7 +242,7 @@ process_args <- function(args, app) {
     for (i in seq_along(positional_args)) {
       spec <- specs[[i]]
       if (identical(spec$action, "append")) {
-        append(app$exprs[[spec$.val_pos_in_exprs]]) <- positional_args[[i]]
+        append_arg(app$exprs[[spec$.val_pos_in_exprs]]) <- positional_args[[i]]
       } else {
         app$exprs[[spec$.val_pos_in_exprs]] <- positional_args[[i]]
       }
@@ -247,3 +251,11 @@ process_args <- function(args, app) {
 
   invisible(TRUE)
 }
+
+# TODO: short options for boolean flags - if default is TRUE,
+#   should short should negate the default and inject FALSE? might be confusing.
+# TODO: support 'desc' for 'description' in yaml header (meh)
+# TODO: think through what character() can/should mean (meh)
+
+to_snake_case <- function(x) gsub("-", "_", x, fixed = TRUE)
+to_kebab_case <- function(x) gsub("_", "-", x, fixed = TRUE)

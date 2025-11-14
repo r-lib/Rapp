@@ -1,16 +1,55 @@
+build_help_yaml_spec <- function(app) {
+  opts <- sanitize_help_entries(app$opts)
+  args <- sanitize_help_entries(app$args)
+  commands <- build_help_command_specs(app$commands)
+  c(
+    app$data,
+    list(
+      options = opts,
+      arguments = args,
+      commands = commands
+    )
+  )
+}
+
+sanitize_help_entries <- function(entries) {
+  if (!length(entries)) {
+    return(NULL)
+  }
+  lapply(entries, function(entry) {
+    entry$.val_pos_in_exprs <- NULL
+    entry
+  })
+}
+
+build_help_command_specs <- function(commands) {
+  if (!length(commands)) {
+    return(NULL)
+  }
+  command_names <- names(commands)
+  if (is.null(command_names)) {
+    return(NULL)
+  }
+  commands <- commands[command_names != ".val_pos_in_exprs"]
+  if (!length(commands)) {
+    return(NULL)
+  }
+  for (nm in names(commands)) {
+    command <- commands[[nm]]
+    spec <- command$meta %||% list()
+    spec["options"] <- list(sanitize_help_entries(command$opts))
+    spec["arguments"] <- list(sanitize_help_entries(command$args))
+    spec["commands"] <- list(build_help_command_specs(command$commands))
+    commands[[nm]] <- spec
+  }
+  commands
+}
+
 print_app_help <- function(app, yaml = TRUE, scope = NULL) {
   app <- as_app(app)
   if (yaml) {
-    x <- c(app$data, list(options = app$opts), list(arguments = app$args))
-    for (nm in names(x$options)) {
-      x$options[[nm]]$.val_pos_in_exprs <- NULL
-    }
-
-    for (nm in names(x$arguments)) {
-      x$arguments[[nm]]$.val_pos_in_exprs <- NULL
-    }
-
-    print.yaml(x)
+    spec <- build_help_yaml_spec(app)
+    print.yaml(spec)
     return()
   }
 

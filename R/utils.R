@@ -71,3 +71,12 @@ compact <- function(x) x[lengths(x) > 0]
 `append<-` <- function(x, after = NULL, value) {
   if (is.null(after)) c(x, value) else append(x, value, after)
 }
+
+`append_arg<-` <- function(x, value) {
+  if (is.null(x)) {
+    return(call("c", value))
+  }
+  stopifnot(is.call(x))
+  x[[length(x) + 1L]] <- value
+  x
+}

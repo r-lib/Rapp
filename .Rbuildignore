@@ -7,3 +7,5 @@
 ^cran-comments\.md$
 ^[.]?air[.]toml$
 ^\.vscode$
+^deps$
+^\.git-blame-ignore-revs$
