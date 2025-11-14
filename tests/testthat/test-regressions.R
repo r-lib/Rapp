@@ -56,3 +56,39 @@ test_that("literal unary minus defaults are parsed as scalars", {
   expect_identical(app$opts$limit$default, -1L)
   expect_output(Rapp::run(app_path, character()), "-1")
 })
+
+test_that("variadic positional collectors declared with NULL accumulate args", {
+  app_path <- tempfile("rapp-variadic-null-", fileext = ".R")
+  on.exit(unlink(app_path), add = TRUE)
+  writeLines(
+    c(
+      "#!/usr/bin/env Rapp",
+      "prefix <- NULL",
+      "extras... <- NULL",
+      "stopifnot(identical(prefix, 'alpha'))",
+      "stopifnot(identical(extras..., c('beta', 'gamma')))",
+      "cat('ok\\n')"
+    ),
+    con = app_path
+  )
+
+  expect_output(Rapp::run(app_path, c("alpha", "beta", "gamma")), "ok")
+})
+
+test_that("variadic positional collectors declared with c() accumulate args", {
+  app_path <- tempfile("rapp-variadic-null-", fileext = ".R")
+  on.exit(unlink(app_path), add = TRUE)
+  writeLines(
+    c(
+      "#!/usr/bin/env Rapp",
+      "prefix <- NULL",
+      "extras... <- c()",
+      "stopifnot(identical(prefix, 'alpha'))",
+      "stopifnot(identical(extras..., c('beta', 'gamma')))",
+      "cat('ok\\n')"
+    ),
+    con = app_path
+  )
+
+  expect_output(Rapp::run(app_path, c("alpha", "beta", "gamma")), "ok")
+})
