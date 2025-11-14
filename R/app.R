@@ -349,13 +349,12 @@ run <- function(app, args = commandArgs(TRUE)) {
     tryCatch(
       eval(app$exprs, new.env(parent = globalenv())),
       error = function(e) {
-        if (interactive()) {
+        if (interactive() || !getOption("Rapp.quit_on_error", TRUE)) {
           stop(e)
-        } else {
-          print_error_like_stop(e)
-          print_help_hint()
-          quit(save = "no", status = 1L, runLast = FALSE)
         }
+        print_error_like_stop(e)
+        print_help_hint()
+        quit(save = "no", status = 1L, runLast = FALSE)
       }
     )
   }

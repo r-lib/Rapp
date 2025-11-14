@@ -1,3 +1,8 @@
+withr::local_options(
+  list(Rapp.quit_on_error = FALSE),
+  .local_envir = testthat::teardown_env()
+)
+
 is_windows <- function() {
   identical(.Platform$OS.type, "windows")
 }
