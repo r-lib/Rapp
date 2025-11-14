@@ -55,7 +55,8 @@ process_args <- function(args, app) {
       }
 
     if (arg_type == "command") {
-      app$exprs[[app_commands$.val_pos_in_exprs]] <- gsub("-", "_", a, fixed = TRUE)
+      app$exprs[[app_commands$.val_pos_in_exprs]] <-
+        gsub("-", "_", a, fixed = TRUE)
       command <- app_commands[[a]]
       append(app_opts) <- command$opts
       append(app_args) <- command$args
@@ -248,9 +249,7 @@ process_args <- function(args, app) {
   invisible(TRUE)
 }
 
-# TODO: short options for boolean flags - short should negate the default (chatgpt says no)
+# TODO: short options for boolean flags - if default is TRUE,
+#   should short should negate the default and inject FALSE? might be confusing.
 # TODO: support 'desc' for 'description' in yaml header (meh)
 # TODO: think through what character() can/should mean (meh)
-# TODO: --help-yaml should output all subcommands by default (it should be the full app spec)
-# TODO: print help output on R error?
-# TODO: map commands to snake-case "mcp-serve" from "mcp_serve"
