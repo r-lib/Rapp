@@ -4,7 +4,7 @@
       writeLines(run_cli_app(erroring_app))
     Output
       Error: boom
-      Hint: run with --help to view usage information.
+      Execution halted
 
 # CLI handles underscored commands
 

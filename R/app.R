@@ -346,21 +346,24 @@ run <- function(app, args = commandArgs(TRUE)) {
   app <- as_app(app)
 
   if (process_args(args, app)) {
-    tryCatch(
-      eval(app$exprs, new.env(parent = globalenv())),
-      error = function(e) {
-        if (interactive() || !getOption("Rapp.quit_on_error", TRUE)) {
-          stop(e)
-        }
-        print_error_like_stop(e)
-        print_help_hint()
-        quit(save = "no", status = 1L, runLast = FALSE)
-      }
-    )
+    eval(app$exprs, new.env(parent = globalenv()))
   }
 
   invisible()
 }
+
+
+# tryCatch(
+#   eval(app$exprs, new.env(parent = globalenv())),
+#   error = function(e) {
+#     if (interactive() || !getOption("Rapp.quit_on_error", TRUE)) {
+#       stop(e)
+#     }
+#     print_error_like_stop(e)
+#     print_help_hint()
+#     quit(save = "no", status = 1L, runLast = FALSE)
+#   }
+# )
 
 print_error_like_stop <- function(err) {
   call <- conditionCall(err)
