@@ -71,3 +71,13 @@ compact <- function(x) x[lengths(x) > 0]
 `append<-` <- function(x, after = NULL, value) {
   if (is.null(after)) c(x, value) else append(x, value, after)
 }
+
+`append1<-` <- function(x, value) {
+  stopifnot(
+    is.list(x) ||
+      is.call(x) ||
+      identical(mode(x), mode(value)) && length(value) == 1L
+  )
+  x[[length(x) + 1L]] <- value
+  x
+}

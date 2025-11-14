@@ -238,7 +238,7 @@ process_args <- function(args, app) {
     for (i in seq_along(positional_args)) {
       spec <- specs[[i]]
       if (identical(spec$action, "append")) {
-        append(app$exprs[[spec$.val_pos_in_exprs]]) <- positional_args[[i]]
+        append1(app$exprs[[spec$.val_pos_in_exprs]]) <- positional_args[[i]]
       } else {
         app$exprs[[spec$.val_pos_in_exprs]] <- positional_args[[i]]
       }
