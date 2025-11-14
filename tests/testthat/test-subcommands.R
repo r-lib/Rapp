@@ -1,8 +1,9 @@
 simple_app <- path("apps", "simple-commands.R")
 nested_app <- path("apps", "nested-commands.R")
+underscored_app <- path("apps", "underscored-command.R")
 
-capture_simple_env <- function(args = character()) {
-  app <- Rapp:::as_app(simple_app)
+capture_app_env <- function(app_path, args = character()) {
+  app <- Rapp:::as_app(app_path)
   Rapp:::process_args(args, app)
   run_env <- new.env(parent = baseenv())
   capture.output(
@@ -13,16 +14,12 @@ capture_simple_env <- function(args = character()) {
   as.list(run_env, all.names = TRUE)
 }
 
+capture_simple_env <- function(args = character()) {
+  capture_app_env(simple_app, args)
+}
+
 capture_nested_env <- function(args = character()) {
-  app <- Rapp:::as_app(nested_app)
-  Rapp:::process_args(args, app)
-  run_env <- new.env(parent = baseenv())
-  capture.output(
-    for (expr in app$exprs) {
-      eval(expr, run_env)
-    }
-  )
-  as.list(run_env, all.names = TRUE)
+  capture_app_env(nested_app, args)
 }
 
 test_that("simple app uses defaults without args", {
@@ -101,4 +98,10 @@ test_that("nested command options and switches cascade correctly", {
   expect_identical(env$child2_opt, "C2")
   expect_identical(env$child2_switch, TRUE)
   expect_identical(env$child2_arg, "payload")
+})
+
+test_that("snake case subcommands expose kebab-case cli names", {
+  app <- Rapp:::as_app(underscored_app)
+  expect_true("foo-bar" %in% names(app$commands))
+  expect_false("foo_bar" %in% names(app$commands))
 })
