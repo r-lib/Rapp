@@ -1,6 +1,6 @@
-simple_app <- path("apps", "simple-commands.R")
-nested_app <- path("apps", "nested-commands.R")
-underscored_app <- path("apps", "underscored-command.R")
+simple_app <- test_path("apps", "simple-commands.R")
+nested_app <- test_path("apps", "nested-commands.R")
+underscored_app <- test_path("apps", "underscored-command.R")
 
 capture_app_env <- function(app_path, args = character()) {
   app <- Rapp:::as_app(app_path)

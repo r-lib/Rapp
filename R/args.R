@@ -48,15 +48,17 @@ process_args <- function(args, app) {
         "long-opt"
       } else if (startsWith(a, "-")) {
         "short-opt"
-      } else if (a %in% names(app_commands)) {
+      } else if (to_kebab_case(a) %in% names(app_commands)) {
         "command"
       } else {
         "positional"
       }
 
     if (arg_type == "command") {
-      app$exprs[[app_commands$.val_pos_in_exprs]] <-
-        gsub("-", "_", a, fixed = TRUE)
+      # in the R space, names are always snake_case
+      # in the app spec, names are always kebab-case
+      app$exprs[[app_commands$.val_pos_in_exprs]] <- to_snake_case(a)
+      a <- to_kebab_case(a)
       command <- app_commands[[a]]
       append(app_opts) <- command$opts
       append(app_args) <- command$args
@@ -254,3 +256,6 @@ process_args <- function(args, app) {
 #   should short should negate the default and inject FALSE? might be confusing.
 # TODO: support 'desc' for 'description' in yaml header (meh)
 # TODO: think through what character() can/should mean (meh)
+
+to_snake_case <- function(x) gsub("-", "_", x, fixed = TRUE)
+to_kebab_case <- function(x) gsub("_", "-", x, fixed = TRUE)

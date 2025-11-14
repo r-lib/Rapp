@@ -1,11 +1,8 @@
-withr::local_options(
-  list(Rapp.quit_on_error = FALSE),
-  .local_envir = testthat::teardown_env()
-)
-
 is_windows <- function() {
   identical(.Platform$OS.type, "windows")
 }
+
+list(Rapp.quit_on_error = FALSE)
 
 setup_fake_rapp_package <- function(base, suffix, package = "Rapp") {
   dir.create(base, recursive = TRUE, showWarnings = FALSE)
