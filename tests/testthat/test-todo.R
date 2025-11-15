@@ -15,19 +15,19 @@ test_that("todo help output", {
   app_path <- todo_app_path()
   expect_snapshot(
     cat(
-      capture_help_lines(app_path),
+      help_lines(app_path),
       sep = "\n"
     )
   )
   expect_snapshot(
     cat(
-      capture_help_lines(app_path, "list"),
+      help_lines(app_path, "list"),
       sep = "\n"
     )
   )
   expect_snapshot(
     cat(
-      capture_help_lines(app_path, "done"),
+      help_lines(app_path, "done"),
       sep = "\n"
     )
   )

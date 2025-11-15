@@ -2,18 +2,6 @@ simple_app <- test_path("apps", "simple-commands.R")
 nested_app <- test_path("apps", "nested-commands.R")
 underscored_app <- test_path("apps", "underscored-command.R")
 
-capture_app_env <- function(app_path, args = character()) {
-  app <- Rapp:::as_app(app_path)
-  Rapp:::process_args(args, app)
-  run_env <- new.env(parent = baseenv())
-  capture.output(
-    for (expr in app$exprs) {
-      eval(expr, run_env)
-    }
-  )
-  as.list(run_env, all.names = TRUE)
-}
-
 capture_simple_env <- function(args = character()) {
   capture_app_env(simple_app, args)
 }

@@ -22,6 +22,35 @@ setup_fake_rapp_package <- function(base, suffix, package = "Rapp") {
   list(lib = lib_dir, exec = exec_dir, package = package)
 }
 
+local_rapp_app <- function(
+  lines,
+  prefix = "rapp-app-",
+  fileext = ".R",
+  .local_envir = parent.frame()
+) {
+  app_path <- tempfile(prefix, fileext = fileext)
+  writeLines(lines, app_path)
+  withr::defer(unlink(app_path), envir = .local_envir)
+  app_path
+}
+
+local_rapp_script <- function(
+  lines,
+  prefix = "rapp-app-",
+  fileext = ".R",
+  .local_envir = parent.frame()
+) {
+  if (!length(lines) || !startsWith(lines[[1L]], "#!/")) {
+    lines <- c("#!/usr/bin/env Rapp", lines)
+  }
+  local_rapp_app(
+    lines,
+    prefix = prefix,
+    fileext = fileext,
+    .local_envir = .local_envir
+  )
+}
+
 
 path <- function(...) {
   normalizePath(file.path(...), mustWork = FALSE)
@@ -39,57 +68,17 @@ expect_same_paths_set <- function(actual, expected) {
   testthat::expect_setequal(normalize_paths(actual), normalize_paths(expected))
 }
 
-build_help_scope <- function(app, command_path = character()) {
-  app_name <- app$data$name
-  if (is.null(app_name)) {
-    app_name <- basename(app$filepath)
-  }
-  scope <- list(list(
-    name = app_name,
-    opts = app$opts,
-    args = app$args,
-    commands = if (is.null(app$commands)) list() else app$commands,
-    meta = if (length(app$data)) {
-      Rapp:::prune_empty(as.list(unclass(app$data)))
-    } else {
-      NULL
-    }
-  ))
-
-  commands <- if (is.null(app$commands)) list() else app$commands
-  for (cmd in command_path) {
-    command <- commands[[cmd]]
-    if (is.null(command)) {
-      break
-    }
-    meta <- if (!is.null(command$meta)) {
-      Rapp:::prune_empty(as.list(unclass(command$meta)))
-    } else {
-      NULL
-    }
-    scope[[length(scope) + 1L]] <- list(
-      name = cmd,
-      opts = command$opts,
-      args = command$args,
-      commands = if (is.null(command$commands)) list() else command$commands,
-      meta = meta
-    )
-    commands <- if (is.null(command$commands)) list() else command$commands
-  }
-  scope
-}
-
-capture_help_lines <- function(
+help_lines <- function(
   app_path,
   command_path = character(),
-  full = FALSE
+  format = c("text", "yaml")
 ) {
+  format <- match.arg(format)
   app <- Rapp:::as_app(app_path)
-  scope <- build_help_scope(app, command_path)
   lines <- capture.output(Rapp:::print_app_help(
     app,
-    yaml = FALSE,
-    scope = scope
+    yaml = identical(format, "yaml"),
+    command_path = command_path
   ))
   if (length(lines) && identical(tail(lines, 1L), "NULL")) {
     lines <- head(lines, -1L)
@@ -97,24 +86,40 @@ capture_help_lines <- function(
   lines
 }
 
-capture_help_yaml <- function(
-  app_path,
+help_lines_from_script <- function(
+  lines,
   command_path = character(),
-  full = FALSE,
-  variant = NULL
+  format = c("text", "yaml"),
+  prefix = "rapp-help-",
+  .local_envir = parent.frame()
 ) {
+  app_path <- local_rapp_script(
+    lines,
+    prefix = prefix,
+    .local_envir = .local_envir
+  )
+  help_lines(app_path, command_path = command_path, format = format)
+}
+
+
+capture_app_env <- function(app_path, args = character()) {
   app <- Rapp:::as_app(app_path)
-  scope <- build_help_scope(app, command_path)
-  lines <- capture.output(Rapp:::print_app_help(
-    app,
-    yaml = TRUE,
-    scope = scope,
-    full = full
-  ))
-  if (length(lines) && identical(tail(lines, 1L), "NULL")) {
-    lines <- head(lines, -1L)
-  }
-  lines
+  Rapp:::process_args(args, app)
+  run_env <- new.env(parent = baseenv())
+  capture.output({
+    for (expr in app$exprs) {
+      eval(expr, run_env)
+    }
+  })
+  as.list(run_env, all.names = TRUE)
+}
+
+run_cli_app <- function(command, args = character()) {
+  system2(command, args, stdout = TRUE)
+}
+
+write_cli_output <- function(command, args = character()) {
+  writeLines(run_cli_app(command, args))
 }
 
 

@@ -1,14 +1,12 @@
 test_that("non-literal unary minus defaults are ignored without error", {
-  app_path <- tempfile("rapp-unary-minus-", fileext = ".R")
-  on.exit(unlink(app_path), add = TRUE)
-  writeLines(
+  app_path <- local_rapp_app(
     c(
       "#!/usr/bin/env Rapp",
       "fallback_default <- 1L",
       "opt <- -fallback_default",
       "cat('ran\\n')"
     ),
-    con = app_path
+    prefix = "rapp-unary-minus-"
   )
 
   expect_output(Rapp::run(app_path, character()), "ran")
@@ -17,15 +15,13 @@ test_that("non-literal unary minus defaults are ignored without error", {
 test_that("launcher names containing quotes survive launcher export", {
   skip_on_os("windows")
 
-  app_path <- tempfile("rapp-launcher-quotes-", fileext = ".R")
-  on.exit(unlink(app_path), add = TRUE)
-  writeLines(
+  app_path <- local_rapp_app(
     c(
       "#!/usr/bin/env Rapp",
       "#| launcher: { name: \"Acme's CLI\" }",
       "cat('launcher test\\n')"
     ),
-    con = app_path
+    prefix = "rapp-launcher-quotes-"
   )
 
   launcher_lines <- Rapp:::launcher_contents(app_path, package = "Rapp")
@@ -41,15 +37,13 @@ test_that("launcher names containing quotes survive launcher export", {
 })
 
 test_that("literal unary minus defaults are parsed as scalars", {
-  app_path <- tempfile("rapp-unary-literal-", fileext = ".R")
-  on.exit(unlink(app_path), add = TRUE)
-  writeLines(
+  app_path <- local_rapp_app(
     c(
       "#!/usr/bin/env Rapp",
       "limit <- -1L",
       "cat(limit, '\\n')"
     ),
-    con = app_path
+    prefix = "rapp-unary-literal-"
   )
 
   app <- Rapp:::as_app(app_path)
@@ -58,9 +52,7 @@ test_that("literal unary minus defaults are parsed as scalars", {
 })
 
 test_that("variadic positional collectors declared with NULL accumulate args", {
-  app_path <- tempfile("rapp-variadic-null-", fileext = ".R")
-  on.exit(unlink(app_path), add = TRUE)
-  writeLines(
+  app_path <- local_rapp_app(
     c(
       "#!/usr/bin/env Rapp",
       "prefix <- NULL",
@@ -69,16 +61,14 @@ test_that("variadic positional collectors declared with NULL accumulate args", {
       "stopifnot(identical(extras..., c('beta', 'gamma')))",
       "cat('ok\\n')"
     ),
-    con = app_path
+    prefix = "rapp-variadic-null-"
   )
 
   expect_output(Rapp::run(app_path, c("alpha", "beta", "gamma")), "ok")
 })
 
 test_that("variadic positional collectors declared with c() accumulate args", {
-  app_path <- tempfile("rapp-variadic-null-", fileext = ".R")
-  on.exit(unlink(app_path), add = TRUE)
-  writeLines(
+  app_path <- local_rapp_app(
     c(
       "#!/usr/bin/env Rapp",
       "prefix <- NULL",
@@ -87,16 +77,14 @@ test_that("variadic positional collectors declared with c() accumulate args", {
       "stopifnot(identical(extras..., c('beta', 'gamma')))",
       "cat('ok\\n')"
     ),
-    con = app_path
+    prefix = "rapp-variadic-null-"
   )
 
   expect_output(Rapp::run(app_path, c("alpha", "beta", "gamma")), "ok")
 })
 
 test_that("leading variadic positional collectors accumulate args", {
-  app_path <- tempfile("rapp-leading-variadic-", fileext = ".R")
-  on.exit(unlink(app_path), add = TRUE)
-  writeLines(
+  app_path <- local_rapp_app(
     c(
       "#!/usr/bin/env Rapp",
       "...extras <- NULL",
@@ -105,7 +93,7 @@ test_that("leading variadic positional collectors accumulate args", {
       "stopifnot(identical(suffix, 'gamma'))",
       "cat('ok\\n')"
     ),
-    con = app_path
+    prefix = "rapp-leading-variadic-"
   )
 
   expect_output(Rapp::run(app_path, c("alpha", "beta", "gamma")), "ok")

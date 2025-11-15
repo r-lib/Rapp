@@ -1,15 +1,7 @@
 kitchen_app <- test_path("apps", "kitchen-sink.R")
 
 capture_kitchen_env <- function(args = character()) {
-  app <- Rapp:::as_app(kitchen_app)
-  Rapp:::process_args(args, app)
-  run_env <- new.env(parent = baseenv())
-  capture.output(
-    for (expr in app$exprs) {
-      eval(expr, run_env)
-    }
-  )
-  as.list(run_env, all.names = TRUE)
+  capture_app_env(kitchen_app, args)
 }
 
 test_that("kitchen sink defaults apply", {
@@ -80,18 +72,60 @@ test_that("summary command overrides defaults and appends filters", {
   expect_identical(env_overrides$summary_filter, c("a", "b"))
 })
 
+test_that("detail command enforces required id and optional payload", {
+  expect_error(
+    capture_kitchen_env("detail"),
+    "Missing required argument: DETAIL-ID"
+  )
+
+  env_required <- capture_kitchen_env(c("detail", "record-id"))
+  expect_identical(env_required$mode, "detail")
+  expect_identical(env_required$detail_id, "record-id")
+  expect_null(env_required$detail_payload)
+
+  env_payload <- capture_kitchen_env(c(
+    "detail",
+    "global-target",
+    "override-default",
+    "record-id",
+    "payload"
+  ))
+  expect_identical(env_payload$optional_positional, "global-target")
+  expect_identical(env_payload$optional_positional_default, "override-default")
+  expect_identical(env_payload$detail_payload, "payload")
+})
+
+test_that("config command accepts an optional config path", {
+  env_default <- capture_kitchen_env("config")
+  expect_identical(env_default$mode, "config")
+  expect_null(env_default$config_path)
+
+  env_with_path <- capture_kitchen_env(c(
+    "config",
+    "global-target",
+    "override-default",
+    "cfg.yml"
+  ))
+  expect_identical(env_with_path$optional_positional, "global-target")
+  expect_identical(
+    env_with_path$optional_positional_default,
+    "override-default"
+  )
+  expect_identical(env_with_path$config_path, "cfg.yml")
+})
+
 test_that("help output surfaces titles", {
-  lines <- capture_help_lines(kitchen_app)
+  lines <- help_lines(kitchen_app)
   expect_identical(lines[1], "Kitchen Sink CLI")
   command_block <- lines[
     (which(lines == "Commands:") + 1L):length(lines)
   ]
   expect_true(any(grepl("^\\s+summary\\s+Summary Mode$", command_block)))
 
-  summary_lines <- capture_help_lines(kitchen_app, "summary")
+  summary_lines <- help_lines(kitchen_app, "summary")
   expect_identical(summary_lines[1], "Summary Mode")
 
-  detail_lines <- capture_help_lines(kitchen_app, "detail")
+  detail_lines <- help_lines(kitchen_app, "detail")
   expect_identical(detail_lines[1], "Detail Mode")
 })
 

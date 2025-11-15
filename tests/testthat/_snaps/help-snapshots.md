@@ -1,7 +1,7 @@
 # --help snapshots
 
     Code
-      writeLines(system2("flip-coin", "--help", stdout = TRUE))
+      write_cli_output("flip-coin", "--help")
     Output
       Usage: flip-coin [OPTIONS]
       
@@ -16,7 +16,7 @@
 ---
 
     Code
-      writeLines(system2("todo", "--help", stdout = TRUE))
+      write_cli_output("todo", "--help")
     Output
       Todo manager
       
@@ -39,7 +39,7 @@
 ---
 
     Code
-      writeLines(system2("nested-commands", "--help", stdout = TRUE))
+      write_cli_output("nested-commands", "--help")
     Output
       Usage: nested-commands [OPTIONS] <COMMAND>
       
@@ -57,7 +57,7 @@
 # command --help snapshots
 
     Code
-      writeLines(system2("todo", "list --help", stdout = TRUE))
+      write_cli_output("todo", c("list", "--help"))
     Output
       Display the todos
       
@@ -76,7 +76,7 @@
 ---
 
     Code
-      writeLines(system2("todo", "done --help", stdout = TRUE))
+      write_cli_output("todo", c("done", "--help"))
     Output
       Mark a task as completed
       
@@ -95,7 +95,7 @@
 ---
 
     Code
-      writeLines(system2("nested-commands", "parent child2 --help", stdout = TRUE))
+      write_cli_output("nested-commands", c("parent", "child2", "--help"))
     Output
       Usage: nested-commands parent child2 [OPTIONS] <CHILD2-ARG>
       
@@ -117,7 +117,7 @@
 # --help-yaml snapshots
 
     Code
-      writeLines(system2("flip-coin", "--help-yaml", stdout = TRUE))
+      write_cli_output("flip-coin", "--help-yaml")
     Output
       launcher:
         default_packages:
@@ -154,7 +154,7 @@
 ---
 
     Code
-      writeLines(system2("todo", "--help-yaml", stdout = TRUE))
+      write_cli_output("todo", "--help-yaml")
     Output
       launcher:
         default_packages:
@@ -220,7 +220,7 @@
 ---
 
     Code
-      writeLines(system2("nested-commands", "--help-yaml", stdout = TRUE))
+      write_cli_output("nested-commands", "--help-yaml")
     Output
       launcher:
         default_packages:
@@ -286,47 +286,10 @@
           arguments: ~
           commands: ~
 
-# --help --yaml snapshots
-
-    Code
-      writeLines(system2("flip-coin", "--help --yaml", stdout = TRUE))
-    Output
-      launcher:
-        default_packages:
-        - base
-        - utils
-      name: flip-coin
-      description: Flip a coin.
-      options:
-        flips:
-          default: 1
-          val_type: integer
-          arg_type: option
-          action: replace
-          description: Number of coin flips
-          short: 'n'
-        sep:
-          default: ' '
-          val_type: string
-          arg_type: option
-          action: replace
-        wrap:
-          default: yes
-          val_type: bool
-          arg_type: switch
-          action: replace
-        seed:
-          default: .na.integer
-          val_type: integer
-          arg_type: option
-          action: replace
-      arguments: ~
-      commands: ~
-
 ---
 
     Code
-      writeLines(system2("todo", "--help --yaml", stdout = TRUE))
+      write_cli_output("todo", c("list", "--help-yaml"))
     Output
       launcher:
         default_packages:
@@ -392,7 +355,7 @@
 ---
 
     Code
-      writeLines(system2("nested-commands", "--help --yaml", stdout = TRUE))
+      write_cli_output("nested-commands", c("parent", "child2", "--help-yaml"))
     Output
       launcher:
         default_packages:

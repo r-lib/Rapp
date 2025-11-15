@@ -20,10 +20,10 @@ test_that("ls app accepts same option multiple times", {
   app <- Rapp:::as_app(ls_app)
   expect_identical(app$args$root$arg_type, "positional")
 
-  help_lines <- capture_help_lines(ls_app)
+  lines <- help_lines(ls_app)
   expect_true(any(grepl(
     "May be supplied multiple times\\.",
-    help_lines,
+    lines,
     fixed = FALSE
   )))
 })
