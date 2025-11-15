@@ -1,7 +1,5 @@
 test_that("missing required positional triggers a helpful error", {
-  app_path <- tempfile("rapp-required-pos-", fileext = ".R")
-  on.exit(unlink(app_path), add = TRUE)
-  writeLines(
+  app_path <- local_rapp_app(
     c(
       "#!/usr/bin/env Rapp",
       "#| name: required-test",
@@ -13,16 +11,14 @@ test_that("missing required positional triggers a helpful error", {
       "",
       "cat('Hello ', name, '!\\n', sep = '')"
     ),
-    con = app_path
+    prefix = "rapp-required-pos-"
   )
 
   expect_snapshot(error = TRUE, Rapp::run(app_path, character()))
 })
 
 test_that("missing required positional in a command triggers a helpful error", {
-  app_path <- tempfile("rapp-required-cmd-", fileext = ".R")
-  on.exit(unlink(app_path), add = TRUE)
-  writeLines(
+  app_path <- local_rapp_app(
     c(
       "#!/usr/bin/env Rapp",
       "#| name: cmd-required-test",
@@ -36,7 +32,7 @@ test_that("missing required positional in a command triggers a helpful error", {
       "  }",
       ")"
     ),
-    con = app_path
+    prefix = "rapp-required-cmd-"
   )
 
   expect_snapshot(error = TRUE, Rapp::run(app_path, c("add")))
