@@ -3,16 +3,7 @@ process_args <- function(args, app) {
   app_opts <- app$opts
   app_args <- app$args
   app_commands <- app$commands
-  app_meta <- if (length(app$data)) {
-    prune_empty(as.list(unclass(app$data)))
-  }
-  help_scope <- list(list(
-    name = app$data$name %||% basename(app$filepath),
-    opts = app$opts,
-    args = app$args,
-    commands = app$commands %||% list(),
-    meta = app_meta
-  ))
+  command_path <- character()
 
   if (!inherits(args, "connection")) {
     args <- textConnection(args)
@@ -37,7 +28,7 @@ process_args <- function(args, app) {
     if (a %in% c("--help", "--help-yaml")) {
       print_app_help(
         app,
-        scope = help_scope,
+        command_path = command_path,
         yaml = a == "--help-yaml" || "--yaml" %in% readLines(args)
       )
       return(if (interactive()) invisible(FALSE) else q("no"))
@@ -62,16 +53,7 @@ process_args <- function(args, app) {
       command <- app_commands[[a]]
       append(app_opts) <- command$opts
       append(app_args) <- command$args
-      command_meta <- if (!is.null(command$meta)) {
-        prune_empty(as.list(unclass(command$meta)))
-      }
-      help_scope[[length(help_scope) + 1L]] <- list(
-        name = a,
-        opts = command$opts,
-        args = command$args,
-        commands = command$commands %||% list(),
-        meta = command_meta
-      )
+      command_path <- c(command_path, a)
       app_commands <- command$commands
       next
     }

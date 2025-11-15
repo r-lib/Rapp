@@ -39,57 +39,16 @@ expect_same_paths_set <- function(actual, expected) {
   testthat::expect_setequal(normalize_paths(actual), normalize_paths(expected))
 }
 
-build_help_scope <- function(app, command_path = character()) {
-  app_name <- app$data$name
-  if (is.null(app_name)) {
-    app_name <- basename(app$filepath)
-  }
-  scope <- list(list(
-    name = app_name,
-    opts = app$opts,
-    args = app$args,
-    commands = if (is.null(app$commands)) list() else app$commands,
-    meta = if (length(app$data)) {
-      Rapp:::prune_empty(as.list(unclass(app$data)))
-    } else {
-      NULL
-    }
-  ))
-
-  commands <- if (is.null(app$commands)) list() else app$commands
-  for (cmd in command_path) {
-    command <- commands[[cmd]]
-    if (is.null(command)) {
-      break
-    }
-    meta <- if (!is.null(command$meta)) {
-      Rapp:::prune_empty(as.list(unclass(command$meta)))
-    } else {
-      NULL
-    }
-    scope[[length(scope) + 1L]] <- list(
-      name = cmd,
-      opts = command$opts,
-      args = command$args,
-      commands = if (is.null(command$commands)) list() else command$commands,
-      meta = meta
-    )
-    commands <- if (is.null(command$commands)) list() else command$commands
-  }
-  scope
-}
-
 capture_help_lines <- function(
   app_path,
   command_path = character(),
   full = FALSE
 ) {
   app <- Rapp:::as_app(app_path)
-  scope <- build_help_scope(app, command_path)
   lines <- capture.output(Rapp:::print_app_help(
     app,
     yaml = FALSE,
-    scope = scope
+    command_path = command_path
   ))
   if (length(lines) && identical(tail(lines, 1L), "NULL")) {
     lines <- head(lines, -1L)
@@ -104,12 +63,10 @@ capture_help_yaml <- function(
   variant = NULL
 ) {
   app <- Rapp:::as_app(app_path)
-  scope <- build_help_scope(app, command_path)
   lines <- capture.output(Rapp:::print_app_help(
     app,
     yaml = TRUE,
-    scope = scope,
-    full = full
+    command_path = command_path
   ))
   if (length(lines) && identical(tail(lines, 1L), "NULL")) {
     lines <- head(lines, -1L)

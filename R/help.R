@@ -45,13 +45,51 @@ build_help_command_specs <- function(commands) {
   commands
 }
 
-print_app_help <- function(app, yaml = TRUE, scope = NULL) {
+build_help_scope <- function(app, command_path = character()) {
+  app <- as_app(app)
+
+  meta <- if (length(app$data)) {
+    prune_empty(as.list(unclass(app$data)))
+  }
+
+  scope <- list(list(
+    name = app$data$name %||% basename(app$filepath),
+    opts = app$opts,
+    args = app$args,
+    commands = app$commands %||% list(),
+    meta = meta
+  ))
+
+  commands <- app$commands %||% list()
+  for (cmd in command_path) {
+    command <- commands[[cmd]]
+    if (is.null(command)) {
+      break
+    }
+    command_meta <- if (!is.null(command$meta)) {
+      prune_empty(as.list(unclass(command$meta)))
+    }
+    scope[[length(scope) + 1L]] <- list(
+      name = cmd,
+      opts = command$opts,
+      args = command$args,
+      commands = command$commands %||% list(),
+      meta = command_meta
+    )
+    commands <- command$commands %||% list()
+  }
+
+  scope
+}
+
+print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   app <- as_app(app)
   if (yaml) {
     spec <- build_help_yaml_spec(app)
     print.yaml(spec)
     return()
   }
+  scope <- build_help_scope(app, command_path)
 
   ensure_list <- function(x) if (is.null(x)) list() else x
   wrap_lines <- function(text, indent = 0L, exdent = indent) {
@@ -86,18 +124,6 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
       }
     }
     out
-  }
-  default_scope <- function(app) {
-    meta <- if (length(app$data)) {
-      prune_empty(as.list(unclass(app$data)))
-    }
-    list(list(
-      name = app$data$name %||% basename(app$filepath),
-      opts = app$opts,
-      args = app$args,
-      commands = app$commands %||% list(),
-      meta = meta
-    ))
   }
   format_cli_name <- function(name) gsub("_", "-", name, fixed = TRUE)
   format_placeholder <- function(name) {
@@ -373,10 +399,6 @@ print_app_help <- function(app, yaml = TRUE, scope = NULL) {
       },
       ""
     )
-  }
-
-  if (is.null(scope)) {
-    scope <- default_scope(app)
   }
 
   if (!is.null(app$launcher_name)) {
