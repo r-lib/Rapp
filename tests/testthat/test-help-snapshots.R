@@ -139,15 +139,3 @@ test_that("--help-yaml snapshots", {
     writeLines(system2("nested-commands", "--help-yaml", stdout = TRUE))
   )
 })
-
-test_that("--help --yaml snapshots", {
-  expect_snapshot(
-    writeLines(system2("flip-coin", "--help --yaml", stdout = TRUE))
-  )
-  expect_snapshot(
-    writeLines(system2("todo", "--help --yaml", stdout = TRUE))
-  )
-  expect_snapshot(
-    writeLines(system2("nested-commands", "--help --yaml", stdout = TRUE))
-  )
-})

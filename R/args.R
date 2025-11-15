@@ -29,9 +29,9 @@ process_args <- function(args, app) {
       print_app_help(
         app,
         command_path = command_path,
-        yaml = a == "--help-yaml" || "--yaml" %in% readLines(args)
+        yaml = a == "--help-yaml"
       )
-      return(if (interactive()) invisible(FALSE) else q("no"))
+      return(FALSE)
     }
 
     arg_type <-
@@ -231,7 +231,7 @@ process_args <- function(args, app) {
     }
   }
 
-  invisible(TRUE)
+  TRUE
 }
 
 # TODO: short options for boolean flags - if default is TRUE,
