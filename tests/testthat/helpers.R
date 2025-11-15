@@ -34,6 +34,23 @@ local_rapp_app <- function(
   app_path
 }
 
+local_rapp_script <- function(
+  lines,
+  prefix = "rapp-app-",
+  fileext = ".R",
+  .local_envir = parent.frame()
+) {
+  if (!length(lines) || !startsWith(lines[[1L]], "#!/")) {
+    lines <- c("#!/usr/bin/env Rapp", lines)
+  }
+  local_rapp_app(
+    lines,
+    prefix = prefix,
+    fileext = fileext,
+    .local_envir = .local_envir
+  )
+}
+
 
 path <- function(...) {
   normalizePath(file.path(...), mustWork = FALSE)
@@ -66,6 +83,20 @@ capture_help_output <- function(app_path, command_path = character(), yaml = FAL
 
 capture_help_lines <- function(app_path, command_path = character()) {
   capture_help_output(app_path, command_path = command_path, yaml = FALSE)
+}
+
+capture_help_from_lines <- function(
+  lines,
+  command_path = character(),
+  prefix = "rapp-help-",
+  .local_envir = parent.frame()
+) {
+  app_path <- local_rapp_script(
+    lines,
+    prefix = prefix,
+    .local_envir = .local_envir
+  )
+  capture_help_lines(app_path, command_path = command_path)
 }
 
 capture_help_yaml <- function(app_path, command_path = character()) {

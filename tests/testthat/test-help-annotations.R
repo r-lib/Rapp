@@ -9,28 +9,21 @@ test_that("usage reflects positional argument requiredness", {
     "root <- \".\""
   )
 
-  make_app <- function(required_flag) {
-    lines <- append(
-      base_lines,
-      values = sprintf("#| required: !!bool %s", required_flag),
-      after = 6
-    )
-    app_path <- local_rapp_app(
-      lines,
-      prefix = "rapp-usage-",
-      .local_envir = parent.frame()
-    )
-    capture_help_lines(app_path)
+  capture_usage <- function(required_flag = NULL) {
+    lines <- base_lines
+    if (!is.null(required_flag)) {
+      lines <- append(
+        lines,
+        values = sprintf("#| required: %s", required_flag),
+        after = 5
+      )
+    }
+    capture_help_from_lines(lines, prefix = "rapp-usage-")
   }
 
-  usage_required <- make_app("true")
-  usage_optional <- make_app("false")
-  # Default (no required annotation) should be required by default
-  app_path_default <- local_rapp_app(
-    base_lines,
-    prefix = "rapp-usage-default-"
-  )
-  usage_default <- capture_help_lines(app_path_default)
+  usage_required <- capture_usage("true")
+  usage_optional <- capture_usage("false")
+  usage_default <- capture_usage()
 
   usage_line <- function(lines) {
     lines[startsWith(lines, "Usage: ")]
@@ -42,7 +35,7 @@ test_that("usage reflects positional argument requiredness", {
 })
 
 test_that("short annotation values stay character", {
-  app_path <- local_rapp_app(
+  lines <- capture_help_from_lines(
     c(
       "#!/usr/bin/env Rapp",
       "#| name: short-test",
@@ -54,13 +47,78 @@ test_that("short annotation values stay character", {
     ),
     prefix = "rapp-short-"
   )
-
-  lines <- capture_help_lines(app_path)
   expect_true(any(grepl("-1, --option <OPTION>", lines, fixed = TRUE)))
 })
 
+test_that("help output lists option defaults, types, and toggle hints", {
+  build_help <- function(option_block, prefix) {
+    capture_help_from_lines(
+      c(
+        "#!/usr/bin/env Rapp",
+        "#| name: metadata-test",
+        "#| description: Inspect option metadata.",
+        "",
+        option_block
+      ),
+      prefix = prefix
+    )
+  }
+
+  cases <- list(
+    string = list(
+      option = c(
+        "#| description: Example string option.",
+        "name <- \"alpha\""
+      ),
+      patterns = c("[default: \"alpha\"]", "[type: string]")
+    ),
+    integer = list(
+      option = c(
+        "#| description: Example integer option.",
+        "limit <- 5L"
+      ),
+      patterns = c("[default: 5]", "[type: integer]")
+    ),
+    float = list(
+      option = c(
+        "#| description: Example float option.",
+        "rate <- 0.25"
+      ),
+      patterns = c("[default: 0.25]", "[type: float]")
+    ),
+    switch_true = list(
+      option = c(
+        "#| description: Wrap output.",
+        "wrap <- TRUE"
+      ),
+      patterns = c("[default: true]", "Disable with `--no-wrap`.")
+    ),
+    switch_false = list(
+      option = c(
+        "#| description: Verbose output.",
+        "verbose <- FALSE"
+      ),
+      patterns = c("[default: false]", "Enable with `--verbose`.")
+    )
+  )
+
+  for (case_name in names(cases)) {
+    case <- cases[[case_name]]
+    help_lines <- build_help(
+      option_block = case$option,
+      prefix = paste0("rapp-metadata-", case_name, "-")
+    )
+    for (pattern in case$patterns) {
+      expect_true(
+        any(grepl(pattern, help_lines, fixed = TRUE)),
+        info = sprintf("Missing pattern '%s' for case '%s'", pattern, case_name)
+      )
+    }
+  }
+})
+
 test_that("list-like annotations are parsed via yaml", {
-  app_path <- local_rapp_app(
+  app_path <- local_rapp_script(
     c(
       "#!/usr/bin/env Rapp",
       "#| name: list-test",
@@ -78,16 +136,14 @@ test_that("list-like annotations are parsed via yaml", {
 })
 
 test_that("launcher name is used in help when provided", {
-  app_path <- local_rapp_app(
+  withr::local_envvar(RAPP_LAUNCHER_NAME = "launcher-test")
+  lines <- capture_help_from_lines(
     c(
       "#!/usr/bin/env Rapp",
       "flag <- TRUE"
     ),
     prefix = "rapp-launcher-"
   )
-
-  withr::local_envvar(RAPP_LAUNCHER_NAME = "launcher-test")
-  lines <- capture_help_lines(app_path)
   expect_true("Usage: launcher-test [OPTIONS]" %in% lines)
   expect_identical(
     Sys.getenv("RAPP_LAUNCHER_NAME", NA_character_),
@@ -96,7 +152,7 @@ test_that("launcher name is used in help when provided", {
 })
 
 test_that("parent and global option sections appear only when relevant", {
-  parent_app <- local_rapp_app(
+  parent_app <- local_rapp_script(
     c(
       "#!/usr/bin/env Rapp",
       "switch('',",
@@ -112,7 +168,7 @@ test_that("parent and global option sections appear only when relevant", {
   expect_true(any(grepl("^Parent options:", parent_child_lines)))
   expect_false(any(grepl("^Global options:", parent_child_lines)))
 
-  global_app <- local_rapp_app(
+  global_app <- local_rapp_script(
     c(
       "#!/usr/bin/env Rapp",
       "global_only <- \"global\"",
