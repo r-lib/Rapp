@@ -74,6 +74,18 @@ capture_help_yaml <- function(
   lines
 }
 
+capture_app_env <- function(app_path, args = character()) {
+  app <- Rapp:::as_app(app_path)
+  Rapp:::process_args(args, app)
+  run_env <- new.env(parent = baseenv())
+  capture.output({
+    for (expr in app$exprs) {
+      eval(expr, run_env)
+    }
+  })
+  as.list(run_env, all.names = TRUE)
+}
+
 
 # tryCatch(
 #   eval(app$exprs, new.env(parent = globalenv())),
