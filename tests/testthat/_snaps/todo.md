@@ -1,7 +1,7 @@
 # todo help output
 
     Code
-      cat(capture_help_lines(app_path), sep = "\n")
+      cat(help_lines(app_path), sep = "\n")
     Output
       Todo manager
       
@@ -24,7 +24,7 @@
 ---
 
     Code
-      cat(capture_help_lines(app_path, "list"), sep = "\n")
+      cat(help_lines(app_path, "list"), sep = "\n")
     Output
       Display the todos
       
@@ -43,7 +43,7 @@
 ---
 
     Code
-      cat(capture_help_lines(app_path, "done"), sep = "\n")
+      cat(help_lines(app_path, "done"), sep = "\n")
     Output
       Mark a task as completed
       

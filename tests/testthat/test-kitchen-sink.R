@@ -115,17 +115,17 @@ test_that("config command accepts an optional config path", {
 })
 
 test_that("help output surfaces titles", {
-  lines <- capture_help_lines(kitchen_app)
+  lines <- help_lines(kitchen_app)
   expect_identical(lines[1], "Kitchen Sink CLI")
   command_block <- lines[
     (which(lines == "Commands:") + 1L):length(lines)
   ]
   expect_true(any(grepl("^\\s+summary\\s+Summary Mode$", command_block)))
 
-  summary_lines <- capture_help_lines(kitchen_app, "summary")
+  summary_lines <- help_lines(kitchen_app, "summary")
   expect_identical(summary_lines[1], "Summary Mode")
 
-  detail_lines <- capture_help_lines(kitchen_app, "detail")
+  detail_lines <- help_lines(kitchen_app, "detail")
   expect_identical(detail_lines[1], "Detail Mode")
 })
 

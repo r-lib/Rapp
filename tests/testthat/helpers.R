@@ -68,11 +68,16 @@ expect_same_paths_set <- function(actual, expected) {
   testthat::expect_setequal(normalize_paths(actual), normalize_paths(expected))
 }
 
-capture_help_output <- function(app_path, command_path = character(), yaml = FALSE) {
+help_lines <- function(
+  app_path,
+  command_path = character(),
+  format = c("text", "yaml")
+) {
+  format <- match.arg(format)
   app <- Rapp:::as_app(app_path)
   lines <- capture.output(Rapp:::print_app_help(
     app,
-    yaml = yaml,
+    yaml = identical(format, "yaml"),
     command_path = command_path
   ))
   if (length(lines) && identical(tail(lines, 1L), "NULL")) {
@@ -81,13 +86,10 @@ capture_help_output <- function(app_path, command_path = character(), yaml = FAL
   lines
 }
 
-capture_help_lines <- function(app_path, command_path = character()) {
-  capture_help_output(app_path, command_path = command_path, yaml = FALSE)
-}
-
-capture_help_from_lines <- function(
+help_lines_from_script <- function(
   lines,
   command_path = character(),
+  format = c("text", "yaml"),
   prefix = "rapp-help-",
   .local_envir = parent.frame()
 ) {
@@ -96,12 +98,9 @@ capture_help_from_lines <- function(
     prefix = prefix,
     .local_envir = .local_envir
   )
-  capture_help_lines(app_path, command_path = command_path)
+  help_lines(app_path, command_path = command_path, format = format)
 }
 
-capture_help_yaml <- function(app_path, command_path = character()) {
-  capture_help_output(app_path, command_path = command_path, yaml = TRUE)
-}
 
 capture_app_env <- function(app_path, args = character()) {
   app <- Rapp:::as_app(app_path)

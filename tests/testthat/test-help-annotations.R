@@ -18,7 +18,7 @@ test_that("usage reflects positional argument requiredness", {
         after = 5
       )
     }
-    capture_help_from_lines(lines, prefix = "rapp-usage-")
+    help_lines_from_script(lines, prefix = "rapp-usage-")
   }
 
   usage_required <- capture_usage("true")
@@ -35,7 +35,7 @@ test_that("usage reflects positional argument requiredness", {
 })
 
 test_that("short annotation values stay character", {
-  lines <- capture_help_from_lines(
+  lines <- help_lines_from_script(
     c(
       "#!/usr/bin/env Rapp",
       "#| name: short-test",
@@ -52,7 +52,7 @@ test_that("short annotation values stay character", {
 
 test_that("help output lists option defaults, types, and toggle hints", {
   build_help <- function(option_block, prefix) {
-    capture_help_from_lines(
+    help_lines_from_script(
       c(
         "#!/usr/bin/env Rapp",
         "#| name: metadata-test",
@@ -104,13 +104,13 @@ test_that("help output lists option defaults, types, and toggle hints", {
 
   for (case_name in names(cases)) {
     case <- cases[[case_name]]
-    help_lines <- build_help(
+    lines <- build_help(
       option_block = case$option,
       prefix = paste0("rapp-metadata-", case_name, "-")
     )
     for (pattern in case$patterns) {
       expect_true(
-        any(grepl(pattern, help_lines, fixed = TRUE)),
+        any(grepl(pattern, lines, fixed = TRUE)),
         info = sprintf("Missing pattern '%s' for case '%s'", pattern, case_name)
       )
     }
@@ -137,7 +137,7 @@ test_that("list-like annotations are parsed via yaml", {
 
 test_that("launcher name is used in help when provided", {
   withr::local_envvar(RAPP_LAUNCHER_NAME = "launcher-test")
-  lines <- capture_help_from_lines(
+  lines <- help_lines_from_script(
     c(
       "#!/usr/bin/env Rapp",
       "flag <- TRUE"
@@ -164,7 +164,7 @@ test_that("parent and global option sections appear only when relevant", {
     ),
     prefix = "rapp-parent-options-"
   )
-  parent_child_lines <- capture_help_lines(parent_app, c("parent", "child"))
+  parent_child_lines <- help_lines(parent_app, c("parent", "child"))
   expect_true(any(grepl("^Parent options:", parent_child_lines)))
   expect_false(any(grepl("^Global options:", parent_child_lines)))
 
@@ -180,7 +180,7 @@ test_that("parent and global option sections appear only when relevant", {
     ),
     prefix = "rapp-global-options-"
   )
-  global_child_lines <- capture_help_lines(global_app, c("parent", "child"))
+  global_child_lines <- help_lines(global_app, c("parent", "child"))
   expect_true(any(grepl("^Global options:", global_child_lines)))
   expect_false(any(grepl("^Parent options:", global_child_lines)))
 })
