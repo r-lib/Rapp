@@ -202,7 +202,65 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
       if (nzchar(meta)) meta else NULL,
       if (nzchar(extra)) extra else NULL
     )
-    list(flag = flag, pieces = pieces)
+    list(label = flag, pieces = pieces)
+  }
+  label_context <- function(label, indent, label_width) {
+    padded_label <- sprintf(
+      "%s%-*s",
+      strrep(" ", indent),
+      label_width,
+      label
+    )
+    list(
+      initial = paste0(padded_label, "  "),
+      continuation = strrep(" ", indent + label_width + 2L)
+    )
+  }
+  format_labeled_block <- function(
+    entries,
+    indent = 2L,
+    width = getOption("width", 79L),
+    max_label_width = 30L,
+    label_width = NULL
+  ) {
+    if (!length(entries)) {
+      return(character())
+    }
+    labels <- vapply(entries, "[[", "", "label")
+    if (is.null(label_width)) {
+      non_empty <- labels[nzchar(labels)]
+      target <- if (length(non_empty)) non_empty else labels
+      label_width <- min(max(nchar(target)), max_label_width)
+    }
+    out <- character()
+    for (entry in entries) {
+      ctx <- label_context(entry$label, indent, label_width)
+      text <- entry$text
+      if (!length(text)) {
+        out <- c(out, ctx$initial)
+        next
+      }
+      for (i in seq_along(text)) {
+        content <- text[[i]]
+        wrapped <- if (!nzchar(content)) {
+          if (i == 1L) ctx$initial else ctx$continuation
+        } else {
+          lines <- strwrap(
+            content,
+            width = width,
+            initial = if (i == 1L) ctx$initial else ctx$continuation,
+            prefix = ctx$continuation
+          )
+          if (!length(lines)) {
+            if (i == 1L) ctx$initial else ctx$continuation
+          } else {
+            lines
+          }
+        }
+        out <- c(out, wrapped)
+      }
+    }
+    out
   }
   format_option_block <- function(opts) {
     opts <- ensure_list(opts)
@@ -211,28 +269,20 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
     }
 
     entries <- imap(opts, format_option_entry)
-    flags <- vapply(entries, "[[", "", "flag")
+    flags <- vapply(entries, "[[", "", "label")
     flag_width <- min(max(nchar(flags)), 30L)
     indent <- 2L
     total_width <- getOption("width", 79L)
-    out <- character()
-    for (entry in entries) {
-      padded_flag <- sprintf(
-        "%s%-*s",
-        strrep(" ", indent),
-        flag_width,
-        entry$flag
-      )
-      continuation <- strrep(" ", indent + flag_width + 2L)
-      initial <- paste0(padded_flag, "  ")
+    formatted <- lapply(entries, function(entry) {
       pieces <- entry$pieces
+      ctx <- label_context(entry$label, indent, flag_width)
       if (length(pieces) >= 2L && startsWith(pieces[[2L]], "[")) {
         combined <- paste(pieces[[1L]], pieces[[2L]], collapse = " ")
         fit <- strwrap(
           combined,
           width = total_width,
-          initial = initial,
-          prefix = continuation
+          initial = ctx$initial,
+          prefix = ctx$continuation
         )
         if (length(fit) == 1L) {
           pieces <- c(combined, pieces[-(1:2)])
@@ -240,32 +290,20 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
       }
       if (length(pieces) >= 2L) {
         candidate <- paste(pieces[[1L]], pieces[[2L]], collapse = " ")
-        line_candidate <- paste0(initial, candidate)
+        line_candidate <- paste0(ctx$initial, candidate)
         if (nchar(line_candidate) <= total_width) {
           pieces <- c(candidate, pieces[-(1:2)])
         }
       }
-      info_lines <- character()
-      if (!length(pieces)) {
-        info_lines <- initial
-      } else {
-        for (i in seq_along(pieces)) {
-          piece <- pieces[[i]]
-          wrapped <- strwrap(
-            piece,
-            width = total_width,
-            initial = if (i == 1L) initial else continuation,
-            prefix = continuation
-          )
-          if (!length(wrapped)) {
-            wrapped <- if (i == 1L) initial else continuation
-          }
-          info_lines <- c(info_lines, wrapped)
-        }
-      }
-      out <- c(out, info_lines)
-    }
-    out
+      list(label = entry$label, text = pieces)
+    })
+
+    format_labeled_block(
+      formatted,
+      indent = indent,
+      width = total_width,
+      label_width = flag_width
+    )
   }
   format_argument_block <- function(args) {
     args <- ensure_list(args)
@@ -289,42 +327,14 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
       }
       entries[[length(entries) + 1L]] <- list(
         label = placeholder,
-        description = desc
+        text = desc
       )
     }
 
     if (!length(entries)) {
       return(character())
     }
-
-    labels <- vapply(entries, "[[", "", "label")
-    width <- getOption("width", 79L)
-    label_width <- min(max(nchar(labels)), 30L)
-    indent <- 2L
-    desc_width <- width - indent - label_width - 2L
-
-    out <- character()
-    for (entry in entries) {
-      padded_label <- sprintf(
-        "%s%-*s",
-        strrep(" ", indent),
-        label_width,
-        entry$label
-      )
-      wrapped <- strwrap(entry$description, width = desc_width)
-      if (!length(wrapped)) {
-        wrapped <- ""
-      }
-      out <- c(out, paste0(padded_label, "  ", wrapped[[1L]]))
-      if (length(wrapped) > 1L) {
-        continuation <- paste0(
-          strrep(" ", indent + label_width + 2L),
-          wrapped[-1L]
-        )
-        out <- c(out, continuation)
-      }
-    }
-    out
+    format_labeled_block(entries)
   }
   format_command_block <- function(commands) {
     commands <- ensure_list(commands)
@@ -337,42 +347,10 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
       command <- commands[[name]]
       meta <- command$meta %||% list()
       label <- meta$title %||% meta$description %||% ""
-      list(name = name, label = label)
+      list(label = name, text = label)
     })
 
-    names_column <- vapply(entries, "[[", "", "name")
-    width <- getOption("width", 79L)
-    name_width <- min(max(nchar(names_column)), 30L)
-    indent <- 2L
-    desc_width <- width - indent - name_width - 2L
-
-    out <- character()
-    for (entry in entries) {
-      padded_name <- sprintf(
-        "%s%-*s",
-        strrep(" ", indent),
-        name_width,
-        entry$name
-      )
-      label <- entry$label
-      wrapped <- if (nzchar(label)) {
-        strwrap(label, width = desc_width)
-      } else {
-        ""
-      }
-      if (!length(wrapped)) {
-        wrapped <- ""
-      }
-      out <- c(out, paste0(padded_name, "  ", wrapped[[1L]]))
-      if (length(wrapped) > 1L) {
-        continuation <- paste0(
-          strrep(" ", indent + name_width + 2L),
-          wrapped[-1L]
-        )
-        out <- c(out, continuation)
-      }
-    }
-    out
+    format_labeled_block(entries)
   }
   build_usage_args <- function(args) {
     args <- ensure_list(args)
