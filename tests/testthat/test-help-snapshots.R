@@ -89,30 +89,16 @@ withr::with_envvar(c("RAPP_NO_MODIFY_PATH" = "1"), {
 withr::local_path(destdir, .local_envir = snapshot_env)
 
 test_that("--help snapshots", {
-  expect_snapshot(
-    writeLines(system2("flip-coin", "--help", stdout = TRUE))
-  )
-  expect_snapshot(
-    writeLines(system2("todo", "--help", stdout = TRUE))
-  )
-  expect_snapshot(
-    writeLines(system2("nested-commands", "--help", stdout = TRUE))
-  )
+  expect_snapshot(write_cli_output("flip-coin", "--help"))
+  expect_snapshot(write_cli_output("todo", "--help"))
+  expect_snapshot(write_cli_output("nested-commands", "--help"))
 })
 
 test_that("command --help snapshots", {
+  expect_snapshot(write_cli_output("todo", c("list", "--help")))
+  expect_snapshot(write_cli_output("todo", c("done", "--help")))
   expect_snapshot(
-    writeLines(system2("todo", "list --help", stdout = TRUE))
-  )
-  expect_snapshot(
-    writeLines(system2("todo", "done --help", stdout = TRUE))
-  )
-  expect_snapshot(
-    writeLines(system2(
-      "nested-commands",
-      "parent child2 --help",
-      stdout = TRUE
-    ))
+    write_cli_output("nested-commands", c("parent", "child2", "--help"))
   )
 })
 
@@ -129,13 +115,11 @@ test_that("command --help snapshots", {
 # })
 
 test_that("--help-yaml snapshots", {
+  expect_snapshot(write_cli_output("flip-coin", "--help-yaml"))
+  expect_snapshot(write_cli_output("todo", "--help-yaml"))
+  expect_snapshot(write_cli_output("nested-commands", "--help-yaml"))
+  expect_snapshot(write_cli_output("todo", c("list", "--help-yaml")))
   expect_snapshot(
-    writeLines(system2("flip-coin", "--help-yaml", stdout = TRUE))
-  )
-  expect_snapshot(
-    writeLines(system2("todo", "--help-yaml", stdout = TRUE))
-  )
-  expect_snapshot(
-    writeLines(system2("nested-commands", "--help-yaml", stdout = TRUE))
+    write_cli_output("nested-commands", c("parent", "child2", "--help-yaml"))
   )
 })

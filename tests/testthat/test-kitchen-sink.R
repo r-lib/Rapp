@@ -107,7 +107,10 @@ test_that("config command accepts an optional config path", {
     "cfg.yml"
   ))
   expect_identical(env_with_path$optional_positional, "global-target")
-  expect_identical(env_with_path$optional_positional_default, "override-default")
+  expect_identical(
+    env_with_path$optional_positional_default,
+    "override-default"
+  )
   expect_identical(env_with_path$config_path, "cfg.yml")
 })
 

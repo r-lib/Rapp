@@ -86,6 +86,14 @@ capture_app_env <- function(app_path, args = character()) {
   as.list(run_env, all.names = TRUE)
 }
 
+run_cli_app <- function(command, args = character()) {
+  system2(command, args, stdout = TRUE)
+}
+
+write_cli_output <- function(command, args = character()) {
+  writeLines(run_cli_app(command, args))
+}
+
 
 # tryCatch(
 #   eval(app$exprs, new.env(parent = globalenv())),
