@@ -180,7 +180,7 @@ list_package_apps <- function(package, lib.loc = NULL) {
   exec_dir <- system.file("exec", package = package, lib.loc = lib.loc)
   dir.exists(exec_dir) || return()
   files <- list.files(exec_dir, pattern = "\\.[Rr]$", full.names = TRUE)
-  files[map_lgl(files, \(f) !is.na(get_launcher_type(f)))]
+  files[map_lgl(files, function(f) !is.na(get_launcher_type(f)))]
 }
 
 
