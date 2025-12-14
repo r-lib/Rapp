@@ -26,12 +26,12 @@
 #'
 #' @details
 #'
-#' Launchers are regenerated on every run, and any obsolete launchers for the
-#' same package are removed. `RAPP_INSTALL_DIR` overrides the default
-#' destination. Launchers are POSIX shell scripts on Unix-like systems and
-#' `.bat` files on Windows. Front-matter options such as `vanilla`,
-#' `no-environ`, and `default_packages` map directly to the corresponding
-#' `Rscript` arguments.
+#' Launchers are regenerated each time `install_pkg_cli_apps()` is called, and
+#' any obsolete launchers for the same package are removed. `RAPP_INSTALL_DIR`
+#' overrides the default destination. Launchers are POSIX shell scripts on
+#' Unix-like systems and `.bat` files on Windows. Front-matter options such as
+#' `vanilla`, `no-environ`, and `default_packages` map directly to the
+#' corresponding `Rscript` arguments.
 #'
 #' When `overwrite` is `NA`, files previously written by Rapp are always
 #' replaced while other executables trigger a confirmation prompt (skipped in

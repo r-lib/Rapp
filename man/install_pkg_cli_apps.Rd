@@ -44,12 +44,12 @@ Optional \verb{#| launcher:} front matter in the script lets authors tune the
 \verb{--default-packages=base,<pkg>}, where \verb{<pkg>} is the package providing the
 executable.
 
-Launchers are regenerated on every run, and any obsolete launchers for the
-same package are removed. \code{RAPP_INSTALL_DIR} overrides the default
-destination. Launchers are POSIX shell scripts on Unix-like systems and
-\code{.bat} files on Windows. Front-matter options such as \code{vanilla},
-\code{no-environ}, and \code{default_packages} map directly to the corresponding
-\code{Rscript} arguments.
+Launchers are regenerated each time \code{install_pkg_cli_apps()} is called, and
+any obsolete launchers for the same package are removed. \code{RAPP_INSTALL_DIR}
+overrides the default destination. Launchers are POSIX shell scripts on
+Unix-like systems and \code{.bat} files on Windows. Front-matter options such as
+\code{vanilla}, \code{no-environ}, and \code{default_packages} map directly to the
+corresponding \code{Rscript} arguments.
 
 When \code{overwrite} is \code{NA}, files previously written by Rapp are always
 replaced while other executables trigger a confirmation prompt (skipped in
