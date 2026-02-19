@@ -125,7 +125,7 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
       commands <- map2(
         branches,
         seq_along(branches) + 2L,
-        \(branch, branch_idx) {
+        function(branch, branch_idx) {
           # stopifnot(is.call(branch) && identical(branch[[1]], quote(`{`)))
           inputs <-
             get_app_inputs(app, as.list(branch), pos = c(pos, i, branch_idx))

@@ -1,13 +1,20 @@
 # Rapp (development version)
 
--   New `install_pkg_cli_apps()` installs Rapps and R scripts in a
-    package's `exec/` directory onto the users `PATH` (#7, #3).
--   Added support for commands in Rapp applications (#8, #11).
--   Added support for short opts (#4, #5).
--   Simple assignment of `c()` or `list()` now creates a repeatable CLI
-    option.
--   Positional arguments are now required by default, unless annotation
-    `#| required: false` is supplied (#13).
+# Rapp 0.3.0
+
+## Breaking changes
+
+-   Positional arguments are now required by default. Use
+    `#| required: false` to make an argument optional (#13).
+
+## New features
+
+-   `#| short` now adds a short option alias like `-n` (#4, #5).
+-   `c()` and `list()` assignments now declare repeatable options.
+-   `install_pkg_cli_apps()` installs launchers for `Rapp` and `Rscript`
+    apps in a package's `exec/` directory on the user's `PATH` (#3, #7).
+-   `switch()` blocks can now declare commands in Rapp applications (#8,
+    #11).
 
 # Rapp 0.2.0
 
@@ -19,3 +26,4 @@
 # Rapp 0.1.0
 
 -   Initial release
+
