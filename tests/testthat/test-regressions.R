@@ -148,7 +148,7 @@ test_that("boolean switches can disable negative aliases", {
       "#!/usr/bin/env Rapp",
       "#| description: Legacy spelling is ignored.",
       "#| negative: false",
-      "legacy <- NA"
+      "legacy <- TRUE"
     ),
     prefix = "rapp-negative-ignored-"
   )
@@ -156,7 +156,7 @@ test_that("boolean switches can disable negative aliases", {
   expect_true(any(grepl("--no-legacy", negative_help, fixed = TRUE)))
 })
 
-test_that("boolean switch aliases follow logical defaults", {
+test_that("boolean aliases follow logical defaults without consuming NA", {
   app_path <- local_rapp_app(
     c(
       "#!/usr/bin/env Rapp",
@@ -176,11 +176,15 @@ test_that("boolean switch aliases follow logical defaults", {
   )
 
   expect_output(
-    Rapp::run(app_path, c("--disabled", "--no-enabled", "--unknown")),
+    Rapp::run(app_path, character()),
+    "disabled=FALSE enabled=TRUE unknown=NA"
+  )
+  expect_output(
+    Rapp::run(app_path, c("--disabled", "--no-enabled", "--unknown", "true")),
     "disabled=TRUE enabled=FALSE unknown=TRUE"
   )
   expect_output(
-    Rapp::run(app_path, c("--no-unknown")),
+    Rapp::run(app_path, "--unknown=false"),
     "disabled=FALSE enabled=TRUE unknown=FALSE"
   )
 
@@ -189,7 +193,8 @@ test_that("boolean switch aliases follow logical defaults", {
   expect_false(any(grepl("--no-disabled", help, fixed = TRUE)))
   expect_false(any(grepl("--enabled", help, fixed = TRUE)))
   expect_true(any(grepl("--no-enabled", help, fixed = TRUE)))
-  expect_true(any(grepl("--unknown / --no-unknown", help, fixed = TRUE)))
+  expect_true(any(grepl("--unknown <UNKNOWN>", help, fixed = TRUE)))
+  expect_false(any(grepl("--no-unknown", help, fixed = TRUE)))
 
   expect_error(
     Rapp::run(app_path, "--no-disabled"),
@@ -204,6 +209,11 @@ test_that("boolean switch aliases follow logical defaults", {
   expect_error(
     Rapp::run(app_path, "--enabled=false"),
     "Arguments not recognized: --enabled=false",
+    fixed = TRUE
+  )
+  expect_error(
+    Rapp::run(app_path, "--no-unknown"),
+    "Arguments not recognized: --no-unknown",
     fixed = TRUE
   )
 })

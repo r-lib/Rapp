@@ -68,7 +68,7 @@ compact <- function(x) x[lengths(x) > 0]
 `%||%` <- function(x, y) if (is.null(x)) y else x
 `subtract<-` <- function(x, value) x - value
 
-is_bool_switch_default <- function(x) is.logical(x) && length(x) == 1L
+is_bool_switch_default <- function(x) identical(x, TRUE) || identical(x, FALSE)
 
 has_positive_alias <- function(opt) {
   stopifnot(identical(opt[["arg_type"]], "switch"))
@@ -76,9 +76,7 @@ has_positive_alias <- function(opt) {
   default <- opt[["default"]]
   stopifnot(is_bool_switch_default(default))
 
-  isFALSE(default) ||
-    isTRUE(is.na(default)) ||
-    isFALSE(opt[["negative_alias"]])
+  isFALSE(default) || isFALSE(opt[["negative_alias"]])
 }
 
 has_negative_alias <- function(opt) {
@@ -91,7 +89,7 @@ has_negative_alias <- function(opt) {
     return(!isFALSE(opt[["negative_alias"]]))
   }
 
-  isTRUE(default) || isTRUE(is.na(default))
+  isTRUE(default)
 }
 
 `append<-` <- function(x, after = NULL, value) {

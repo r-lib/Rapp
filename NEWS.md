@@ -1,8 +1,9 @@
 # Rapp (development version)
 
 -   Boolean switch aliases now follow logical defaults: `FALSE` exposes the
-    positive flag, `TRUE` exposes the generated `--no-*` flag, and `NA`
-    exposes both.
+    positive flag and `TRUE` exposes the generated `--no-*` flag. `NA` remains
+    a value-taking boolean option, so it can still indicate that an option was
+    not supplied.
 
 -   Boolean switches annotated with `#| negative_alias: false` no longer include
     or accept a generated `--no-*` alias (#24).

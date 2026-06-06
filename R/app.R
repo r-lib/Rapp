@@ -98,7 +98,7 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
     e <- exprs[[i]]
 
     # foo <- NULL   default positional arg  `APP <FOO>`
-    # foo <- <TRUE|FALSE|NA>   default switch, with aliases from default
+    # foo <- <TRUE|FALSE>   default switch, with aliases from default
     # foo <- <string|float|int literal>  default opt  `APP --foo val`
     # foo <- <c()|list()>   default opt with action: append   `APP --foo val1  --foo val2`
     #

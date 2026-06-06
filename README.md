@@ -108,10 +108,10 @@ flip-coin --n=1
 flip-coin --n 1
 ```
 
-Bool options, (that is, assignments of `TRUE`, `FALSE`, or `NA` in an R
-app) are a little different. They support usage as switches or toggles
-at the command line, and the default controls which aliases are exposed.
-For example in an R script:
+Assignments of `TRUE` or `FALSE` are a little different from other
+options. They support usage as switches or toggles at the command line,
+and the default controls which aliases are exposed. For example in an R
+script:
 
 ``` r
 echo <- TRUE
@@ -123,17 +123,18 @@ means that at the command line the negative alias is supported:
 my-app --no-echo     # FALSE
 ```
 
-With `echo <- FALSE`, the positive alias `--echo` is supported. With
-`echo <- NA`, both `--echo` and `--no-echo` are supported.
+With `echo <- FALSE`, the positive alias `--echo` is supported.
+Assignments of `NA` remain boolean options that take a value, so omitting
+`echo <- NA` leaves `echo` as `NA` and supplying `--echo true` or
+`--echo false` records the caller's choice.
 
 To omit the generated `--no-*` alias for a boolean switch, add
-`#| negative_alias: false` above the assignment. This is most useful for
-`NA` defaults:
+`#| negative_alias: false` above the assignment:
 
 ``` r
 #| description: Print version and exit.
 #| negative_alias: false
-version <- NA
+version <- TRUE
 ```
 
 Assigning `c()` or `list()` declares an option that can be supplied
@@ -358,7 +359,7 @@ command line arguments.
 | Assignment of `NULL`<br>`foo <- NULL` | Positional Arg<br>`APP foo-value` |
 | Assignment of `FALSE`<br>`foo <- FALSE` | Boolean switch<br>`APP --foo` |
 | Assignment of `TRUE`<br>`foo <- TRUE` | Boolean switch<br>`APP --no-foo` |
-| Assignment of `NA`<br>`foo <- NA` | Boolean switch<br>`APP --foo` or `APP --no-foo` |
+| Assignment of `NA`<br>`foo <- NA` | Boolean option<br>`APP --foo true` or `APP --foo false` |
 | Assignment of `c()` or `list()`<br>`foo <- c()` | Repeatable option<br>`APP --foo val1 --foo val2` |
 | Assignment of `NULL` to name with `...`<br>`args... <- NULL` | Positional Arg Collector<br>`APP foo bar baz` |
 | Switch with string literal<br>`switch("", cmd1 = {}, cmd2 = {})` | Commands<br>`APP cmd1 --help`<br>`APP cmd2 --help` |
