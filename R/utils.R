@@ -68,6 +68,8 @@ compact <- function(x) x[lengths(x) > 0]
 `%||%` <- function(x, y) if (is.null(x)) y else x
 `subtract<-` <- function(x, value) x - value
 
+has_negative_alias <- function(opt) !isFALSE(opt[["negative_alias"]])
+
 `append<-` <- function(x, after = NULL, value) {
   if (is.null(after)) c(x, value) else append(x, value, after)
 }

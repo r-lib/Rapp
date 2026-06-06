@@ -130,6 +130,15 @@ my-app --echo=false  # FALSE
 my-app --echo=0      # FALSE
 ```
 
+To omit the generated `--no-*` alias for a boolean switch, add
+`#| negative_alias: false` above the assignment:
+
+``` r
+#| description: Print version and exit.
+#| negative_alias: false
+version <- FALSE
+```
+
 Assigning `c()` or `list()` declares an option that can be supplied
 multiple times. Use `c()` when you want to keep the exact strings
 provided on the command line, and `list()` when you want Rapp to attempt
@@ -338,6 +347,8 @@ Other YAML fields you can supply to change the behavior of Rapp
 - `arg_type`: how the input appears on the CLI (`option`, `switch`, `positional`).
 - `action`: whether values replace or accumulate (`replace` vs `append` for
   repeatable options and collectors).
+- `negative_alias`: whether boolean switches include a generated `--no-*`
+  alias.
 
 ## Summary
 

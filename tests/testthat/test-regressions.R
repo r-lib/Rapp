@@ -98,3 +98,60 @@ test_that("leading variadic positional collectors accumulate args", {
 
   expect_output(Rapp::run(app_path, c("alpha", "beta", "gamma")), "ok")
 })
+
+test_that("boolean switches can disable negative aliases", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: version-app",
+      "#| description: Version printer.",
+      "",
+      "#| description: Print version and exit.",
+      "#| negative_alias: false",
+      "version <- FALSE",
+      "",
+      "if (version) cat('version-app 1.0.0\\n')"
+    ),
+    prefix = "rapp-no-negative-switch-"
+  )
+
+  expect_output(Rapp::run(app_path, "--version"), "version-app 1.0.0")
+
+  help <- capture.output(Rapp::run(app_path, "--help"))
+  expect_true(any(grepl("--version", help, fixed = TRUE)))
+  expect_false(any(grepl("--no-version", help, fixed = TRUE)))
+  expect_error(
+    Rapp::run(app_path, "--no-version"),
+    "Arguments not recognized: --no-version",
+    fixed = TRUE
+  )
+
+  true_default_app <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| description: Keep output wrapped.",
+      "#| negative_alias: false",
+      "wrap <- TRUE"
+    ),
+    prefix = "rapp-no-negative-default-true-"
+  )
+  true_default_help <- capture.output(Rapp::run(true_default_app, "--help"))
+  expect_false(any(grepl("--no-wrap", true_default_help, fixed = TRUE)))
+  expect_false(any(grepl(
+    "Enable with `--wrap`.",
+    true_default_help,
+    fixed = TRUE
+  )))
+
+  negative_app <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| description: Legacy spelling is ignored.",
+      "#| negative: false",
+      "legacy <- FALSE"
+    ),
+    prefix = "rapp-negative-ignored-"
+  )
+  negative_help <- capture.output(Rapp::run(negative_app, "--help"))
+  expect_true(any(grepl("--no-legacy", negative_help, fixed = TRUE)))
+})

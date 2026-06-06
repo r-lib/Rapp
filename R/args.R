@@ -91,8 +91,9 @@ process_args <- function(args, app) {
       # if flag not known, maybe this is a switch flag
       if (is.null(spec) && startsWith(a, "--no-")) {
         alt_name <- str_drop_prefix(name, "no_")
-        spec <- app_opts[[alt_name]]
-        if (!is.null(spec)) {
+        alt_spec <- app_opts[[alt_name]]
+        if (!is.null(alt_spec) && has_negative_alias(alt_spec)) {
+          spec <- alt_spec
           val <- "false"
           name <- alt_name
         }
@@ -198,9 +199,14 @@ process_args <- function(args, app) {
     }
 
     if (length(specs) < length(positional_args)) {
+      unknown_args <- if (length(specs)) {
+        positional_args[-seq_along(specs)]
+      } else {
+        positional_args
+      }
       stop(
         "Arguments not recognized: ",
-        paste0(positional_args[-seq_along(specs)], collapse = " ")
+        paste0(unknown_args, collapse = " ")
       )
     }
 

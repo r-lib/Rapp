@@ -1,5 +1,8 @@
 # Rapp (development version)
 
+-   Boolean switches annotated with `#| negative_alias: false` no longer include
+    or accept a generated `--no-*` alias (#24).
+
 # Rapp 0.3.0
 
 ## Breaking changes
@@ -26,4 +29,3 @@
 # Rapp 0.1.0
 
 -   Initial release
-

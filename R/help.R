@@ -177,8 +177,13 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
     } else if (identical(opt$arg_type, "switch")) {
       default_value <- format_default_value(opt$default)
       toggle_flag <- paste0("--no-", cli_name)
+      show_negative <- has_negative_alias(opt)
       toggle_note <- if (isTRUE(opt$default)) {
-        sprintf("Disable with `%s`.", toggle_flag)
+        if (show_negative) {
+          sprintf("Disable with `%s`.", toggle_flag)
+        } else {
+          character()
+        }
       } else {
         sprintf("Enable with `%s`.", paste0("--", cli_name))
       }
@@ -186,7 +191,9 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
         details <- c(details, sprintf("[default: %s]", default_value))
       }
       details <- c(details, toggle_note)
-      flag <- paste(flag, "/", toggle_flag)
+      if (show_negative) {
+        flag <- paste(flag, "/", toggle_flag)
+      }
     }
 
     if (identical(opt$action, "append")) {
