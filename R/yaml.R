@@ -1,14 +1,10 @@
 #' @export
-print.yaml <- function(x, file = "", ..., append = FALSE) {
-  out <- encode_yaml(x, ...)
-  for (f in file) {
-    cat(out, file = f, sep = "\n", append = append)
-  }
+print.rapp_yaml <- function(x, ...) {
+  out <- yaml12::format_yaml(x, ...)
+  writeLines(out)
 
   invisible(out)
 }
-
-read_yaml <- function(...) maybe_as_yaml(yaml12::read_yaml(...))
 
 parse_yaml <- function(...) maybe_as_yaml(yaml12::parse_yaml(...))
 
@@ -21,14 +17,6 @@ parse_hashpipe_yaml <- function(x, ...) {
 
 as_yaml <- function(x) maybe_as_yaml(as.list(x))
 
-encode_yaml <- function(x, ...) {
-  out <- yaml12::format_yaml(x, ...)
-  strsplit(out, "\n", fixed = TRUE)[[1L]]
-}
-
-# yaml <- function(...)
-#   as_yaml(rlang::dots_list(..., .named = TRUE))
-
 maybe_as_yaml <- function(x) {
   if (is.null(x)) {
     return(NULL)
@@ -37,30 +25,18 @@ maybe_as_yaml <- function(x) {
     x <- as.list(x)
   }
   if (is.list(x)) {
-    class(x) <- "yaml"
+    class(x) <- "rapp_yaml"
   }
   x
 }
 
 
-# no partial matching, preserve 'yaml' class on sublists
+# no partial matching, preserve 'rapp_yaml' class on sublists
 #' @export
-`$.yaml` <- function(x, ...) maybe_as_yaml(unclass(x)[[...]])
-
-#' @export
-`[[.yaml` <- function(x, ...) maybe_as_yaml(NextMethod())
+`$.rapp_yaml` <- function(x, ...) maybe_as_yaml(unclass(x)[[...]])
 
 #' @export
-`[.yaml` <- `[[.yaml`
+`[[.rapp_yaml` <- function(x, ...) maybe_as_yaml(NextMethod())
 
-# @importFrom utils str
-# str.yaml <- function(x, ...) {
-#   cat("YAML ")
-#   str(unclass(x), ...)
-# }
-
-# registerS3method("print", "yaml", print.yaml)
-# registerS3method("$", "yaml", `$.yaml`)
-# registerS3method("[[", "yaml", `[[.yaml`)
-# registerS3method("[", "yaml", `[.yaml`)
-# registerS3method("str", "yaml", str.yaml)
+#' @export
+`[.rapp_yaml` <- `[[.rapp_yaml`

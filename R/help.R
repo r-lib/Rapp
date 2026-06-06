@@ -86,7 +86,7 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   app <- as_app(app)
   if (yaml) {
     spec <- build_help_yaml_spec(app)
-    print.yaml(spec)
+    print(as_yaml(spec))
     return()
   }
   scope <- build_help_scope(app, command_path)
