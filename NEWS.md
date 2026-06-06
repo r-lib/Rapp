@@ -1,5 +1,7 @@
 # Rapp (development version)
 
+-   Running tests no longer modifies the user `PATH` on Windows.
+
 # Rapp 0.3.0
 
 ## Breaking changes
