@@ -10,7 +10,7 @@
       Options:
         -n, --flips <FLIPS>  Number of coin flips [default: 1] [type: integer]
         --sep <SEP>          [default: " "] [type: string]
-        --wrap / --no-wrap   [default: true] Disable with `--no-wrap`.
+        --no-wrap            [default: true] Disable with `--no-wrap`.
         --seed <SEED>        [default: NA] [type: integer]
 
 ---
@@ -102,14 +102,12 @@
       child2 command
       
       Options:
-        --child2-opt <CHILD2-OPT>       [default: "child2-default"] [type: string]
-        --child2-switch / --no-child2-switch  [default: false]
-                                        Enable with `--child2-switch`.
+        --child2-opt <CHILD2-OPT>  [default: "child2-default"] [type: string]
+        --child2-switch            [default: false] Enable with `--child2-switch`.
       
       Parent options:
-        --parent-opt <PARENT-OPT>       [default: "parent-default"] [type: string]
-        --parent-switch / --no-parent-switch  [default: true]
-                                        Disable with `--no-parent-switch`.
+        --parent-opt <PARENT-OPT>  [default: "parent-default"] [type: string]
+        --no-parent-switch         [default: true] Disable with `--no-parent-switch`.
       
       Global options:
         --top-opt <TOP-OPT>  [default: "top-default"] [type: string]

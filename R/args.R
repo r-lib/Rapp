@@ -14,7 +14,16 @@ process_args <- function(args, app) {
     short <- str_drop_prefix(short_opt, "-")
     for (i in seq_along(app_opts)) {
       if (identical(short, app_opts[[i]]$short)) {
-        return(paste0("--", names(app_opts)[[i]]))
+        if (identical(app_opts[[i]]$arg_type, "switch")) {
+          if (has_positive_alias(app_opts[[i]])) {
+            return(paste0("--", names(app_opts)[[i]]))
+          }
+          if (has_negative_alias(app_opts[[i]])) {
+            return(paste0("--no-", names(app_opts)[[i]]))
+          }
+        } else {
+          return(paste0("--", names(app_opts)[[i]]))
+        }
       }
     }
   }
@@ -81,18 +90,36 @@ process_args <- function(args, app) {
       name <- gsub("-", "_", name, fixed = TRUE)
       val <- str_drop_prefix(a, equals_idx)
       spec <- app_opts[[name]]
+      if (
+        !is.null(spec) &&
+          identical(spec$arg_type, "switch") &&
+          !has_positive_alias(spec)
+      ) {
+        spec <- NULL
+      }
     } else {
       # --name
       name <- str_drop_prefix(a, "--")
       name <- gsub("-", "_", name, fixed = TRUE)
 
       spec <- app_opts[[name]]
+      if (
+        !is.null(spec) &&
+          identical(spec$arg_type, "switch") &&
+          !has_positive_alias(spec)
+      ) {
+        spec <- NULL
+      }
 
       # if flag not known, maybe this is a switch flag
       if (is.null(spec) && startsWith(a, "--no-")) {
         alt_name <- str_drop_prefix(name, "no_")
         alt_spec <- app_opts[[alt_name]]
-        if (!is.null(alt_spec) && has_negative_alias(alt_spec)) {
+        if (
+          !is.null(alt_spec) &&
+            identical(alt_spec$arg_type, "switch") &&
+            has_negative_alias(alt_spec)
+        ) {
           spec <- alt_spec
           val <- "false"
           name <- alt_name

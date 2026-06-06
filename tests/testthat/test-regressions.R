@@ -148,10 +148,62 @@ test_that("boolean switches can disable negative aliases", {
       "#!/usr/bin/env Rapp",
       "#| description: Legacy spelling is ignored.",
       "#| negative: false",
-      "legacy <- FALSE"
+      "legacy <- NA"
     ),
     prefix = "rapp-negative-ignored-"
   )
   negative_help <- capture.output(Rapp::run(negative_app, "--help"))
   expect_true(any(grepl("--no-legacy", negative_help, fixed = TRUE)))
+})
+
+test_that("boolean switch aliases follow logical defaults", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "disabled <- FALSE",
+      "enabled <- TRUE",
+      "unknown <- NA",
+      "cat(",
+      "  sprintf(",
+      "    'disabled=%s enabled=%s unknown=%s\\n',",
+      "    disabled,",
+      "    enabled,",
+      "    unknown",
+      "  )",
+      ")"
+    ),
+    prefix = "rapp-bool-default-aliases-"
+  )
+
+  expect_output(
+    Rapp::run(app_path, c("--disabled", "--no-enabled", "--unknown")),
+    "disabled=TRUE enabled=FALSE unknown=TRUE"
+  )
+  expect_output(
+    Rapp::run(app_path, c("--no-unknown")),
+    "disabled=FALSE enabled=TRUE unknown=FALSE"
+  )
+
+  help <- capture.output(Rapp::run(app_path, "--help"))
+  expect_true(any(grepl("--disabled", help, fixed = TRUE)))
+  expect_false(any(grepl("--no-disabled", help, fixed = TRUE)))
+  expect_false(any(grepl("--enabled", help, fixed = TRUE)))
+  expect_true(any(grepl("--no-enabled", help, fixed = TRUE)))
+  expect_true(any(grepl("--unknown / --no-unknown", help, fixed = TRUE)))
+
+  expect_error(
+    Rapp::run(app_path, "--no-disabled"),
+    "Arguments not recognized: --no-disabled",
+    fixed = TRUE
+  )
+  expect_error(
+    Rapp::run(app_path, "--enabled"),
+    "Arguments not recognized: --enabled",
+    fixed = TRUE
+  )
+  expect_error(
+    Rapp::run(app_path, "--enabled=false"),
+    "Arguments not recognized: --enabled=false",
+    fixed = TRUE
+  )
 })

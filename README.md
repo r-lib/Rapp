@@ -108,35 +108,32 @@ flip-coin --n=1
 flip-coin --n 1
 ```
 
-Bool options, (that is, assignments of `TRUE` or `FALSE` in an R app)
-are a little different. They support usage as switches or toggles at the
-command line. For example in an R script:
+Bool options, (that is, assignments of `TRUE`, `FALSE`, or `NA` in an R
+app) are a little different. They support usage as switches or toggles
+at the command line, and the default controls which aliases are exposed.
+For example in an R script:
 
 ``` r
 echo <- TRUE
 ```
 
-means that at the command line the following are supported:
+means that at the command line the negative alias is supported:
 
 ``` r
-my-app --echo       # TRUE
-my-app --echo=yes   # TRUE
-my-app --echo=true  # TRUE
-my-app --echo=1     # TRUE
-
 my-app --no-echo     # FALSE
-my-app --echo=no     # FALSE
-my-app --echo=false  # FALSE
-my-app --echo=0      # FALSE
 ```
 
+With `echo <- FALSE`, the positive alias `--echo` is supported. With
+`echo <- NA`, both `--echo` and `--no-echo` are supported.
+
 To omit the generated `--no-*` alias for a boolean switch, add
-`#| negative_alias: false` above the assignment:
+`#| negative_alias: false` above the assignment. This is most useful for
+`NA` defaults:
 
 ``` r
 #| description: Print version and exit.
 #| negative_alias: false
-version <- FALSE
+version <- NA
 ```
 
 Assigning `c()` or `list()` declares an option that can be supplied
@@ -347,8 +344,8 @@ Other YAML fields you can supply to change the behavior of Rapp
 - `arg_type`: how the input appears on the CLI (`option`, `switch`, `positional`).
 - `action`: whether values replace or accumulate (`replace` vs `append` for
   repeatable options and collectors).
-- `negative_alias`: whether boolean switches include a generated `--no-*`
-  alias.
+- `negative_alias`: override whether boolean switches include a generated
+  `--no-*` alias.
 
 ## Summary
 
@@ -359,7 +356,9 @@ command line arguments.
 |----|----|
 | Assignment of scalar literal<br>`foo <- ""` | Option<br>`APP --foo value` |
 | Assignment of `NULL`<br>`foo <- NULL` | Positional Arg<br>`APP foo-value` |
-| Assignment of `TRUE` or `FALSE`<br>`foo <- TRUE` | Boolean switch<br>`APP --foo` or `APP --no-foo` |
+| Assignment of `FALSE`<br>`foo <- FALSE` | Boolean switch<br>`APP --foo` |
+| Assignment of `TRUE`<br>`foo <- TRUE` | Boolean switch<br>`APP --no-foo` |
+| Assignment of `NA`<br>`foo <- NA` | Boolean switch<br>`APP --foo` or `APP --no-foo` |
 | Assignment of `c()` or `list()`<br>`foo <- c()` | Repeatable option<br>`APP --foo val1 --foo val2` |
 | Assignment of `NULL` to name with `...`<br>`args... <- NULL` | Positional Arg Collector<br>`APP foo bar baz` |
 | Switch with string literal<br>`switch("", cmd1 = {}, cmd2 = {})` | Commands<br>`APP cmd1 --help`<br>`APP cmd2 --help` |
