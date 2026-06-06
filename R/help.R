@@ -17,7 +17,7 @@ sanitize_help_entries <- function(entries) {
     return(NULL)
   }
   lapply(entries, function(entry) {
-    entry$.val_pos_in_exprs <- NULL
+    entry[[".val_pos_in_exprs"]] <- NULL
     entry
   })
 }
@@ -36,10 +36,10 @@ build_help_command_specs <- function(commands) {
   }
   for (nm in names(commands)) {
     command <- commands[[nm]]
-    spec <- command$meta %||% list()
-    spec["options"] <- list(sanitize_help_entries(command$opts))
-    spec["arguments"] <- list(sanitize_help_entries(command$args))
-    spec["commands"] <- list(build_help_command_specs(command$commands))
+    spec <- command[["meta"]] %||% list()
+    spec["options"] <- list(sanitize_help_entries(command[["opts"]]))
+    spec["arguments"] <- list(sanitize_help_entries(command[["args"]]))
+    spec["commands"] <- list(build_help_command_specs(command[["commands"]]))
     commands[[nm]] <- spec
   }
   commands
@@ -49,11 +49,11 @@ build_help_scope <- function(app, command_path = character()) {
   app <- as_app(app)
 
   meta <- if (length(app$data)) {
-    prune_empty(as.list(unclass(app$data)))
+    prune_empty(app$data)
   }
 
   scope <- list(list(
-    name = app$data$name %||% basename(app$filepath),
+    name = app$data[["name"]] %||% basename(app$filepath),
     opts = app$opts,
     args = app$args,
     commands = app$commands %||% list(),
@@ -66,17 +66,17 @@ build_help_scope <- function(app, command_path = character()) {
     if (is.null(command)) {
       break
     }
-    command_meta <- if (!is.null(command$meta)) {
-      prune_empty(as.list(unclass(command$meta)))
+    command_meta <- if (!is.null(command[["meta"]])) {
+      prune_empty(command[["meta"]])
     }
     scope[[length(scope) + 1L]] <- list(
       name = cmd,
-      opts = command$opts,
-      args = command$args,
-      commands = command$commands %||% list(),
+      opts = command[["opts"]],
+      args = command[["args"]],
+      commands = command[["commands"]] %||% list(),
       meta = command_meta
     )
-    commands <- command$commands %||% list()
+    commands <- command[["commands"]] %||% list()
   }
 
   scope
@@ -86,7 +86,7 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   app <- as_app(app)
   if (yaml) {
     spec <- build_help_yaml_spec(app)
-    print(as_yaml(spec))
+    writeLines(yaml12::format_yaml(spec))
     return()
   }
   scope <- build_help_scope(app, command_path)
@@ -156,28 +156,28 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   }
   format_option_entry <- function(opt, name) {
     cli_name <- format_cli_name(name)
-    short_flag <- opt$short
+    short_flag <- opt[["short"]]
     flag <- paste0("--", cli_name)
     if (!is.null(short_flag) && nzchar(short_flag)) {
       flag <- paste0("-", short_flag, ", ", flag)
     }
 
-    description <- opt$description %||% character()
+    description <- opt[["description"]] %||% character()
     details <- character()
 
-    if (identical(opt$arg_type, "option")) {
+    if (identical(opt[["arg_type"]], "option")) {
       flag <- paste(flag, format_placeholder(name))
-      default_value <- format_default_value(opt$default)
+      default_value <- format_default_value(opt[["default"]])
       if (!is.null(default_value)) {
         details <- c(details, sprintf("[default: %s]", default_value))
       }
-      if (length(opt$val_type)) {
-        details <- c(details, sprintf("[type: %s]", opt$val_type))
+      if (length(opt[["val_type"]])) {
+        details <- c(details, sprintf("[type: %s]", opt[["val_type"]]))
       }
-    } else if (identical(opt$arg_type, "switch")) {
-      default_value <- format_default_value(opt$default)
+    } else if (identical(opt[["arg_type"]], "switch")) {
+      default_value <- format_default_value(opt[["default"]])
       toggle_flag <- paste0("--no-", cli_name)
-      toggle_note <- if (isTRUE(opt$default)) {
+      toggle_note <- if (isTRUE(opt[["default"]])) {
         sprintf("Disable with `%s`.", toggle_flag)
       } else {
         sprintf("Enable with `%s`.", paste0("--", cli_name))
@@ -189,7 +189,7 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
       flag <- paste(flag, "/", toggle_flag)
     }
 
-    if (identical(opt$action, "append")) {
+    if (identical(opt[["action"]], "append")) {
       details <- c(details, "May be supplied multiple times.")
     }
 
@@ -315,14 +315,14 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
     for (i in seq_along(args)) {
       arg <- args[[i]]
       name <- names(args)[[i]]
-      desc <- arg$description
+      desc <- arg[["description"]]
       if (!length(desc)) {
         next
       }
       label <- sub("^\\.\\.\\.|\\.\\.\\.$", "", name)
       label <- format_cli_name(label)
       placeholder <- format_placeholder(label)
-      if (isTRUE(arg$variadic) || grepl("\\.\\.\\.", name, fixed = TRUE)) {
+      if (isTRUE(arg[["variadic"]]) || grepl("\\.\\.\\.", name, fixed = TRUE)) {
         placeholder <- paste0(placeholder, "...")
       }
       entries[[length(entries) + 1L]] <- list(
@@ -345,8 +345,8 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
 
     entries <- lapply(command_names, function(name) {
       command <- commands[[name]]
-      meta <- command$meta %||% list()
-      label <- meta$title %||% meta$description %||% ""
+      meta <- command[["meta"]] %||% list()
+      label <- meta[["title"]] %||% meta[["description"]] %||% ""
       list(label = name, text = label)
     })
 
@@ -363,12 +363,12 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
         name <- names(args)[[i]]
         arg <- args[[i]]
         placeholder <- format_placeholder(name)
-        variadic <- isTRUE(arg$variadic) ||
+        variadic <- isTRUE(arg[["variadic"]]) ||
           grepl("\\.\\.\\.", name, fixed = TRUE)
         if (variadic) {
           placeholder <- paste0(placeholder, "...")
         }
-        required <- isTRUE(arg$required)
+        required <- isTRUE(arg[["required"]])
         if (required) {
           placeholder
         } else {
@@ -380,15 +380,15 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   }
 
   if (!is.null(app$launcher_name)) {
-    scope[[1]]$name <- app$launcher_name
+    scope[[1]][["name"]] <- app$launcher_name
   }
 
   current <- scope[[length(scope)]]
   root <- scope[[1]]
-  current_meta <- current$meta %||% list()
-  current_opts <- ensure_list(current$opts)
-  current_args <- ensure_list(current$args)
-  current_commands <- ensure_list(current$commands)
+  current_meta <- current[["meta"]] %||% list()
+  current_opts <- ensure_list(current[["opts"]])
+  current_args <- ensure_list(current[["args"]])
+  current_commands <- ensure_list(current[["commands"]])
 
   parent_scopes <- if (length(scope) > 2L) {
     scope[seq_len(length(scope) - 1L)][-1L]
@@ -396,9 +396,9 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
     list()
   }
   parent_opts <- flatten_scope_items(parent_scopes, "opts")
-  global_opts <- ensure_list(root$opts)
+  global_opts <- ensure_list(root[["opts"]])
 
-  app_name <- root$name %||% basename(app$filepath)
+  app_name <- root[["name"]] %||% basename(app$filepath)
   command_path <- if (length(scope) > 1L) {
     vapply(scope[-1L], `[[`, "", "name")
   } else {
@@ -420,8 +420,8 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   usage_components <- c(usage_components, build_usage_args(current_args))
   usage_line <- paste("Usage:", paste(usage_components, collapse = " "))
 
-  title <- current_meta$title
-  description <- current_meta$description
+  title <- current_meta[["title"]]
+  description <- current_meta[["description"]]
 
   if (length(scope) == 1L) {
     if (is.null(description) && is.null(title)) {

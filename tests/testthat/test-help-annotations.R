@@ -135,6 +135,26 @@ test_that("list-like annotations are parsed via yaml", {
   expect_identical(unclass(app$args$root$info), list("alpha", "beta"))
 })
 
+test_that("help metadata keys do not partially match", {
+  app_path <- local_rapp_script(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| title-extra: Do not use as title.",
+      "#| description-extra: Do not use as description.",
+      "",
+      "flag <- TRUE"
+    ),
+    prefix = "rapp-no-partial-meta-"
+  )
+
+  lines <- capture.output(Rapp::run(app_path, "--help"))
+  expect_match(lines[[1]], "^Usage: ")
+  expect_false(any(lines %in% c(
+    "Do not use as title.",
+    "Do not use as description."
+  )))
+})
+
 test_that("launcher name is used in help when provided", {
   withr::local_envvar(RAPP_LAUNCHER_NAME = "launcher-test")
   lines <- help_lines_from_script(

@@ -13,7 +13,7 @@ process_args <- function(args, app) {
   short_opt_to_long_opt <- function(short_opt) {
     short <- str_drop_prefix(short_opt, "-")
     for (i in seq_along(app_opts)) {
-      if (identical(short, app_opts[[i]]$short)) {
+      if (identical(short, app_opts[[i]][["short"]])) {
         return(paste0("--", names(app_opts)[[i]]))
       }
     }
@@ -48,13 +48,13 @@ process_args <- function(args, app) {
     if (arg_type == "command") {
       # in the R space, names are always snake_case
       # in the app spec, names are always kebab-case
-      app$exprs[[app_commands$.val_pos_in_exprs]] <- to_snake_case(a)
+      app$exprs[[app_commands[[".val_pos_in_exprs"]]]] <- to_snake_case(a)
       a <- to_kebab_case(a)
       command <- app_commands[[a]]
-      append(app_opts) <- command$opts
-      append(app_args) <- command$args
+      append(app_opts) <- command[["opts"]]
+      append(app_args) <- command[["args"]]
       command_path <- c(command_path, a)
-      app_commands <- command$commands
+      app_commands <- command[["commands"]]
       next
     }
 
@@ -107,7 +107,7 @@ process_args <- function(args, app) {
     }
 
     if (is.null(val)) {
-      if (identical(spec$arg_type, "switch")) {
+      if (identical(spec[["arg_type"]], "switch")) {
         val <- "true"
       } else {
         # arg_type == "option"
@@ -116,7 +116,7 @@ process_args <- function(args, app) {
     }
 
     mode <- switch(
-      spec$val_type,
+      spec[["val_type"]],
       "string" = "character",
       "bool" = "logical",
       "float" = "double",
@@ -149,17 +149,17 @@ process_args <- function(args, app) {
     }
 
     # val can be NULL
-    if (identical(spec$action, "append")) {
-      expr <- app$exprs[[spec$.val_pos_in_exprs]]
+    if (identical(spec[["action"]], "append")) {
+      expr <- app$exprs[[spec[[".val_pos_in_exprs"]]]]
       if (!is.call(expr)) {
         expr <- if (isTRUE(is.na(expr))) expr <- quote(c()) else call("c", expr)
       }
       expr[[length(expr) + 1L]] <- val
-      app$exprs[[spec$.val_pos_in_exprs]] <- expr
+      app$exprs[[spec[[".val_pos_in_exprs"]]]] <- expr
       next
     }
 
-    app$exprs[[spec$.val_pos_in_exprs]] <- val
+    app$exprs[[spec[[".val_pos_in_exprs"]]]] <- val
   }
 
   if (length(positional_args) || length(app_args)) {
@@ -180,18 +180,18 @@ process_args <- function(args, app) {
     }
 
     if (length(collector)) {
-      specs[[collector]]$variadic <- TRUE
-      specs[[collector]]$action <- "append"
+      specs[[collector]][["variadic"]] <- TRUE
+      specs[[collector]][["action"]] <- "append"
       n_short <- length(positional_args) - length(specs)
       if (n_short < 0) {
         # If a collector is present but there aren't enough positional args,
         # drop the collector slot only when it's not explicitly required.
-        if (!isTRUE(specs[[collector]]$required)) {
+        if (!isTRUE(specs[[collector]][["required"]])) {
           specs[[collector]] <- NULL
         }
       } else if (n_short > 0) {
         collector_spec <- specs[collector]
-        collector_spec[[1]]$action <- "append"
+        collector_spec[[1]][["action"]] <- "append"
         append(specs, after = collector) <-
           rep(collector_spec, n_short)
       }
@@ -206,7 +206,7 @@ process_args <- function(args, app) {
 
     if (length(specs) != length(positional_args)) {
       for (i in rev(seq_along(specs))) {
-        if (isFALSE(specs[[i]]$required)) {
+        if (isFALSE(specs[[i]][["required"]])) {
           specs[[i]] <- NULL
         }
         if (length(specs) == length(positional_args)) break
@@ -223,10 +223,12 @@ process_args <- function(args, app) {
 
     for (i in seq_along(positional_args)) {
       spec <- specs[[i]]
-      if (identical(spec$action, "append")) {
-        append_arg(app$exprs[[spec$.val_pos_in_exprs]]) <- positional_args[[i]]
+      if (identical(spec[["action"]], "append")) {
+        append_arg(
+          app$exprs[[spec[[".val_pos_in_exprs"]]]]
+        ) <- positional_args[[i]]
       } else {
-        app$exprs[[spec$.val_pos_in_exprs]] <- positional_args[[i]]
+        app$exprs[[spec[[".val_pos_in_exprs"]]]] <- positional_args[[i]]
       }
     }
   }

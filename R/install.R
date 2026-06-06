@@ -236,8 +236,8 @@ rapp_install_dir <- function() {
 launcher_path <- function(app_path, destdir) {
   data <- get_app_data(app_path)
   name <-
-    data$launcher$name %||%
-    data$name %||%
+    data[["launcher"]][["name"]] %||%
+    data[["name"]] %||%
     sub("\\.[rR]$", "", basename(app_path))
   switch(
     .Platform$OS.type,
@@ -256,16 +256,16 @@ launcher_contents <- function(app_path, package) {
 
   app_data <- get_app_data(app_path)
   launcher_name <-
-    app_data$launcher$name %||%
-    app_data$name %||%
+    app_data[["launcher"]][["name"]] %||%
+    app_data[["name"]] %||%
     sub("\\.[rR]$", "", basename(app_path))
   # if (!nzchar(launcher_name) || !grepl("^[[:alnum:]_-]+$", launcher_name)) {
   #   stop("Launcher name must match ^[[:alnum:]_-]+$")
   # }
 
-  rscript_opts <- app_data$launcher
+  rscript_opts <- app_data[["launcher"]]
 
-  default_packages <- rscript_opts$default_packages %||% c("base", package)
+  default_packages <- rscript_opts[["default_packages"]] %||% c("base", package)
   default_packages <- if (length(default_packages)) {
     shQuote(sprintf(
       "--default-packages=%s",
@@ -277,13 +277,13 @@ launcher_contents <- function(app_path, package) {
 
   # assemble rscript opts
   rscript_opts <- c(
-    if (isTRUE(rscript_opts$vanilla)) "--vanilla",
-    if (isTRUE(rscript_opts$`no-environ`)) "--no-environ",
-    if (isTRUE(rscript_opts$`no-site-file`)) "--no-site-file",
-    if (isTRUE(rscript_opts$`no-init-file`)) "--no-init-file",
-    if (isTRUE(rscript_opts$restore)) "--restore",
-    if (isTRUE(rscript_opts$save)) "--save",
-    if (isTRUE(rscript_opts$verbose)) "--verbose",
+    if (isTRUE(rscript_opts[["vanilla"]])) "--vanilla",
+    if (isTRUE(rscript_opts[["no-environ"]])) "--no-environ",
+    if (isTRUE(rscript_opts[["no-site-file"]])) "--no-site-file",
+    if (isTRUE(rscript_opts[["no-init-file"]])) "--no-init-file",
+    if (isTRUE(rscript_opts[["restore"]])) "--restore",
+    if (isTRUE(rscript_opts[["save"]])) "--save",
+    if (isTRUE(rscript_opts[["verbose"]])) "--verbose",
     default_packages
   )
   rscript_opts <- paste0(rscript_opts, collapse = " ")
