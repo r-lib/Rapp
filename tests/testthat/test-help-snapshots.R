@@ -63,30 +63,14 @@ withr::local_envvar(R_PROFILE_USER = pkg_profile, .local_envir = snapshot_env)
 destdir <- tempfile("rapp-help-bin")
 dir.create(destdir, recursive = TRUE, showWarnings = FALSE)
 withr::defer(unlink(destdir, recursive = TRUE), envir = snapshot_env)
-
-old_no_modify <- Sys.getenv("RAPP_NO_MODIFY_PATH", unset = NA_character_)
-Sys.setenv("RAPP_NO_MODIFY_PATH" = "1")
-withr::defer(
-  {
-    if (is.na(old_no_modify)) {
-      Sys.unsetenv("RAPP_NO_MODIFY_PATH")
-    } else {
-      Sys.setenv("RAPP_NO_MODIFY_PATH", old_no_modify)
-    }
-  },
-  envir = snapshot_env
-)
-
-withr::with_envvar(c("RAPP_NO_MODIFY_PATH" = "1"), {
-  suppressMessages(Rapp::install_pkg_cli_apps(
-    pkg,
-    destdir = destdir,
-    lib.loc = fake[["lib"]],
-    overwrite = TRUE
-  ))
-})
-
 withr::local_path(destdir, .local_envir = snapshot_env)
+
+suppressMessages(Rapp::install_pkg_cli_apps(
+  pkg,
+  destdir = destdir,
+  lib.loc = fake[["lib"]],
+  overwrite = TRUE
+))
 
 test_that("--help snapshots", {
   expect_snapshot(write_cli_output("flip-coin", "--help"))

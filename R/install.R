@@ -473,17 +473,20 @@ ensure_path_windows <- function(destdir = rapp_install_dir()) {
   if (Sys.getenv("RAPP_NO_MODIFY_PATH") != "") {
     return(FALSE)
   }
-  stopifnot(.Platform$OS.type == "windows")
+  stopifnot(is_windows())
   destdir <- normalizePath(destdir, winslash = "\\", mustWork = TRUE)
 
   # Check if we're already on PATH. If we are, do nothing
+  path_norm <- function(x) tolower(normalizePath(x, mustWork = FALSE))
+  present <- path_norm(destdir) %in% path_norm(split_path(Sys.getenv("PATH")))
+  if (present) {
+    return(FALSE)
+  }
+
   # Read current PATH from HKCU\Environment
   path <- get_env_win_registry("Path")
-  path <- strsplit(path, ";", fixed = TRUE)[[1L]]
-  path <- path[nzchar(path)]
-  path <- unique(path)
+  path <- split_path(path)
 
-  path_norm <- function(x) tolower(normalizePath(x, mustWork = FALSE))
   present <- path_norm(destdir) %in% path_norm(path)
   if (present) {
     return(FALSE)
@@ -508,6 +511,11 @@ ensure_path_windows <- function(destdir = rapp_install_dir()) {
   ))
   args <- c("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script)
   system2("powershell", args)
+}
+
+split_path <- function(path) {
+  path <- strsplit(path, ";", fixed = TRUE)[[1L]]
+  unique(path[nzchar(path)])
 }
 
 get_env_win_registry <- function(name) {
