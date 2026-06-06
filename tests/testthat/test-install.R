@@ -214,8 +214,7 @@ test_that("non-Rapp executables respect overwrite flag", {
 
 
 test_that("front matter customises launcher options", {
-  Sys.setenv("RAPP_NO_MODIFY_PATH" = "1")
-  on.exit(Sys.unsetenv("RAPP_NO_MODIFY_PATH"), add = TRUE)
+  withr::local_envvar(RAPP_NO_MODIFY_PATH = "1")
 
   pkg <- "rappTestFront"
   fake <- setup_fake_rapp_package(
