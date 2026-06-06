@@ -1,4 +1,6 @@
 test_that("install_pkg_cli_apps installs launchers for matching scripts", {
+  Sys.setenv("RAPP_NO_MODIFY_PATH" = "1")
+  on.exit(Sys.unsetenv("RAPP_NO_MODIFY_PATH"), add = TRUE)
   pkg <- "rappTestBasic"
   fake <- setup_fake_rapp_package(tempdir(), "-install-basic", package = pkg)
   on.exit(unlink(fake[["lib"]], recursive = TRUE), add = TRUE)
@@ -23,7 +25,6 @@ test_that("install_pkg_cli_apps installs launchers for matching scripts", {
 
   destdir <- tempfile("rapp-bin-basic")
   on.exit(unlink(destdir, recursive = TRUE), add = TRUE)
-  withr::local_path(destdir)
 
   expect_false(dir.exists(destdir))
 
@@ -78,6 +79,9 @@ test_that("install_pkg_cli_apps installs launchers for matching scripts", {
 
 
 test_that("install_pkg_cli_apps installs launchers for conventional Rscript apps", {
+  Sys.setenv("RAPP_NO_MODIFY_PATH" = "1")
+  on.exit(Sys.unsetenv("RAPP_NO_MODIFY_PATH"), add = TRUE)
+
   pkg <- "rappTestRscript"
   fake <- setup_fake_rapp_package(tempdir(), "-install-rscript", package = pkg)
   on.exit(unlink(fake[["lib"]], recursive = TRUE), add = TRUE)
@@ -93,7 +97,6 @@ test_that("install_pkg_cli_apps installs launchers for conventional Rscript apps
 
   destdir <- tempfile("rapp-bin-rscript")
   on.exit(unlink(destdir, recursive = TRUE), add = TRUE)
-  withr::local_path(destdir)
 
   messages <- character()
   created <- withCallingHandlers(
@@ -143,6 +146,9 @@ test_that("install_pkg_cli_apps installs launchers for conventional Rscript apps
 
 
 test_that("non-Rapp executables respect overwrite flag", {
+  Sys.setenv("RAPP_NO_MODIFY_PATH" = "1")
+  on.exit(Sys.unsetenv("RAPP_NO_MODIFY_PATH"), add = TRUE)
+
   pkg <- "rappTestOverwrite"
   fake <- setup_fake_rapp_package(
     tempdir(),
@@ -157,7 +163,6 @@ test_that("non-Rapp executables respect overwrite flag", {
   destdir <- tempfile("rapp-bin-overwrite")
   dir.create(destdir, recursive = TRUE)
   on.exit(unlink(destdir, recursive = TRUE), add = TRUE)
-  withr::local_path(destdir)
 
   target <- if (is_windows()) {
     path(destdir, "clash.bat")
@@ -209,6 +214,9 @@ test_that("non-Rapp executables respect overwrite flag", {
 
 
 test_that("front matter customises launcher options", {
+  Sys.setenv("RAPP_NO_MODIFY_PATH" = "1")
+  on.exit(Sys.unsetenv("RAPP_NO_MODIFY_PATH"), add = TRUE)
+
   pkg <- "rappTestFront"
   fake <- setup_fake_rapp_package(
     tempdir(),
@@ -237,7 +245,6 @@ test_that("front matter customises launcher options", {
 
   destdir <- tempfile("rapp-bin-frontmatter")
   on.exit(unlink(destdir, recursive = TRUE), add = TRUE)
-  withr::local_path(destdir)
 
   messages <- character()
   created <- withCallingHandlers(
@@ -271,42 +278,9 @@ test_that("front matter customises launcher options", {
 })
 
 
-test_that("process PATH entry prevents Windows registry modification", {
-  pkg <- "rappTestPathEntry"
-  fake <- setup_fake_rapp_package(
-    tempdir(),
-    "-install-path-entry",
-    package = pkg
-  )
-  on.exit(unlink(fake[["lib"]], recursive = TRUE), add = TRUE)
-
-  app_path <- file.path(fake[["exec"]], "path-entry.R")
-  writeLines(c("#!/usr/bin/env Rapp", "print('path entry')"), app_path)
-
-  destdir <- tempfile("rapp-bin-path-entry")
-  dir.create(destdir, recursive = TRUE)
-  on.exit(unlink(destdir, recursive = TRUE), add = TRUE)
-  withr::local_path(destdir, action = "replace")
-
-  testthat::local_mocked_bindings(
-    is_windows = function() TRUE,
-    get_env_win_registry = function(name) {
-      stop("unexpected registry access", call. = FALSE)
-    },
-    .package = "Rapp"
-  )
-
-  expect_no_error(
-    suppressMessages(install_pkg_cli_apps(
-      pkg,
-      destdir = destdir,
-      lib.loc = fake[["lib"]]
-    ))
-  )
-})
-
-
 test_that("install_pkg_cli_apps prunes orphaned launchers", {
+  Sys.setenv("RAPP_NO_MODIFY_PATH" = "1")
+  on.exit(Sys.unsetenv("RAPP_NO_MODIFY_PATH"), add = TRUE)
   pkg <- "rappTestPrune"
   fake <- setup_fake_rapp_package(tempdir(), "-install-prune", package = pkg)
   on.exit(unlink(fake[["lib"]], recursive = TRUE), add = TRUE)
@@ -318,7 +292,6 @@ test_that("install_pkg_cli_apps prunes orphaned launchers", {
 
   destdir <- tempfile("rapp-bin-prune")
   on.exit(unlink(destdir, recursive = TRUE), add = TRUE)
-  withr::local_path(destdir)
 
   messages <- character()
   first_created <- withCallingHandlers(

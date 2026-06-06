@@ -59,6 +59,10 @@ profile_lines <- c(
 writeLines(profile_lines, pkg_profile)
 withr::defer(unlink(pkg_profile), envir = snapshot_env)
 withr::local_envvar(R_PROFILE_USER = pkg_profile, .local_envir = snapshot_env)
+withr::local_envvar(
+  c("RAPP_NO_MODIFY_PATH" = "1"),
+  .local_envir = snapshot_env
+)
 
 destdir <- tempfile("rapp-help-bin")
 dir.create(destdir, recursive = TRUE, showWarnings = FALSE)
