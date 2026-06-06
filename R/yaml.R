@@ -8,9 +8,9 @@ print.yaml <- function(x, file = "", ..., append = FALSE) {
   invisible(out)
 }
 
-read_yaml <- function(...) maybe_as_yaml(yaml::read_yaml(...))
+read_yaml <- function(...) maybe_as_yaml(yaml12::read_yaml(...))
 
-parse_yaml <- function(...) maybe_as_yaml(yaml::yaml.load(...))
+parse_yaml <- function(...) maybe_as_yaml(yaml12::parse_yaml(...))
 
 parse_hashpipe_yaml <- function(x, ...) {
   x <- sub("^[ \t]+", "", x, perl = TRUE)
@@ -21,12 +21,8 @@ parse_hashpipe_yaml <- function(x, ...) {
 
 as_yaml <- function(x) maybe_as_yaml(as.list(x))
 
-encode_yaml <- function(x, ..., precision = 16L, handlers = list()) {
-  handlers[["complex"]] <- as.character
-  out <- do.call(
-    yaml::as.yaml,
-    list(x, ..., precision = precision, handlers = handlers)
-  )
+encode_yaml <- function(x, ...) {
+  out <- yaml12::format_yaml(x, ...)
   strsplit(out, "\n", fixed = TRUE)[[1L]]
 }
 

@@ -23,7 +23,7 @@ switch(
   help = {}
 )
 
-# cat(yaml::as.yaml(as.list(environment())))
+# cat(yaml12::format_yaml(as.list(environment())))
 print(as.list(environment(), all.names = TRUE))
 print(loadedNamespaces()) # confirm only base,Rapp,compiler
 

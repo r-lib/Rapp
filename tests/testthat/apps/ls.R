@@ -2,7 +2,7 @@
 #| name: ls-r
 #| description: List files matching chained regular expressions.
 
-# c() means, option that can be supplied multiple times. c() does no parsing / yaml interpertation
+# c() means, option that can be supplied multiple times. c() does no parsing / YAML interpretation
 #| short: p
 #| description: Regular expression filter, the union of multiple matches is returned.
 pattern <- c()
@@ -23,5 +23,5 @@ paths <- sort(unique(unlist(
 
 env <- as.list.environment(environment())
 env$root <- NULL
-cat(yaml::as.yaml(env))
+writeLines(yaml12::format_yaml(env))
 # writeLines(paths)

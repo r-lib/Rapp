@@ -16,7 +16,7 @@ switch(
     #| description: Maximum number of entries to display (-1 for all).
     limit <- 30L
 
-    tasks <- if (file.exists(store)) yaml::read_yaml(store) else list()
+    tasks <- if (file.exists(store)) yaml12::read_yaml(store) else list()
     if (!length(tasks)) {
       cat("No tasks yet.\n")
     } else {
@@ -37,7 +37,7 @@ switch(
       stop("Please supply a task description.", call. = FALSE)
     }
 
-    tasks <- if (file.exists(store)) yaml::read_yaml(store) else list()
+    tasks <- if (file.exists(store)) yaml12::read_yaml(store) else list()
     if (is.null(tasks)) {
       tasks <- list()
     }
@@ -45,7 +45,7 @@ switch(
       tasks <- as.list(tasks)
     }
     tasks[[length(tasks) + 1L]] <- task
-    yaml::write_yaml(tasks, store)
+    yaml12::write_yaml(tasks, store)
     cat("Added:", task, "\n")
   },
 
@@ -56,7 +56,7 @@ switch(
     #| short: i
     index <- 1L
 
-    tasks <- if (file.exists(store)) yaml::read_yaml(store) else list()
+    tasks <- if (file.exists(store)) yaml12::read_yaml(store) else list()
     if (is.null(tasks)) {
       tasks <- list()
     }
@@ -73,7 +73,7 @@ switch(
 
     task <- tasks[[index]]
     tasks[[index]] <- NULL
-    yaml::write_yaml(tasks, store)
+    yaml12::write_yaml(tasks, store)
     cat("Completed:", task, "\n")
   },
 

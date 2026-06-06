@@ -98,3 +98,16 @@ test_that("leading variadic positional collectors accumulate args", {
 
   expect_output(Rapp::run(app_path, c("alpha", "beta", "gamma")), "ok")
 })
+
+test_that("YAML 1.2 strings are preserved in parsed option values", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "value <- list()"
+    ),
+    prefix = "rapp-yaml12-"
+  )
+
+  env <- Rapp::run(app_path, c("--value", "no"))
+  expect_identical(env$value, list("no"))
+})
