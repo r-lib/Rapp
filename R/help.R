@@ -544,8 +544,9 @@ eval_help_yaml_calls <- function(x) {
 }
 
 format_help_yaml <- function(spec) {
-  yaml <- yaml12::format_yaml(mark_help_yaml_nonfinite(spec))
-  replacements <- help_yaml_nonfinite_replacements()
+  sentinels <- help_yaml_nonfinite_sentinels(spec)
+  yaml <- yaml12::format_yaml(mark_help_yaml_nonfinite(spec, sentinels))
+  replacements <- help_yaml_nonfinite_replacements(sentinels)
   for (sentinel in names(replacements)) {
     yaml <- gsub(
       sprintf("\"%s\"", sentinel),
@@ -557,39 +558,80 @@ format_help_yaml <- function(spec) {
   yaml
 }
 
-mark_help_yaml_nonfinite <- function(x) {
+mark_help_yaml_nonfinite <- function(x, sentinels) {
   if (is.list(x)) {
-    return(lapply(x, mark_help_yaml_nonfinite))
+    return(lapply(x, mark_help_yaml_nonfinite, sentinels = sentinels))
   }
   if (is.double(x) && any(is.nan(x) | is.infinite(x))) {
     if (length(x) == 1L) {
-      return(help_yaml_nonfinite_sentinel(x))
+      return(help_yaml_nonfinite_sentinel(x, sentinels))
     }
-    return(lapply(unname(as.list(x)), mark_help_yaml_nonfinite))
+    return(lapply(
+      unname(as.list(x)),
+      mark_help_yaml_nonfinite,
+      sentinels = sentinels
+    ))
   }
   x
 }
 
-help_yaml_nonfinite_sentinel <- function(value) {
-  stopifnot(
-    is.double(value),
-    length(value) == 1L,
-    is.nan(value) || is.infinite(value)
-  )
-  if (is.nan(value)) {
-    return("@@RAPP_YAML_NONFINITE_NAN@@")
-  }
-  if (value > 0) {
-    "@@RAPP_YAML_NONFINITE_INF@@"
-  } else {
-    "@@RAPP_YAML_NONFINITE_NEG_INF@@"
+help_yaml_nonfinite_sentinels <- function(spec) {
+  existing <- help_yaml_strings(spec)
+  labels <- c(inf = "INF", neg_inf = "NEG_INF", nan = "NAN")
+  i <- 0L
+  repeat {
+    prefix <- if (i == 0L) {
+      "@@RAPP_YAML_NONFINITE"
+    } else {
+      sprintf("@@RAPP_YAML_NONFINITE_%d", i)
+    }
+    sentinels <- paste0(prefix, "_", labels, "@@")
+    names(sentinels) <- names(labels)
+    if (!any(sentinels %in% existing)) {
+      return(sentinels)
+    }
+    i <- i + 1L
   }
 }
 
-help_yaml_nonfinite_replacements <- function() {
-  c(
-    "@@RAPP_YAML_NONFINITE_INF@@" = ".inf",
-    "@@RAPP_YAML_NONFINITE_NEG_INF@@" = "-.inf",
-    "@@RAPP_YAML_NONFINITE_NAN@@" = ".nan"
+help_yaml_strings <- function(x) {
+  strings <- names(x) %||% character()
+  if (is.list(x)) {
+    for (value in x) {
+      strings <- c(strings, help_yaml_strings(value))
+    }
+    return(strings)
+  }
+  if (is.character(x)) {
+    strings <- c(strings, x)
+  }
+  strings
+}
+
+help_yaml_nonfinite_sentinel <- function(value, sentinels) {
+  stopifnot(
+    is.double(value),
+    length(value) == 1L,
+    is.nan(value) || is.infinite(value),
+    is.character(sentinels),
+    all(c("inf", "neg_inf", "nan") %in% names(sentinels))
   )
+  if (is.nan(value)) {
+    return(sentinels[["nan"]])
+  }
+  if (value > 0) {
+    sentinels[["inf"]]
+  } else {
+    sentinels[["neg_inf"]]
+  }
+}
+
+help_yaml_nonfinite_replacements <- function(sentinels) {
+  stopifnot(
+    is.character(sentinels),
+    all(c("inf", "neg_inf", "nan") %in% names(sentinels))
+  )
+  replacements <- c(".inf", "-.inf", ".nan")
+  names(replacements) <- sentinels
+  replacements
 }

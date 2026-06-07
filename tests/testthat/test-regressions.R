@@ -178,6 +178,37 @@ test_that("YAML help preserves non-finite numeric defaults", {
   expect_true(is.nan(spec[["options"]][["bad"]][["default"]]))
 })
 
+test_that("YAML help preserves strings matching non-finite sentinels", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| sentinel: \"@@RAPP_YAML_NONFINITE_INF@@\"",
+      "limit <- Inf",
+      "string_inf <- \"@@RAPP_YAML_NONFINITE_INF@@\"",
+      "string_neg_inf <- \"@@RAPP_YAML_NONFINITE_NEG_INF@@\"",
+      "string_nan <- \"@@RAPP_YAML_NONFINITE_NAN@@\""
+    ),
+    prefix = "rapp-yaml-non-finite-sentinel-"
+  )
+
+  spec <- yaml12::parse_yaml(capture.output(Rapp::run(app_path, "--help-yaml")))
+
+  expect_identical(spec[["sentinel"]], "@@RAPP_YAML_NONFINITE_INF@@")
+  expect_identical(spec[["options"]][["limit"]][["default"]], Inf)
+  expect_identical(
+    spec[["options"]][["string_inf"]][["default"]],
+    "@@RAPP_YAML_NONFINITE_INF@@"
+  )
+  expect_identical(
+    spec[["options"]][["string_neg_inf"]][["default"]],
+    "@@RAPP_YAML_NONFINITE_NEG_INF@@"
+  )
+  expect_identical(
+    spec[["options"]][["string_nan"]][["default"]],
+    "@@RAPP_YAML_NONFINITE_NAN@@"
+  )
+})
+
 test_that("YAML help preserves non-finite metadata without rewriting text", {
   app_path <- local_rapp_app(
     c(
