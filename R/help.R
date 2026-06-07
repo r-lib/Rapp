@@ -544,27 +544,52 @@ eval_help_yaml_calls <- function(x) {
 }
 
 format_help_yaml <- function(spec) {
-  yaml <- yaml12::format_yaml(mark_help_yaml_nan(spec))
-  yaml <- gsub("(?m)(:[ \t]*)-inf$", "\\1-.inf", yaml, perl = TRUE)
-  yaml <- gsub("(?m)(:[ \t]*)inf$", "\\1.inf", yaml, perl = TRUE)
-  gsub(
-    sprintf("\"%s\"", help_yaml_nan_sentinel()),
-    ".nan",
-    yaml,
-    fixed = TRUE
-  )
+  yaml <- yaml12::format_yaml(mark_help_yaml_nonfinite(spec))
+  replacements <- help_yaml_nonfinite_replacements()
+  for (sentinel in names(replacements)) {
+    yaml <- gsub(
+      sprintf("\"%s\"", sentinel),
+      replacements[[sentinel]],
+      yaml,
+      fixed = TRUE
+    )
+  }
+  yaml
 }
 
-mark_help_yaml_nan <- function(x) {
+mark_help_yaml_nonfinite <- function(x) {
   if (is.list(x)) {
-    return(lapply(x, mark_help_yaml_nan))
+    return(lapply(x, mark_help_yaml_nonfinite))
   }
-  if (is.double(x) && length(x) == 1L && is.nan(x)) {
-    return(help_yaml_nan_sentinel())
+  if (is.double(x) && any(is.nan(x) | is.infinite(x))) {
+    if (length(x) == 1L) {
+      return(help_yaml_nonfinite_sentinel(x))
+    }
+    return(lapply(unname(as.list(x)), mark_help_yaml_nonfinite))
   }
   x
 }
 
-help_yaml_nan_sentinel <- function() {
-  "@@RAPP_YAML_NONFINITE_NAN@@"
+help_yaml_nonfinite_sentinel <- function(value) {
+  stopifnot(
+    is.double(value),
+    length(value) == 1L,
+    is.nan(value) || is.infinite(value)
+  )
+  if (is.nan(value)) {
+    return("@@RAPP_YAML_NONFINITE_NAN@@")
+  }
+  if (value > 0) {
+    "@@RAPP_YAML_NONFINITE_INF@@"
+  } else {
+    "@@RAPP_YAML_NONFINITE_NEG_INF@@"
+  }
+}
+
+help_yaml_nonfinite_replacements <- function() {
+  c(
+    "@@RAPP_YAML_NONFINITE_INF@@" = ".inf",
+    "@@RAPP_YAML_NONFINITE_NEG_INF@@" = "-.inf",
+    "@@RAPP_YAML_NONFINITE_NAN@@" = ".nan"
+  )
 }
