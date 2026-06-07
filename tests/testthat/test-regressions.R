@@ -133,6 +133,7 @@ test_that("YAML help records typed NA defaults as null", {
   expect_null(defaults[["real"]])
   expect_null(defaults[["character"]])
 
+  # YAML null is enough because val_type carries the declared input type.
   expect_false(any(vapply(
     spec[["options"]],
     function(option) "default_type" %in% names(option),
