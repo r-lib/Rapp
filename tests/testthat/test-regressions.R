@@ -159,3 +159,23 @@ test_that("YAML help serializes complex defaults as strings", {
 
   expect_identical(spec[["options"]][["z"]][["default"]], "0+1i")
 })
+
+test_that("YAML help keeps generated keys when metadata names collide", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| options: metadata-options",
+      "#| arguments: metadata-arguments",
+      "#| commands: metadata-commands",
+      "flag <- TRUE",
+      "arg <- NULL"
+    ),
+    prefix = "rapp-yaml-duplicate-help-"
+  )
+
+  spec <- yaml12::parse_yaml(capture.output(Rapp::run(app_path, "--help-yaml")))
+
+  expect_identical(spec[["options"]][["flag"]][["arg_type"]], "switch")
+  expect_identical(spec[["arguments"]][["arg"]][["arg_type"]], "positional")
+  expect_null(spec[["commands"]])
+})

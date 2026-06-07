@@ -2,13 +2,14 @@ build_help_yaml_spec <- function(app) {
   opts <- sanitize_help_entries(app$opts)
   args <- sanitize_help_entries(app$args)
   commands <- build_help_command_specs(app$commands)
+  generated <- list(
+    options = opts,
+    arguments = args,
+    commands = commands
+  )
   c(
-    app$data,
-    list(
-      options = opts,
-      arguments = args,
-      commands = commands
-    )
+    app$data[setdiff(names(app$data), names(generated))],
+    generated
   )
 }
 
