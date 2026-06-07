@@ -531,10 +531,12 @@ eval_help_yaml_calls <- function(x) {
     x,
     function(value) {
       if (is.call(value)) {
-        eval(value, envir = baseenv())
-      } else {
-        value
+        value <- eval(value, envir = baseenv())
       }
+      if (is.complex(value)) {
+        value <- as.character(value)
+      }
+      value
     },
     how = "replace"
   )

@@ -145,3 +145,17 @@ test_that("YAML help records typed NA defaults as null", {
   expect_identical(val_types[["real"]], "float")
   expect_identical(val_types[["character"]], "string")
 })
+
+test_that("YAML help serializes complex defaults as strings", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "z <- 1i"
+    ),
+    prefix = "rapp-yaml-complex-"
+  )
+
+  spec <- yaml12::parse_yaml(capture.output(Rapp::run(app_path, "--help-yaml")))
+
+  expect_identical(spec[["options"]][["z"]][["default"]], "0+1i")
+})
