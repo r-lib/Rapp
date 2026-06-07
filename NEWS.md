@@ -6,6 +6,10 @@
     option values are strings, not boolean aliases; use `true`/`false`,
     `1`/`0`, or switch forms such as `--flag` and `--no-flag`.
 
+## Bug fixes
+
+-   Running tests no longer modifies the user `PATH` on Windows (#26).
+
 # Rapp 0.3.0
 
 ## Breaking changes
