@@ -1,5 +1,11 @@
 # Rapp (development version)
 
+## Breaking changes
+
+-   Rapp now parses YAML with YAML 1.2 semantics. Bare `yes` and `no`
+    option values are strings, not boolean aliases; use `true`/`false`,
+    `1`/`0`, or switch forms such as `--flag` and `--no-flag`.
+
 # Rapp 0.3.0
 
 ## Breaking changes
@@ -26,4 +32,3 @@
 # Rapp 0.1.0
 
 -   Initial release
-

@@ -120,15 +120,17 @@ means that at the command line the following are supported:
 
 ``` r
 my-app --echo       # TRUE
-my-app --echo=yes   # TRUE
 my-app --echo=true  # TRUE
 my-app --echo=1     # TRUE
 
 my-app --no-echo     # FALSE
-my-app --echo=no     # FALSE
 my-app --echo=false  # FALSE
 my-app --echo=0      # FALSE
 ```
+
+Rapp parses option values as YAML 1.2, where bare `yes` and `no` are
+strings rather than boolean aliases. Use `true`/`false`, `1`/`0`, or the
+switch forms shown above for boolean values.
 
 Assigning `c()` or `list()` declares an option that can be supplied
 multiple times. Use `c()` when you want to keep the exact strings
