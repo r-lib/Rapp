@@ -146,7 +146,6 @@
           action: replace
         seed:
           default: ~
-          default_type: integer
           val_type: integer
           arg_type: option
           action: replace

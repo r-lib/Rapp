@@ -18,23 +18,8 @@ sanitize_help_entries <- function(entries) {
   }
   lapply(entries, function(entry) {
     entry[[".val_pos_in_exprs"]] <- NULL
-    entry <- annotate_help_default_type(entry)
     entry
   })
-}
-
-annotate_help_default_type <- function(entry) {
-  default <- entry[["default"]]
-  if (!is.atomic(default) || length(default) != 1L || !is.na(default)) {
-    return(entry)
-  }
-
-  entry[["default_type"]] <- entry[["val_type"]]
-  entry[c(
-    "default",
-    "default_type",
-    setdiff(names(entry), c("default", "default_type"))
-  )]
 }
 
 build_help_command_specs <- function(commands) {

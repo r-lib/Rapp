@@ -112,7 +112,7 @@ test_that("YAML 1.2 strings are preserved in parsed option values", {
   expect_identical(env$value, list("no"))
 })
 
-test_that("YAML help records typed NA defaults as null with a type field", {
+test_that("YAML help records typed NA defaults as null", {
   app_path <- local_rapp_app(
     c(
       "#!/usr/bin/env Rapp",
@@ -126,15 +126,21 @@ test_that("YAML help records typed NA defaults as null with a type field", {
 
   spec <- yaml12::parse_yaml(capture.output(Rapp::run(app_path, "--help-yaml")))
   defaults <- lapply(spec[["options"]], `[[`, "default")
-  default_types <- lapply(spec[["options"]], `[[`, "default_type")
+  val_types <- lapply(spec[["options"]], `[[`, "val_type")
 
   expect_null(defaults[["unset"]])
   expect_null(defaults[["integer"]])
   expect_null(defaults[["real"]])
   expect_null(defaults[["character"]])
 
-  expect_identical(default_types[["unset"]], "bool")
-  expect_identical(default_types[["integer"]], "integer")
-  expect_identical(default_types[["real"]], "float")
-  expect_identical(default_types[["character"]], "string")
+  expect_false(any(vapply(
+    spec[["options"]],
+    function(option) "default_type" %in% names(option),
+    logical(1)
+  )))
+
+  expect_identical(val_types[["unset"]], "bool")
+  expect_identical(val_types[["integer"]], "integer")
+  expect_identical(val_types[["real"]], "float")
+  expect_identical(val_types[["character"]], "string")
 })
