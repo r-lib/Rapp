@@ -160,6 +160,24 @@ test_that("YAML help serializes complex defaults as strings", {
   expect_identical(spec[["options"]][["z"]][["default"]], "0+1i")
 })
 
+test_that("YAML help preserves non-finite numeric defaults", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "limit <- Inf",
+      "floor <- -Inf",
+      "bad <- NaN"
+    ),
+    prefix = "rapp-yaml-non-finite-"
+  )
+
+  spec <- yaml12::parse_yaml(capture.output(Rapp::run(app_path, "--help-yaml")))
+
+  expect_identical(spec[["options"]][["limit"]][["default"]], Inf)
+  expect_identical(spec[["options"]][["floor"]][["default"]], -Inf)
+  expect_true(is.nan(spec[["options"]][["bad"]][["default"]]))
+})
+
 test_that("YAML help keeps generated keys when metadata names collide", {
   app_path <- local_rapp_app(
     c(

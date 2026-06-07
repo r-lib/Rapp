@@ -88,7 +88,7 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   if (yaml) {
     spec <- build_help_yaml_spec(app)
     spec <- eval_help_yaml_calls(spec)
-    writeLines(yaml12::format_yaml(spec))
+    writeLines(format_help_yaml(spec))
     return()
   }
   scope <- build_help_scope(app, command_path)
@@ -541,4 +541,30 @@ eval_help_yaml_calls <- function(x) {
     },
     how = "replace"
   )
+}
+
+format_help_yaml <- function(spec) {
+  yaml <- yaml12::format_yaml(mark_help_yaml_nan(spec))
+  yaml <- gsub("(?m)(:[ \t]*)-inf$", "\\1-.inf", yaml, perl = TRUE)
+  yaml <- gsub("(?m)(:[ \t]*)inf$", "\\1.inf", yaml, perl = TRUE)
+  gsub(
+    sprintf("\"%s\"", help_yaml_nan_sentinel()),
+    ".nan",
+    yaml,
+    fixed = TRUE
+  )
+}
+
+mark_help_yaml_nan <- function(x) {
+  if (is.list(x)) {
+    return(lapply(x, mark_help_yaml_nan))
+  }
+  if (is.double(x) && length(x) == 1L && is.nan(x)) {
+    return(help_yaml_nan_sentinel())
+  }
+  x
+}
+
+help_yaml_nan_sentinel <- function() {
+  "@@RAPP_YAML_NONFINITE_NAN@@"
 }
