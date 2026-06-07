@@ -86,6 +86,7 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   app <- as_app(app)
   if (yaml) {
     spec <- build_help_yaml_spec(app)
+    spec <- eval_help_yaml_calls(spec)
     writeLines(yaml12::format_yaml(spec))
     return()
   }
@@ -523,4 +524,18 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   }
   writeLines(sections)
   return()
+}
+
+eval_help_yaml_calls <- function(x) {
+  rapply(
+    x,
+    function(value) {
+      if (is.call(value)) {
+        eval(value, envir = baseenv())
+      } else {
+        value
+      }
+    },
+    how = "replace"
+  )
 }
