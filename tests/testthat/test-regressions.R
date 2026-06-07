@@ -111,3 +111,24 @@ test_that("YAML 1.2 strings are preserved in parsed option values", {
   env <- Rapp::run(app_path, c("--value", "no"))
   expect_identical(env$value, list("no"))
 })
+
+test_that("YAML help preserves typed NA defaults", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "unset <- NA",
+      "integer <- NA_integer_",
+      "real <- NA_real_",
+      "character <- NA_character_"
+    ),
+    prefix = "rapp-yaml-na-"
+  )
+
+  spec <- yaml12::parse_yaml(capture.output(Rapp::run(app_path, "--help-yaml")))
+  defaults <- lapply(spec[["options"]], `[[`, "default")
+
+  expect_identical(defaults[["unset"]], ".na")
+  expect_identical(defaults[["integer"]], ".na.integer")
+  expect_identical(defaults[["real"]], ".na.real")
+  expect_identical(defaults[["character"]], ".na.character")
+})
