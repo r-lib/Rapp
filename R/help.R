@@ -18,8 +18,23 @@ sanitize_help_entries <- function(entries) {
   }
   lapply(entries, function(entry) {
     entry[[".val_pos_in_exprs"]] <- NULL
+    entry <- annotate_help_default_type(entry)
     entry
   })
+}
+
+annotate_help_default_type <- function(entry) {
+  default <- entry[["default"]]
+  if (!is.atomic(default) || length(default) != 1L || !is.na(default)) {
+    return(entry)
+  }
+
+  entry[["default_type"]] <- entry[["val_type"]]
+  entry[c(
+    "default",
+    "default_type",
+    setdiff(names(entry), c("default", "default_type"))
+  )]
 }
 
 build_help_command_specs <- function(commands) {
@@ -86,7 +101,8 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   app <- as_app(app)
   if (yaml) {
     spec <- build_help_yaml_spec(app)
-    writeLines(format_help_yaml_spec(spec))
+    spec <- eval_help_yaml_calls(spec)
+    writeLines(yaml12::format_yaml(spec))
     return()
   }
   scope <- build_help_scope(app, command_path)
@@ -537,43 +553,4 @@ eval_help_yaml_calls <- function(x) {
     },
     how = "replace"
   )
-}
-
-format_help_yaml_spec <- function(x) {
-  x <- eval_help_yaml_calls(x)
-  x <- encode_help_yaml_na(x)
-  decode_help_yaml_na(yaml12::format_yaml(x))
-}
-
-encode_help_yaml_na <- function(x) {
-  if (is.list(x)) {
-    return(lapply(x, encode_help_yaml_na))
-  }
-
-  if (!is.atomic(x) || length(x) != 1L || !is.na(x)) {
-    return(x)
-  }
-
-  switch(
-    typeof(x),
-    "logical" = "\001RAPP_NA_LOGICAL\001",
-    "integer" = "\001RAPP_NA_INTEGER\001",
-    "double" = "\001RAPP_NA_REAL\001",
-    "character" = "\001RAPP_NA_CHARACTER\001",
-    x
-  )
-}
-
-decode_help_yaml_na <- function(x) {
-  markers <- c(
-    '"\\u0001RAPP_NA_LOGICAL\\u0001"' = ".na",
-    '"\\u0001RAPP_NA_INTEGER\\u0001"' = ".na.integer",
-    '"\\u0001RAPP_NA_REAL\\u0001"' = ".na.real",
-    '"\\u0001RAPP_NA_CHARACTER\\u0001"' = ".na.character"
-  )
-
-  for (marker in names(markers)) {
-    x <- gsub(marker, markers[[marker]], x, fixed = TRUE)
-  }
-  x
 }

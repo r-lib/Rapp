@@ -145,7 +145,8 @@
           arg_type: switch
           action: replace
         seed:
-          default: .na.integer
+          default: ~
+          default_type: integer
           val_type: integer
           arg_type: option
           action: replace
