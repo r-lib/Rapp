@@ -7,9 +7,9 @@
     bool options still accept YAML 1.1 bool aliases such as `yes`, `no`,
     `y`, `n`, `on`, and `off` for backward compatibility.
 -   Rapp now checks parsed command line values against declared option
-    types instead of coercing them. For example, integer options no
-    longer accept float or logical values such as `10.2` or `true`
-    (#18).
+    types instead of coercing them. Integer options no longer accept
+    float or logical values such as `10.2` or `true`; float options still
+    accept integer values (#18).
 
 ## New features
 
