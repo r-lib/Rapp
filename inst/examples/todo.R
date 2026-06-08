@@ -11,7 +11,7 @@
 store <- ".todo.yml"
 
 switch(
-  command <- "",
+  command <- NULL,
 
   #| title: Display the todos
   #| description: Print the contents of the todo list.

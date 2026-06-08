@@ -81,6 +81,15 @@ is_command_switch <- function(e) {
   typeof(switch_expr) == "character" || is_simple_assignment_call(switch_expr)
 }
 
+command_switch_help_on_missing <- function(switch_expr) {
+  if (is.character(switch_expr)) {
+    return(identical(switch_expr, ""))
+  }
+
+  stopifnot(is_simple_assignment_call(switch_expr))
+  is.null(switch_expr[[3L]])
+}
+
 .simple_call_syms <-
   c("+", "-", "c", "character", "integer", "double", "numeric")
 
@@ -117,6 +126,7 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
       if (length(commands)) {
         stop("Only one app command switch() block allowed per expression level")
       }
+      switch_expr <- e[[2L]]
       branches <- as.list(e)[-(1:2)]
       if (".val_pos_in_exprs" %in% names(branches)) {
         stop('command name ".val_pos_in_exprs" not permitted.')
@@ -136,9 +146,10 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
         }
       )
       names(commands) <- gsub("_", "-", names(commands), fixed = TRUE)
-      switch_expr <- e[[2L]]
       commands$.val_pos_in_exprs <-
         c(pos, i, 2L, if (is.call(switch_expr)) 3L)
+      attr(commands, "help_on_missing_command") <-
+        command_switch_help_on_missing(switch_expr)
 
       next
     }

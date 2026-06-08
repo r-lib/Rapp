@@ -77,11 +77,14 @@ arguments, and commands. The sections below cover the supported patterns.
 
 ### Help
 
-All Rapps comes with built-in flags for help.
+All Rapps come with built-in flags for help.
 
 -   `--help` shows usage, description, and options for the app (and for subcommands
     when used after a command, e.g., `todo list --help`).
 -   `--help-yaml` prints machine-readable metadata for the app as YAML.
+
+If an app or command requires a subcommand, omitting the subcommand prints
+the same help as `--help`.
 
 ### Options
 
@@ -212,11 +215,13 @@ This changes the usage to `Usage: greet [<NAME>]` (with brackets).
 ### Commands
 
 Use a `switch()` statement whose first argument is either a character
-scalar or an assignment (for example `switch("")` or
-`switch(command <- "", ...)`) to declare commands. The corresponding
-branch runs when the matching command is supplied on the command line.
-Declare command specific options and positional arguments with the same
-rules inside the branch.
+scalar or an assignment to declare commands. Use `switch("")` or
+`switch(command <- NULL, ...)` when a command is required; if no command
+is supplied, Rapp prints help for the current command level. Use
+`switch(command <- "", ...)` when running without a command is allowed.
+The corresponding branch runs when the matching command is supplied on
+the command line. Declare command specific options and positional
+arguments with the same rules inside the branch.
 
 ``` r
 #!/usr/bin/env Rapp

@@ -16,6 +16,95 @@ test_that("simple app uses defaults without args", {
   expect_identical(env$global_opt, "global_opt_default")
 })
 
+test_that("missing literal command switch prints help", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: required-command-test",
+      "#| description: Exercise missing command help.",
+      "",
+      "switch('',",
+      "  #| title: List entries",
+      "  list = { cat('list called\\n') }",
+      ")"
+    ),
+    prefix = "rapp-required-command-"
+  )
+
+  lines <- capture.output(result <- Rapp::run(app_path, character()))
+
+  expect_null(result)
+  expect_true(any(grepl(
+    "Usage: required-command-test <COMMAND>",
+    lines,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Commands:", lines, fixed = TRUE)))
+  expect_true(any(grepl("list", lines, fixed = TRUE)))
+})
+
+test_that("missing NULL command assignment prints help", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: null-command-test",
+      "#| description: Exercise missing command help.",
+      "",
+      "switch(command <- NULL,",
+      "  #| title: List entries",
+      "  list = { cat(command, '\\n', sep = '') }",
+      ")"
+    ),
+    prefix = "rapp-null-command-"
+  )
+
+  lines <- capture.output(result <- Rapp::run(app_path, character()))
+
+  expect_null(result)
+  expect_true(any(grepl(
+    "Usage: null-command-test <COMMAND>",
+    lines,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Commands:", lines, fixed = TRUE)))
+  expect_true(any(grepl("list", lines, fixed = TRUE)))
+
+  run_lines <- capture.output(env <- Rapp::run(app_path, "list"))
+  expect_identical(run_lines, "list")
+  expect_identical(env$command, "list")
+})
+
+test_that("missing nested command prints scoped help", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: nested-required-command-test",
+      "",
+      "switch('',",
+      "  #| title: Parent command",
+      "  parent = {",
+      "    switch('',",
+      "      #| title: Child command",
+      "      child = { cat('child called\\n') }",
+      "    )",
+      "  }",
+      ")"
+    ),
+    prefix = "rapp-nested-required-command-"
+  )
+
+  lines <- capture.output(result <- Rapp::run(app_path, "parent"))
+
+  expect_null(result)
+  expect_true(any(grepl(
+    "Usage: nested-required-command-test parent <COMMAND>",
+    lines,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Commands:", lines, fixed = TRUE)))
+  expect_true(any(grepl("child", lines, fixed = TRUE)))
+})
+
 test_that("global option is recognised before and after a command", {
   env_pre <- capture_simple_env(c("--global-opt", "override", "cmd1"))
   env_post <- capture_simple_env(c("cmd1", "--global-opt", "late"))

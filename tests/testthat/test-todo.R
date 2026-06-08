@@ -33,6 +33,14 @@ test_that("todo help output", {
   )
 })
 
+test_that("todo without a command prints help", {
+  lines <- run_todo_app()
+
+  expect_true(any(grepl("Todo manager", lines, fixed = TRUE)))
+  expect_true(any(grepl("Usage: todo [OPTIONS] <COMMAND>", lines, fixed = TRUE)))
+  expect_true(any(grepl("Commands:", lines, fixed = TRUE)))
+})
+
 test_that("todo commands update the store", {
   store <- tempfile(fileext = ".yml")
   on.exit(unlink(store), add = TRUE)

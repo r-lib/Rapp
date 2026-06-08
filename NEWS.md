@@ -13,6 +13,9 @@
 
 ## New features
 
+-   Apps that declare a required command with `switch("")` or
+    `switch(command <- NULL, ...)` now print scoped help when the command
+    is omitted (#21).
 -   `#| examples` annotations now add usage examples to `--help` output
     (#23).
 
