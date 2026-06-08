@@ -277,6 +277,48 @@ test_that("front matter customises launcher options", {
 })
 
 
+test_that("launcher front matter accepts kebab-case option names", {
+  withr::local_envvar(RAPP_NO_MODIFY_PATH = "1")
+
+  pkg <- "rappTestLauncherKebab"
+  fake <- setup_fake_rapp_package(
+    tempdir(),
+    "-install-launcher-kebab",
+    package = pkg
+  )
+  on.exit(unlink(fake[["lib"]], recursive = TRUE), add = TRUE)
+
+  app_path <- file.path(fake[["exec"]], "kebab.R")
+  writeLines(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| launcher:",
+      "#|   default-packages: [stats]",
+      "print('launcher kebab test')"
+    ),
+    app_path
+  )
+
+  destdir <- tempfile("rapp-bin-launcher-kebab")
+  on.exit(unlink(destdir, recursive = TRUE), add = TRUE)
+
+  created <- suppressMessages(
+    install_pkg_cli_apps(pkg, destdir = destdir, lib.loc = fake[["lib"]])
+  )
+
+  expected_launcher <- if (is_windows()) {
+    path(destdir, "kebab.bat")
+  } else {
+    path(destdir, "kebab")
+  }
+  expect_same_path(created, expected_launcher)
+
+  exec_line <- tail(readLines(expected_launcher), 1L)
+  expect_true(grepl("--default-packages=stats", exec_line, fixed = TRUE))
+  expect_false(grepl(paste0("base,", pkg), exec_line, fixed = TRUE))
+})
+
+
 test_that("launcher-like front matter keys do not partially match", {
   withr::local_envvar(RAPP_NO_MODIFY_PATH = "1")
 

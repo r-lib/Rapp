@@ -57,6 +57,10 @@ get_app_data <- function(app) {
     structure(list(), names = character())
   }
 
+  if (!is.null(data[["launcher"]])) {
+    data[["launcher"]] <- normalize_anno_keys(data[["launcher"]])
+  }
+
   data
 }
 
