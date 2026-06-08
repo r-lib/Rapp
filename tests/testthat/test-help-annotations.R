@@ -68,6 +68,52 @@ test_that("short-like annotation keys do not partially match", {
   expect_false(any(grepl("-x, --option <OPTION>", lines, fixed = TRUE)))
 })
 
+test_that("repeated example annotations appear in help", {
+  lines <- c(
+    "#!/usr/bin/env Rapp",
+    "#| name: italyparl",
+    "switch('',",
+    "  #| title: Parliamentary bills",
+    "  #| description: Search bills from Camera or Senato.",
+    "  #| example: italyparl bills --approved --camera cd",
+    "  #| example: italyparl bills --keyword energia --camera sn --format json",
+    "  bills = {",
+    "    #| description: cd or sn",
+    "    #| example: italyparl bills --camera sn",
+    "    camera <- 'cd'",
+    "    #| description: Only approved bills",
+    "    approved <- FALSE",
+    "  }",
+    ")"
+  )
+
+  help <- help_lines_from_script(
+    lines,
+    command_path = "bills",
+    prefix = "rapp-examples-"
+  )
+
+  examples <- help[seq(
+    which(help == "Examples:") + 1L,
+    length.out = 3L
+  )]
+  expect_identical(examples, c(
+    "  italyparl bills --approved --camera cd",
+    "  italyparl bills --keyword energia --camera sn --format json",
+    "  italyparl bills --camera sn"
+  ))
+
+  yaml <- yaml12::parse_yaml(help_lines_from_script(
+    lines,
+    format = "yaml",
+    prefix = "rapp-examples-yaml-"
+  ))
+  expect_identical(yaml$commands$bills$example, c(
+    "italyparl bills --approved --camera cd",
+    "italyparl bills --keyword energia --camera sn --format json"
+  ))
+})
+
 test_that("required-like annotation keys do not partially match", {
   app_path <- local_rapp_script(
     c(

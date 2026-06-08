@@ -354,6 +354,35 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
 
     format_labeled_block(entries)
   }
+  format_example_values <- function(x) {
+    if (is.null(x)) {
+      return(character())
+    }
+    as.character(unlist(x, use.names = FALSE))
+  }
+  collect_entry_examples <- function(entries) {
+    entries <- ensure_list(entries)
+    if (!length(entries)) {
+      return(character())
+    }
+    unlist(
+      lapply(entries, function(entry) {
+        format_example_values(entry[["example"]])
+      }),
+      use.names = FALSE
+    )
+  }
+  format_example_block <- function(scope) {
+    examples <- c(
+      format_example_values((scope$meta %||% list())[["example"]]),
+      collect_entry_examples(scope$opts),
+      collect_entry_examples(scope$args)
+    )
+    if (!length(examples)) {
+      return(character())
+    }
+    wrap_lines(examples, indent = 2L, exdent = 2L)
+  }
   build_usage_args <- function(args) {
     args <- ensure_list(args)
     if (!length(args)) {
@@ -502,6 +531,16 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
       "",
       "Arguments:",
       argument_block
+    )
+  }
+
+  example_block <- format_example_block(current)
+  if (length(example_block)) {
+    sections <- c(
+      sections,
+      "",
+      "Examples:",
+      example_block
     )
   }
 

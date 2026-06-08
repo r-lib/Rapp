@@ -7,6 +7,11 @@
     bool options still accept YAML 1.1 bool aliases such as `yes`, `no`,
     `y`, `n`, `on`, and `off` for backward compatibility.
 
+## New features
+
+-   `#| example` annotations now add usage examples to `--help` output
+    (#23).
+
 ## Bug fixes
 
 -   Running tests no longer modifies the user `PATH` on Windows (#26).
