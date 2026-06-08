@@ -128,27 +128,30 @@ process_args <- function(args, app) {
     # right now, a val like [1,2,3] gets parsed and is injected as a
     # length 3 integer vector.
     # Decide if this needs a guardrail or paving and signage.
-
-    # Try coerce to the R type, but if coercion fails, e.g.:
-    # Warning in as.vector("1a", "integer") : NAs introduced by coercion
-    # Then keep the original yaml parsed val as is.
-    # NAs cannot be injected from cli args via regular yaml,
-    # NAs are sentinals users can use to check if an opt was supplied.
-    # (but anything is possible with '!expr ...')
     if (identical(spec$val_type, "bool")) {
       val <- normalize_bool_cli_value(val)
     }
     if (mode != "character") {
-      tryCatch(
-        {
-          val <- parse_yaml(val)
-          if (!is.na(coerced_val <- as.vector(val, mode))) {
-            val <- coerced_val
-          }
-        },
-        error = identity,
-        warning = identity
-      )
+      received_val <- val
+      val <- if (mode == "any") {
+        tryCatch(parse_yaml(val), error = function(e) received_val)
+      } else {
+        parse_yaml(val, simplify = TRUE)
+      }
+      if (mode == "double" && identical(typeof(val), "integer")) {
+        val <- as.vector(val, mode)
+      }
+      if (mode != "any" && !identical(typeof(val), mode)) {
+        stop(
+          sprintf(
+            "Invalid value for --%s: expected %s, received %s.",
+            to_kebab_case(name),
+            spec$val_type,
+            encodeString(received_val, quote = '"')
+          ),
+          call. = FALSE
+        )
+      }
     }
 
     # val can be NULL

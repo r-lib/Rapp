@@ -161,6 +161,72 @@ test_that("YAML 1.1 bool aliases stay strings for parsed non-bool options", {
   expect_identical(env$value, list("on", "off", "y", "n"))
 })
 
+test_that("any options keep raw strings when YAML parsing fails", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "value <- list()"
+    ),
+    prefix = "rapp-any-invalid-yaml-"
+  )
+
+  env <- Rapp::run(
+    app_path,
+    c("--value", "[not closed", "--value", "{ok: true}")
+  )
+  expect_identical(env$value, list("[not closed", list(ok = TRUE)))
+})
+
+test_that("integer options require YAML integer values", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "flips <- 1L"
+    ),
+    prefix = "rapp-lossy-integer-"
+  )
+
+  env <- Rapp::run(app_path, c("--flips", "2"))
+  expect_identical(env$flips, 2L)
+
+  expect_snapshot(error = TRUE, Rapp::run(app_path, c("--flips", "10.2")))
+  expect_snapshot(error = TRUE, Rapp::run(app_path, c("--flips", "TRUE")))
+})
+
+test_that("float options accept YAML integer values", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "rate <- 0.25"
+    ),
+    prefix = "rapp-float-integer-"
+  )
+
+  env <- Rapp::run(app_path, c("--rate", "1"))
+  expect_identical(env$rate, 1)
+})
+
+test_that("typed options accept YAML sequences with matching values", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "flips <- 1L",
+      "rate <- 0.25",
+      "flags <- FALSE"
+    ),
+    prefix = "rapp-typed-sequence-"
+  )
+
+  env <- Rapp::run(app_path, c("--flips", "[1, 2]"))
+  expect_identical(env$flips, c(1L, 2L))
+
+  env <- Rapp::run(app_path, c("--rate", "[1, 2.5]"))
+  expect_identical(env$rate, c(1, 2.5))
+
+  env <- Rapp::run(app_path, "--flags=[true, false]")
+  expect_identical(env$flags, c(TRUE, FALSE))
+})
+
 test_that("YAML help records typed NA defaults as null", {
   app_path <- local_rapp_app(
     c(
