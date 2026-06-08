@@ -50,6 +50,43 @@ test_that("short annotation values stay character", {
   expect_true(any(grepl("-1, --option <OPTION>", lines, fixed = TRUE)))
 })
 
+test_that("short-like annotation keys do not partially match", {
+  app_path <- local_rapp_script(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: short-extra-test",
+      "",
+      "#| short-extra: x",
+      "#| description: Example option.",
+      "option <- \"\""
+    ),
+    prefix = "rapp-short-extra-"
+  )
+
+  lines <- capture.output(Rapp::run(app_path, "--help"))
+  expect_true(any(grepl("--option <OPTION>", lines, fixed = TRUE)))
+  expect_false(any(grepl("-x, --option <OPTION>", lines, fixed = TRUE)))
+})
+
+test_that("required-like annotation keys do not partially match", {
+  app_path <- local_rapp_script(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: required-extra-test",
+      "",
+      "#| required-extra: false",
+      "name <- NULL",
+      "cat(name, '\\n')"
+    ),
+    prefix = "rapp-required-extra-"
+  )
+
+  expect_error(
+    Rapp::run(app_path, character()),
+    "Missing required argument: NAME"
+  )
+})
+
 test_that("help output lists option defaults, types, and toggle hints", {
   build_help <- function(option_block, prefix) {
     help_lines_from_script(

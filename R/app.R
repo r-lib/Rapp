@@ -241,14 +241,14 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
     # annotated otherwise. This applies both to NULL-initialized
     # positionals and those explicitly marked via `#| arg-type: positional`.
     if (
-      identical(arg[["arg_type"]], "positional") &&
+      identical(arg$arg_type, "positional") &&
         is.null(arg[["required"]]) &&
         !(endsWith(name, "...") || startsWith(name, "..."))
     ) {
-      arg[["required"]] <- TRUE
+      arg$required <- TRUE
     }
 
-    if (identical(arg[["arg_type"]], "positional")) {
+    if (identical(arg$arg_type, "positional")) {
       args[[name]] <- arg
     } else {
       opts[[name]] <- arg

@@ -277,6 +277,58 @@ test_that("front matter customises launcher options", {
 })
 
 
+test_that("launcher-like front matter keys do not partially match", {
+  withr::local_envvar(RAPP_NO_MODIFY_PATH = "1")
+
+  pkg <- "rappTestLauncherExtra"
+  fake <- setup_fake_rapp_package(
+    tempdir(),
+    "-install-launcher-extra",
+    package = pkg
+  )
+  on.exit(unlink(fake[["lib"]], recursive = TRUE), add = TRUE)
+
+  app_path <- file.path(fake[["exec"]], "extra.R")
+  writeLines(
+    c(
+      "#!/usr/bin/env -S Rscript -e 'Rapp::run()'",
+      "#| launcher-extra:",
+      "#|   name: wrong",
+      "#|   vanilla: true",
+      "#|   default_packages: [stats]",
+      "print('launcher extra test')"
+    ),
+    app_path
+  )
+
+  destdir <- tempfile("rapp-bin-launcher-extra")
+  on.exit(unlink(destdir, recursive = TRUE), add = TRUE)
+
+  messages <- character()
+  created <- withCallingHandlers(
+    install_pkg_cli_apps(pkg, destdir = destdir, lib.loc = fake[["lib"]]),
+    message = function(m) {
+      messages <<- c(messages, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+  expect_true(any(grepl("^created:", messages)))
+
+  expected_launcher <- if (is_windows()) {
+    path(destdir, "extra.bat")
+  } else {
+    path(destdir, "extra")
+  }
+  expect_same_path(created, expected_launcher)
+
+  lines <- readLines(expected_launcher)
+  exec_line <- lines[length(lines)]
+  expect_false(grepl("--vanilla", exec_line, fixed = TRUE))
+  expect_false(grepl("--default-packages=stats", exec_line, fixed = TRUE))
+  expect_true(grepl(paste0("base,", pkg), exec_line, fixed = TRUE))
+})
+
+
 test_that("install_pkg_cli_apps prunes orphaned launchers", {
   Sys.setenv("RAPP_NO_MODIFY_PATH" = "1")
   on.exit(Sys.unsetenv("RAPP_NO_MODIFY_PATH"), add = TRUE)
