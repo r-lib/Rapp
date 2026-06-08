@@ -127,6 +127,11 @@ process_args <- function(args, app) {
     if (identical(spec$val_type, "bool")) {
       val <- normalize_bool_cli_value(val)
     }
+
+    # TODO: do we care about enforcing or formalizing flag val length?
+    # right now, a val like [1,2,3] gets parsed and is injected as a
+    # length 3 integer vector.
+    # Decide if this needs a guardrail or paving and signage.
     if (mode != "character") {
       received_val <- val
       val <- parse_yaml(val)
