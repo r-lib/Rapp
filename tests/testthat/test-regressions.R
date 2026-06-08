@@ -112,6 +112,55 @@ test_that("YAML 1.2 strings are preserved in parsed option values", {
   expect_identical(env$value, list("no"))
 })
 
+test_that("YAML 1.1 bool aliases are accepted for bool option values", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "flag <- FALSE"
+    ),
+    prefix = "rapp-yaml11-bool-aliases-"
+  )
+
+  true_values <- c(
+    "y", "Y", "yes", "Yes", "YES",
+    "true", "True", "TRUE",
+    "on", "On", "ON",
+    "1"
+  )
+  false_values <- c(
+    "n", "N", "no", "No", "NO",
+    "false", "False", "FALSE",
+    "off", "Off", "OFF",
+    "0"
+  )
+
+  for (value in true_values) {
+    env <- Rapp::run(app_path, paste0("--flag=", value))
+    expect_identical(env$flag, TRUE, info = value)
+  }
+
+  for (value in false_values) {
+    env <- Rapp::run(app_path, paste0("--flag=", value))
+    expect_identical(env$flag, FALSE, info = value)
+  }
+})
+
+test_that("YAML 1.1 bool aliases stay strings for parsed non-bool options", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "value <- list()"
+    ),
+    prefix = "rapp-yaml11-string-aliases-"
+  )
+
+  env <- Rapp::run(
+    app_path,
+    c("--value", "on", "--value", "off", "--value", "y", "--value", "n")
+  )
+  expect_identical(env$value, list("on", "off", "y", "n"))
+})
+
 test_that("YAML help records typed NA defaults as null", {
   app_path <- local_rapp_app(
     c(

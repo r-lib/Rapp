@@ -135,6 +135,9 @@ process_args <- function(args, app) {
     # NAs cannot be injected from cli args via regular yaml,
     # NAs are sentinals users can use to check if an opt was supplied.
     # (but anything is possible with '!expr ...')
+    if (identical(spec$val_type, "bool")) {
+      val <- normalize_bool_cli_value(val)
+    }
     if (mode != "character") {
       tryCatch(
         {
@@ -240,6 +243,31 @@ process_args <- function(args, app) {
 #   should short should negate the default and inject FALSE? might be confusing.
 # TODO: support 'desc' for 'description' in yaml header (meh)
 # TODO: think through what character() can/should mean (meh)
+
+normalize_bool_cli_value <- function(val) {
+  stopifnot(is.character(val), length(val) == 1L)
+
+  true_values <- c(
+    "true", "True", "TRUE",
+    "y", "Y", "yes", "Yes", "YES",
+    "on", "On", "ON",
+    "1"
+  )
+  false_values <- c(
+    "false", "False", "FALSE",
+    "n", "N", "no", "No", "NO",
+    "off", "Off", "OFF",
+    "0"
+  )
+
+  if (val %in% true_values) {
+    "true"
+  } else if (val %in% false_values) {
+    "false"
+  } else {
+    val
+  }
+}
 
 to_snake_case <- function(x) gsub("-", "_", x, fixed = TRUE)
 to_kebab_case <- function(x) gsub("_", "-", x, fixed = TRUE)

@@ -3,8 +3,9 @@
 ## Breaking changes
 
 -   Rapp now parses YAML with YAML 1.2 semantics. Bare `yes` and `no`
-    option values are strings, not boolean aliases; use `true`/`false`,
-    `1`/`0`, or switch forms such as `--flag` and `--no-flag`.
+    non-bool option values are strings, not boolean aliases. Declared
+    bool options still accept YAML 1.1 bool aliases such as `yes`, `no`,
+    `y`, `n`, `on`, and `off` for backward compatibility.
 
 ## Bug fixes
 
