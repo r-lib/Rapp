@@ -122,6 +122,53 @@ test_that("examples annotation appears in help", {
   ))
 })
 
+test_that("inherited option examples appear in command help", {
+  lines <- c(
+    "#!/usr/bin/env Rapp",
+    "#| name: inherited-examples",
+    "",
+    "#| description: Config file.",
+    "#| examples: inherited-examples --config config.yml child",
+    "config <- \"\"",
+    "",
+    "switch('',",
+    "  child = {",
+    "    flag <- TRUE",
+    "  }",
+    ")"
+  )
+
+  help <- help_lines_from_script(
+    lines,
+    command_path = "child",
+    prefix = "rapp-inherited-examples-"
+  )
+
+  examples <- help[seq(
+    which(help == "Examples:") + 1L,
+    length.out = 1L
+  )]
+  expect_identical(
+    examples,
+    "  inherited-examples --config config.yml child"
+  )
+})
+
+test_that("YAML help preserves generated entries named examples", {
+  yaml <- yaml12::parse_yaml(help_lines_from_script(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: examples-option",
+      "examples <- \"\""
+    ),
+    format = "yaml",
+    prefix = "rapp-examples-option-"
+  ))
+
+  expect_identical(yaml$options$examples$arg_type, "option")
+  expect_identical(yaml$options$examples$val_type, "string")
+})
+
 test_that("required-like annotation keys do not partially match", {
   app_path <- local_rapp_script(
     c(

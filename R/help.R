@@ -7,11 +7,10 @@ build_help_yaml_spec <- function(app) {
     arguments = args,
     commands = commands
   )
-  spec <- c(
-    app$data[setdiff(names(app$data), names(generated))],
+  c(
+    normalize_examples_field(app$data[setdiff(names(app$data), names(generated))]),
     generated
   )
-  normalize_help_yaml_examples(spec)
 }
 
 sanitize_help_entries <- function(entries) {
@@ -20,7 +19,7 @@ sanitize_help_entries <- function(entries) {
   }
   lapply(entries, function(entry) {
     entry$.val_pos_in_exprs <- NULL
-    entry
+    normalize_examples_field(entry)
   })
 }
 
@@ -31,14 +30,11 @@ format_examples <- function(x) {
   as.character(unlist(x, use.names = FALSE))
 }
 
-normalize_help_yaml_examples <- function(x) {
-  if (!is.list(x)) {
-    return(x)
-  }
+normalize_examples_field <- function(x) {
   if ("examples" %in% names(x) && !is.null(x[["examples"]])) {
     x[["examples"]] <- as.list(format_examples(x[["examples"]]))
   }
-  lapply(x, normalize_help_yaml_examples)
+  x
 }
 
 build_help_command_specs <- function(commands) {
@@ -55,7 +51,7 @@ build_help_command_specs <- function(commands) {
   }
   for (nm in names(commands)) {
     command <- commands[[nm]]
-    spec <- command$meta %||% list()
+    spec <- normalize_examples_field(command$meta %||% list())
     spec["options"] <- list(sanitize_help_entries(command$opts))
     spec["arguments"] <- list(sanitize_help_entries(command$args))
     spec["commands"] <- list(build_help_command_specs(command$commands))
@@ -384,11 +380,11 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
       use.names = FALSE
     )
   }
-  format_example_block <- function(scope) {
+  format_example_block <- function(meta, opts, args) {
     examples <- c(
-      format_examples((scope$meta %||% list())[["examples"]]),
-      collect_entry_examples(scope$opts),
-      collect_entry_examples(scope$args)
+      format_examples((meta %||% list())[["examples"]]),
+      collect_entry_examples(opts),
+      collect_entry_examples(args)
     )
     if (!length(examples)) {
       return(character())
@@ -546,7 +542,12 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
     )
   }
 
-  example_block <- format_example_block(current)
+  example_opts <- c(
+    current_opts,
+    parent_opts,
+    if (length(scope) > 1L) global_opts else list()
+  )
+  example_block <- format_example_block(current$meta, example_opts, current_args)
   if (length(example_block)) {
     sections <- c(
       sections,

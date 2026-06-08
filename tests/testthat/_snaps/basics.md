@@ -12,4 +12,8 @@
         --sep <SEP>          [default: " "] [type: string]
         --wrap / --no-wrap   [default: true] Disable with `--no-wrap`.
         --seed <SEED>        [default: NA] [type: integer]
+      
+      Examples:
+        flip-coin --flips 3
+        flip-coin -n 30 --no-wrap
 
