@@ -10,6 +10,20 @@ capture_nested_env <- function(args = character()) {
   capture_app_env(nested_app, args)
 }
 
+snapshot_missing_command_help <- function(app_path, args, invocation) {
+  output <- capture.output(result <- Rapp::run(app_path, args))
+  expect_null(result)
+
+  snapshot <- list(
+    app = paste(readLines(app_path), collapse = "\n"),
+    invocation = paste0("$ ", invocation),
+    output = paste(output, collapse = "\n")
+  )
+  expect_snapshot(yaml12::write_yaml(snapshot))
+
+  output
+}
+
 test_that("simple app uses defaults without args", {
   env <- capture_simple_env()
   expect_identical(env$cmd, "")
@@ -31,9 +45,12 @@ test_that("missing literal command switch prints help", {
     prefix = "rapp-required-command-"
   )
 
-  lines <- capture.output(result <- Rapp::run(app_path, character()))
+  lines <- snapshot_missing_command_help(
+    app_path,
+    character(),
+    "required-command-test"
+  )
 
-  expect_null(result)
   expect_true(any(grepl(
     "Usage: required-command-test <COMMAND>",
     lines,
@@ -58,9 +75,12 @@ test_that("missing NULL command assignment prints help", {
     prefix = "rapp-null-command-"
   )
 
-  lines <- capture.output(result <- Rapp::run(app_path, character()))
+  lines <- snapshot_missing_command_help(
+    app_path,
+    character(),
+    "null-command-test"
+  )
 
-  expect_null(result)
   expect_true(any(grepl(
     "Usage: null-command-test <COMMAND>",
     lines,
@@ -93,9 +113,12 @@ test_that("missing nested command prints scoped help", {
     prefix = "rapp-nested-required-command-"
   )
 
-  lines <- capture.output(result <- Rapp::run(app_path, "parent"))
+  lines <- snapshot_missing_command_help(
+    app_path,
+    "parent",
+    "nested-required-command-test parent"
+  )
 
-  expect_null(result)
   expect_true(any(grepl(
     "Usage: nested-required-command-test parent <COMMAND>",
     lines,
