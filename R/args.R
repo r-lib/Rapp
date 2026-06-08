@@ -115,41 +115,11 @@ process_args <- function(args, app) {
       }
     }
 
-    mode <- switch(
-      spec$val_type,
-      "string" = "character",
-      "bool" = "logical",
-      "float" = "double",
-      "integer" = "integer",
-      "any"
-    )
-
     # TODO: do we care about enforcing or formalizing flag val length?
     # right now, a val like [1,2,3] gets parsed and is injected as a
     # length 3 integer vector.
     # Decide if this needs a guardrail or paving and signage.
-
-    # Try coerce to the R type, but if coercion fails, e.g.:
-    # Warning in as.vector("1a", "integer") : NAs introduced by coercion
-    # Then keep the original yaml parsed val as is.
-    # NAs cannot be injected from cli args via regular yaml,
-    # NAs are sentinals users can use to check if an opt was supplied.
-    # (but anything is possible with '!expr ...')
-    if (identical(spec$val_type, "bool")) {
-      val <- normalize_bool_cli_value(val)
-    }
-    if (mode != "character") {
-      tryCatch(
-        {
-          val <- parse_yaml(val)
-          if (!is.na(coerced_val <- as.vector(val, mode))) {
-            val <- coerced_val
-          }
-        },
-        error = identity,
-        warning = identity
-      )
-    }
+    val <- parse_cli_option_value(val, spec, name)
 
     # val can be NULL
     if (identical(spec$action, "append")) {
@@ -259,6 +229,82 @@ normalize_bool_cli_value <- function(val) {
     "0" = "false",
     val
   )
+}
+
+parse_cli_option_value <- function(val, spec, name) {
+  stopifnot(is.character(val), length(val) == 1L)
+  stopifnot(is.list(spec), is.character(name), length(name) == 1L)
+  stopifnot(is.character(spec$val_type), length(spec$val_type) == 1L)
+
+  if (identical(spec$val_type, "string")) {
+    return(val)
+  }
+
+  if (identical(spec$val_type, "bool")) {
+    val <- normalize_bool_cli_value(val)
+  }
+
+  val <- parse_yaml(val)
+
+  if (identical(spec$val_type, "any")) {
+    return(val)
+  }
+
+  if (!cli_value_matches_type(val, spec$val_type)) {
+    stop(
+      sprintf(
+        "Invalid value for --%s: expected %s.",
+        to_kebab_case(name),
+        spec$val_type
+      ),
+      call. = FALSE
+    )
+  }
+
+  mode <- switch(
+    spec$val_type,
+    "bool" = "logical",
+    "float" = "double",
+    "integer" = "integer"
+  )
+  as.vector(val, mode)
+}
+
+cli_value_matches_type <- function(val, val_type) {
+  types <- cli_value_leaf_types(val)
+  if (!length(types)) {
+    return(FALSE)
+  }
+
+  switch(
+    val_type,
+    "bool" = all(types == "logical"),
+    "float" = all(types %in% c("integer", "double")),
+    "integer" = {
+      if (!all(types %in% c("integer", "double"))) {
+        return(FALSE)
+      }
+      val <- as.vector(val, "double")
+      all(
+        is.finite(val) &
+          val >= (-.Machine$integer.max - 1) &
+          val <= .Machine$integer.max &
+          val == trunc(val)
+      )
+    },
+    "string" = all(types == "character"),
+    "any" = TRUE,
+    FALSE
+  )
+}
+
+cli_value_leaf_types <- function(x) {
+  if (!is.list(x)) {
+    return(typeof(x))
+  }
+
+  out <- unlist(lapply(x, cli_value_leaf_types), use.names = FALSE)
+  if (is.null(out)) character() else out
 }
 
 to_snake_case <- function(x) gsub("-", "_", x, fixed = TRUE)

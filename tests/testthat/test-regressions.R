@@ -161,6 +161,28 @@ test_that("YAML 1.1 bool aliases stay strings for parsed non-bool options", {
   expect_identical(env$value, list("on", "off", "y", "n"))
 })
 
+test_that("integer options reject lossy CLI coercions", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "flips <- 1L"
+    ),
+    prefix = "rapp-lossy-integer-"
+  )
+
+  env <- Rapp::run(app_path, c("--flips", "2"))
+  expect_identical(env$flips, 2L)
+
+  expect_error(
+    Rapp::run(app_path, c("--flips", "10.2")),
+    "expected integer"
+  )
+  expect_error(
+    Rapp::run(app_path, c("--flips", "TRUE")),
+    "expected integer"
+  )
+})
+
 test_that("YAML help records typed NA defaults as null", {
   app_path <- local_rapp_app(
     c(

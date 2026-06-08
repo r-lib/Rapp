@@ -99,9 +99,11 @@ flip-coin --n 1
 ```
 
 Non-string option values passed from the command line are parsed as
-YAML/JSON, and then coerced to the original R type. Values can be
-supplied after the option flag, or as part of the option flag string
-with `=`. The following two usages are the same:
+YAML/JSON and must match the original R type. Numeric values are
+normalized without lossy coercion, so a float can accept an integer value
+but an integer option rejects values like `10.2` or `true`. Values can be
+supplied after the option flag, or as part of the option flag string with
+`=`. The following two usages are the same:
 
 ``` bash
 flip-coin --n=1

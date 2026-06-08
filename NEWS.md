@@ -6,6 +6,9 @@
     non-bool option values are strings, not boolean aliases. Declared
     bool options still accept YAML 1.1 bool aliases such as `yes`, `no`,
     `y`, `n`, `on`, and `off` for backward compatibility.
+-   Rapp now rejects lossy command line coercions for typed options. For
+    example, integer options no longer accept float or logical values
+    such as `10.2` or `true` (#18).
 
 ## New features
 
