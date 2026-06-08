@@ -4,7 +4,7 @@
       Rapp::run(app_path, c("--flips", "10.2"))
     Condition
       Error:
-      ! Invalid value for --flips: expected integer, but parsed "10.2" as float.
+      ! Invalid value for --flips: expected integer, received "10.2".
 
 ---
 
@@ -12,5 +12,5 @@
       Rapp::run(app_path, c("--flips", "TRUE"))
     Condition
       Error:
-      ! Invalid value for --flips: expected integer, but parsed "TRUE" as bool.
+      ! Invalid value for --flips: expected integer, received "TRUE".
 

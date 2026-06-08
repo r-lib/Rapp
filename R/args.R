@@ -115,7 +115,33 @@ process_args <- function(args, app) {
       }
     }
 
-    val <- parse_cli_option_value(val, spec, name)
+    mode <- switch(
+      spec$val_type,
+      "string" = "character",
+      "bool" = "logical",
+      "float" = "double",
+      "integer" = "integer",
+      "any"
+    )
+
+    if (identical(spec$val_type, "bool")) {
+      val <- normalize_bool_cli_value(val)
+    }
+    if (mode != "character") {
+      received_val <- val
+      val <- parse_yaml(val)
+      if (mode != "any" && !identical(typeof(val), mode)) {
+        stop(
+          sprintf(
+            "Invalid value for --%s: expected %s, received %s.",
+            to_kebab_case(name),
+            spec$val_type,
+            encodeString(received_val, quote = '"')
+          ),
+          call. = FALSE
+        )
+      }
+    }
 
     # val can be NULL
     if (identical(spec$action, "append")) {
@@ -224,61 +250,6 @@ normalize_bool_cli_value <- function(val) {
     "off" = , "Off" = , "OFF" = ,
     "0" = "false",
     val
-  )
-}
-
-parse_cli_option_value <- function(val, spec, name) {
-  stopifnot(is.character(val), length(val) == 1L)
-  stopifnot(is.list(spec), is.character(spec$val_type))
-  stopifnot(is.character(name), length(name) == 1L)
-  stopifnot(length(spec$val_type) == 1L)
-
-  if (identical(spec$val_type, "string")) {
-    return(val)
-  }
-
-  received_val <- val
-
-  if (identical(spec$val_type, "bool")) {
-    val <- normalize_bool_cli_value(val)
-  }
-
-  val <- parse_yaml(val)
-
-  if (identical(spec$val_type, "any")) {
-    return(val)
-  }
-
-  expected_type <- switch(
-    spec$val_type,
-    "bool" = "logical",
-    "float" = "double",
-    "integer" = "integer"
-  )
-  if (!identical(typeof(val), expected_type)) {
-    stop(
-      sprintf(
-        "Invalid value for --%s: expected %s, but parsed %s as %s.",
-        to_kebab_case(name),
-        spec$val_type,
-        encodeString(received_val, quote = '"'),
-        cli_value_type(val)
-      ),
-      call. = FALSE
-    )
-  }
-  val
-}
-
-cli_value_type <- function(val) {
-  switch(
-    typeof(val),
-    "character" = "string",
-    "logical" = "bool",
-    "double" = "float",
-    "integer" = "integer",
-    "list" = "YAML collection",
-    typeof(val)
   )
 }
 
