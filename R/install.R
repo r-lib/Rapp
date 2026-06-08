@@ -5,12 +5,15 @@
 #' Rapp`) or `Rscript` (for example, `#!/usr/bin/env Rscript`). Each discovered
 #' script gets a lightweight launcher in `destdir` that invokes `Rapp` or
 #' `Rscript` to run the app. The launcher encodes the absolute path to the R
-#' binary this function is called from.
+#' binary this function is called from, and its name defaults to the script
+#' basename without the `.R` extension.
 #'
-#' Optional `#| launcher:` front matter in the script lets authors tune the
-#' `Rscript` flags. By default, for both `Rscript` and `Rapp`, R is invoked with
-#' `--default-packages=base,<pkg>`, where `<pkg>` is the package providing the
-#' executable.
+#' Optional `#| launcher:` front matter in the script lets authors set the
+#' installed launcher `name` and tune the `Rscript` flags. By default, package
+#' apps are invoked with `--default-packages=base,<pkg>`, where `<pkg>` is the
+#' package providing the executable. The top-level `Rapp` launcher installed by
+#' `install_pkg_cli_apps("Rapp")` invokes `Rscript -e Rapp::run()` without
+#' package app defaults.
 #'
 #' @param package Package names to process. Defaults to the calling package when
 #'   run inside a package; otherwise all installed packages.
@@ -27,10 +30,10 @@
 #' @details
 #'
 #' Launchers are regenerated each time `install_pkg_cli_apps()` is called, and
-#' any obsolete launchers for the same package are removed. `RAPP_INSTALL_DIR`
+#' any obsolete launchers for the same package are removed. `RAPP_BIN_DIR`
 #' overrides the default destination. Launchers are POSIX shell scripts on
 #' Unix-like systems and `.bat` files on Windows. Front-matter options such as
-#' `vanilla`, `no-environ`, and `default_packages` map directly to the
+#' `name`, `vanilla`, `no-environ`, and `default-packages` map directly to the
 #' corresponding `Rscript` arguments.
 #'
 #' When `overwrite` is `NA`, files previously written by Rapp are always
@@ -39,7 +42,7 @@
 #' executable.
 #'
 #' If `destdir` is not provided, it is resolved in this order:
-#'   - env var `RAPP_INSTALL_DIR`
+#'   - env var `RAPP_BIN_DIR`
 #'   - env var `XDG_BIN_HOME`
 #'   - env var `XDG_DATA_HOME/../bin`
 #'   - the default location:
@@ -61,6 +64,7 @@
 #' #!/usr/bin/env Rapp
 #' #| description: About this app
 #' #| launcher:
+#' #|   name: about
 #' #|   vanilla: true
 #' #|   default-packages: [base, utils, mypkg]
 #' ```
@@ -278,9 +282,9 @@ launcher_contents <- function(app_path, package) {
   # assemble rscript opts
   rscript_opts <- c(
     if (isTRUE(rscript_opts[["vanilla"]])) "--vanilla",
-    if (isTRUE(rscript_opts[["no-environ"]])) "--no-environ",
-    if (isTRUE(rscript_opts[["no-site-file"]])) "--no-site-file",
-    if (isTRUE(rscript_opts[["no-init-file"]])) "--no-init-file",
+    if (isTRUE(rscript_opts[["no_environ"]])) "--no-environ",
+    if (isTRUE(rscript_opts[["no_site_file"]])) "--no-site-file",
+    if (isTRUE(rscript_opts[["no_init_file"]])) "--no-init-file",
     if (isTRUE(rscript_opts[["restore"]])) "--restore",
     if (isTRUE(rscript_opts[["save"]])) "--save",
     if (isTRUE(rscript_opts[["verbose"]])) "--verbose",

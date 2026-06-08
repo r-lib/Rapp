@@ -400,8 +400,9 @@ prefer, call the front end explicitly with `Rapp flip-coin.R --n 3`.
 
 If you are shipping Rapps via an R package, you can call
 `Rapp::install_pkg_cli_apps("mypackage")` to install lightweight
-launchers for every Rapp (and Rscript shebang) in the package's `exec/`
-directory.
+launchers for every `.R` script in the package's `exec/` directory whose
+shebang line invokes `Rapp` or `Rscript`. A script named `exec/myapp.R`
+is installed as the command `myapp` by default.
 
 ``` r
 Rapp::install_pkg_cli_apps("mypackage")
@@ -421,23 +422,39 @@ install_mypackage_cli <- function(...) {
 ```
 
 App launchers are written to `destdir`, which defaults to the first
-available location from `RAPP_INSTALL_DIR`, `XDG_BIN_HOME`,
+available location from `RAPP_BIN_DIR`, `XDG_BIN_HOME`,
 `XDG_DATA_HOME/../bin`, or the default location, `~/.local/bin` on macOS
 and Linux and `%LOCALAPPDATA%\Programs\R\Rapp\bin` on Windows. On
 Windows the directory is automatically added to `PATH`; on macOS and
 Linux the directory generally is already present on `PATH` (you may need
 to restart your shell if the Rapp installer created the directory). Use
-the `destdir` argument if you prefer an alternate location. If you are
-working with a standalone `.R` file on Windows, call the launcher
-explicitly (`Rapp path\to\flip-coin.R --n 3`) because native shebangs
-are not supported.
+the `destdir` argument if you prefer an alternate location.
+
+Use `#| launcher:` front matter to customize the installed launcher. For
+example, `name` changes the installed command name, and `vanilla`,
+`no-environ`, and `default-packages` tune the generated `Rscript`
+invocation.
+
+``` r
+#!/usr/bin/env Rapp
+#| launcher:
+#|   name: myapp-fast
+#|   vanilla: true
+#|   default-packages: [base, utils, mypackage]
+```
+
+If you are working with a standalone `.R` file on Windows, call the
+launcher explicitly (`Rapp path\to\flip-coin.R --n 3`) because native
+shebangs are not supported.
 
 ### Using package `exec/` directories directly
 
 Launchers are optional. You can add `Rapp` and a package's `exec/`
 directory to the `PATH` and run the apps directly from the package's
-installed directory. For example, after installing {Rapp}, you can place
-something like this in a shell startup script like `.bashrc`:
+installed directory. Direct execution uses the script filename, such as
+`myapp.R`; extensionless command names come from generated launchers. For
+example, after installing {Rapp}, you can place something like this in a
+shell startup script like `.bashrc`:
 
 ``` bash
 export PATH="$(Rscript -e 'cat(normalizePath(system.file("exec", package = "Rapp")))'):$PATH"
@@ -456,8 +473,10 @@ package.
 
 -   Add {Rapp} as a dependency in your DESCRIPTION.
 
--   Place your app in the `exec` folder in your package (for example
-    `exec/myapp`). Apps are automatically installed as executables.
+-   Place your app in the `exec` folder in your package as an `.R` script
+    with a `Rapp` or `Rscript` shebang line (for example,
+    `exec/myapp.R`). `install_pkg_cli_apps()` installs it as `myapp` by
+    default.
 
 -   Encourage users to run `Rapp::install_pkg_cli_apps("mypackage")` or
     your own exported wrapper `mypackage::install_mypackage_cli()` after

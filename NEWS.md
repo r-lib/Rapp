@@ -18,6 +18,10 @@
 
 ## Bug fixes
 
+-   Launcher front matter now accepts documented kebab-case option names
+    such as `default-packages`. Installation docs now clarify that package
+    apps are discovered as `exec/*.R`, installed without the `.R` extension
+    by default, and installed to `RAPP_BIN_DIR` when set (#19, #20).
 -   Running tests no longer modifies the user `PATH` on Windows (#26).
 -   Rapp now installs from source on R versions before 4.0.0 by avoiding
     raw string literal syntax (#30).
