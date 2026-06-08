@@ -247,26 +247,18 @@ process_args <- function(args, app) {
 normalize_bool_cli_value <- function(val) {
   stopifnot(is.character(val), length(val) == 1L)
 
-  true_values <- c(
-    "true", "True", "TRUE",
-    "y", "Y", "yes", "Yes", "YES",
-    "on", "On", "ON",
-    "1"
-  )
-  false_values <- c(
-    "false", "False", "FALSE",
-    "n", "N", "no", "No", "NO",
-    "off", "Off", "OFF",
-    "0"
-  )
-
-  if (val %in% true_values) {
-    "true"
-  } else if (val %in% false_values) {
-    "false"
-  } else {
+  switch(
+    val,
+    "true" = , "True" = , "TRUE" = ,
+    "y" = , "Y" = , "yes" = , "Yes" = , "YES" = ,
+    "on" = , "On" = , "ON" = ,
+    "1" = "true",
+    "false" = , "False" = , "FALSE" = ,
+    "n" = , "N" = , "no" = , "No" = , "NO" = ,
+    "off" = , "Off" = , "OFF" = ,
+    "0" = "false",
     val
-  }
+  )
 }
 
 to_snake_case <- function(x) gsub("-", "_", x, fixed = TRUE)
