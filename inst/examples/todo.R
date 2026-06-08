@@ -2,6 +2,9 @@
 #| name: todo
 #| title: Todo manager
 #| description: Manage a simple todo list.
+#| examples:
+#|   - todo add write-tests
+#|   - todo list
 
 #| description: Path to the todo list file.
 #| short: s
@@ -12,6 +15,7 @@ switch(
 
   #| title: Display the todos
   #| description: Print the contents of the todo list.
+  #| examples: todo list --limit 5
   list = {
     #| description: Maximum number of entries to display (-1 for all).
     limit <- 30L
@@ -51,6 +55,7 @@ switch(
 
   #| title: Mark a task as completed
   #| description: Remove a task from the todo list using its index.
+  #| examples: todo done --index 1
   done = {
     #| description: Index of the task to complete.
     #| short: i

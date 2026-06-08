@@ -52,7 +52,7 @@ get_app_data <- function(app) {
     hashpipe_start <- which.max(app$line_is_hashpipe)
     hashpipe_end <- which.min(c(TRUE, app$line_is_hashpipe[-1L])) - 1L
 
-    parse_hashpipe_anno(app$lines[hashpipe_start:hashpipe_end])
+    parse_hashpipe_yaml(app$lines[hashpipe_start:hashpipe_end])
   } else {
     structure(list(), names = character())
   }
@@ -277,7 +277,7 @@ parse_expr_anno <- function(lineno, lines, is_hashpipe) {
   while (anno_start > 1L && is_hashpipe[anno_start - 1L]) {
     anno_start <- anno_start - 1L
   }
-  normalize_anno_keys(parse_hashpipe_anno(
+  normalize_anno_keys(parse_hashpipe_yaml(
     lines[anno_start:anno_end]
   ))
 }

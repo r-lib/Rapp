@@ -2,9 +2,11 @@
 #| name: flip-coin
 #| description: |
 #|   Flip a coin.
+#| examples: flip-coin --flips 3
 
 #| description: Number of coin flips
 #| short: 'n'
+#| examples: flip-coin -n 30 --no-wrap
 flips <- 1L
 
 sep <- " "

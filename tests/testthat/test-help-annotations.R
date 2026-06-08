@@ -68,18 +68,19 @@ test_that("short-like annotation keys do not partially match", {
   expect_false(any(grepl("-x, --option <OPTION>", lines, fixed = TRUE)))
 })
 
-test_that("repeated example annotations appear in help", {
+test_that("examples annotation appears in help", {
   lines <- c(
     "#!/usr/bin/env Rapp",
     "#| name: italyparl",
     "switch('',",
     "  #| title: Parliamentary bills",
     "  #| description: Search bills from Camera or Senato.",
-    "  #| example: italyparl bills --approved --camera cd",
-    "  #| example: italyparl bills --keyword energia --camera sn --format json",
+    "  #| examples:",
+    "  #|   - italyparl bills --approved --camera cd",
+    "  #|   - italyparl bills --keyword energia --camera sn --format json",
     "  bills = {",
     "    #| description: cd or sn",
-    "    #| example: italyparl bills --camera sn",
+    "    #| examples: italyparl bills --camera sn",
     "    camera <- 'cd'",
     "    #| description: Only approved bills",
     "    approved <- FALSE",
@@ -103,12 +104,19 @@ test_that("repeated example annotations appear in help", {
     "  italyparl bills --camera sn"
   ))
 
-  yaml <- yaml12::parse_yaml(help_lines_from_script(
+  yaml_lines <- help_lines_from_script(
     lines,
     format = "yaml",
     prefix = "rapp-examples-yaml-"
+  )
+  expect_true("        examples:" %in% yaml_lines)
+  expect_true("          - italyparl bills --camera sn" %in% yaml_lines)
+
+  yaml <- yaml12::parse_yaml(yaml_lines)
+  expect_identical(yaml$commands$bills$options$camera$examples, c(
+    "italyparl bills --camera sn"
   ))
-  expect_identical(yaml$commands$bills$example, c(
+  expect_identical(yaml$commands$bills$examples, c(
     "italyparl bills --approved --camera cd",
     "italyparl bills --keyword energia --camera sn --format json"
   ))

@@ -9,7 +9,7 @@
 
 ## New features
 
--   `#| example` annotations now add usage examples to `--help` output
+-   `#| examples` annotations now add usage examples to `--help` output
     (#23).
 
 ## Bug fixes

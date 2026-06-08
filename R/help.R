@@ -7,10 +7,11 @@ build_help_yaml_spec <- function(app) {
     arguments = args,
     commands = commands
   )
-  c(
+  spec <- c(
     app$data[setdiff(names(app$data), names(generated))],
     generated
   )
+  normalize_help_yaml_examples(spec)
 }
 
 sanitize_help_entries <- function(entries) {
@@ -21,6 +22,23 @@ sanitize_help_entries <- function(entries) {
     entry$.val_pos_in_exprs <- NULL
     entry
   })
+}
+
+format_examples <- function(x) {
+  if (is.null(x)) {
+    return(character())
+  }
+  as.character(unlist(x, use.names = FALSE))
+}
+
+normalize_help_yaml_examples <- function(x) {
+  if (!is.list(x)) {
+    return(x)
+  }
+  if ("examples" %in% names(x) && !is.null(x[["examples"]])) {
+    x[["examples"]] <- as.list(format_examples(x[["examples"]]))
+  }
+  lapply(x, normalize_help_yaml_examples)
 }
 
 build_help_command_specs <- function(commands) {
@@ -354,12 +372,6 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
 
     format_labeled_block(entries)
   }
-  format_example_values <- function(x) {
-    if (is.null(x)) {
-      return(character())
-    }
-    as.character(unlist(x, use.names = FALSE))
-  }
   collect_entry_examples <- function(entries) {
     entries <- ensure_list(entries)
     if (!length(entries)) {
@@ -367,14 +379,14 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
     }
     unlist(
       lapply(entries, function(entry) {
-        format_example_values(entry[["example"]])
+        format_examples(entry[["examples"]])
       }),
       use.names = FALSE
     )
   }
   format_example_block <- function(scope) {
     examples <- c(
-      format_example_values((scope$meta %||% list())[["example"]]),
+      format_examples((scope$meta %||% list())[["examples"]]),
       collect_entry_examples(scope$opts),
       collect_entry_examples(scope$args)
     )
