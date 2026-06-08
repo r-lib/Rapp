@@ -19,6 +19,10 @@
         -s, --store <STORE>  Path to the todo list file.
                              [default: ".todo.yml"] [type: string]
       
+      Examples:
+        todo add write-tests
+        todo list
+      
       For help with a specific command, run: `todo <command> --help`.
 
 ---
@@ -39,6 +43,9 @@
       Global options:
         -s, --store <STORE>  Path to the todo list file.
                              [default: ".todo.yml"] [type: string]
+      
+      Examples:
+        todo list --limit 5
 
 ---
 
@@ -58,4 +65,7 @@
       Global options:
         -s, --store <STORE>  Path to the todo list file.
                              [default: ".todo.yml"] [type: string]
+      
+      Examples:
+        todo done --index 1
 

@@ -12,6 +12,10 @@
         --sep <SEP>          [default: " "] [type: string]
         --wrap / --no-wrap   [default: true] Disable with `--no-wrap`.
         --seed <SEED>        [default: NA] [type: integer]
+      
+      Examples:
+        flip-coin --flips 3
+        flip-coin -n 30 --no-wrap
 
 ---
 
@@ -33,6 +37,10 @@
       Options:
         -s, --store <STORE>  Path to the todo list file.
                              [default: ".todo.yml"] [type: string]
+      
+      Examples:
+        todo add write-tests
+        todo list
       
       For help with a specific command, run: `todo <command> --help`.
 
@@ -72,6 +80,9 @@
       Global options:
         -s, --store <STORE>  Path to the todo list file.
                              [default: ".todo.yml"] [type: string]
+      
+      Examples:
+        todo list --limit 5
 
 ---
 
@@ -91,6 +102,9 @@
       Global options:
         -s, --store <STORE>  Path to the todo list file.
                              [default: ".todo.yml"] [type: string]
+      
+      Examples:
+        todo done --index 1
 
 ---
 
@@ -126,6 +140,8 @@
       name: flip-coin
       description: |
         Flip a coin.
+      examples:
+        - flip-coin --flips 3
       options:
         flips:
           default: 1
@@ -134,6 +150,8 @@
           action: replace
           description: Number of coin flips
           short: n
+          examples:
+            - flip-coin -n 30 --no-wrap
         sep:
           default: " "
           val_type: string
@@ -165,6 +183,9 @@
       name: todo
       title: Todo manager
       description: Manage a simple todo list.
+      examples:
+        - todo add write-tests
+        - todo list
       options:
         store:
           default: ".todo.yml"
@@ -178,6 +199,8 @@
         list:
           title: Display the todos
           description: Print the contents of the todo list.
+          examples:
+            - todo list --limit 5
           options:
             limit:
               default: 30
@@ -203,6 +226,8 @@
         done:
           title: Mark a task as completed
           description: Remove a task from the todo list using its index.
+          examples:
+            - todo done --index 1
           options:
             index:
               default: 1
@@ -300,6 +325,9 @@
       name: todo
       title: Todo manager
       description: Manage a simple todo list.
+      examples:
+        - todo add write-tests
+        - todo list
       options:
         store:
           default: ".todo.yml"
@@ -313,6 +341,8 @@
         list:
           title: Display the todos
           description: Print the contents of the todo list.
+          examples:
+            - todo list --limit 5
           options:
             limit:
               default: 30
@@ -338,6 +368,8 @@
         done:
           title: Mark a task as completed
           description: Remove a task from the todo list using its index.
+          examples:
+            - todo done --index 1
           options:
             index:
               default: 1

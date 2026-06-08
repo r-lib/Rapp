@@ -341,6 +341,8 @@ Other YAML fields you can supply to change the behavior of Rapp
 - `arg_type`: how the input appears on the CLI (`option`, `switch`, `positional`).
 - `action`: whether values replace or accumulate (`replace` vs `append` for
   repeatable options and collectors).
+- `examples`: usage examples to show in `--help`. Use a YAML sequence to list
+  multiple examples.
 
 ## Summary
 
