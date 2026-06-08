@@ -115,10 +115,6 @@ process_args <- function(args, app) {
       }
     }
 
-    # TODO: do we care about enforcing or formalizing flag val length?
-    # right now, a val like [1,2,3] gets parsed and is injected as a
-    # length 3 integer vector.
-    # Decide if this needs a guardrail or paving and signage.
     val <- parse_cli_option_value(val, spec, name)
 
     # val can be NULL
@@ -233,12 +229,15 @@ normalize_bool_cli_value <- function(val) {
 
 parse_cli_option_value <- function(val, spec, name) {
   stopifnot(is.character(val), length(val) == 1L)
-  stopifnot(is.list(spec), is.character(name), length(name) == 1L)
-  stopifnot(is.character(spec$val_type), length(spec$val_type) == 1L)
+  stopifnot(is.list(spec), is.character(spec$val_type))
+  stopifnot(is.character(name), length(name) == 1L)
+  stopifnot(length(spec$val_type) == 1L)
 
   if (identical(spec$val_type, "string")) {
     return(val)
   }
+
+  received_val <- val
 
   if (identical(spec$val_type, "bool")) {
     val <- normalize_bool_cli_value(val)
@@ -250,61 +249,37 @@ parse_cli_option_value <- function(val, spec, name) {
     return(val)
   }
 
-  if (!cli_value_matches_type(val, spec$val_type)) {
-    stop(
-      sprintf(
-        "Invalid value for --%s: expected %s.",
-        to_kebab_case(name),
-        spec$val_type
-      ),
-      call. = FALSE
-    )
-  }
-
-  mode <- switch(
+  expected_type <- switch(
     spec$val_type,
     "bool" = "logical",
     "float" = "double",
     "integer" = "integer"
   )
-  as.vector(val, mode)
+  if (!identical(typeof(val), expected_type)) {
+    stop(
+      sprintf(
+        "Invalid value for --%s: expected %s, but parsed %s as %s.",
+        to_kebab_case(name),
+        spec$val_type,
+        encodeString(received_val, quote = '"'),
+        cli_value_type(val)
+      ),
+      call. = FALSE
+    )
+  }
+  val
 }
 
-cli_value_matches_type <- function(val, val_type) {
-  types <- cli_value_leaf_types(val)
-  if (!length(types)) {
-    return(FALSE)
-  }
-
+cli_value_type <- function(val) {
   switch(
-    val_type,
-    "bool" = all(types == "logical"),
-    "float" = all(types %in% c("integer", "double")),
-    "integer" = {
-      if (!all(types %in% c("integer", "double"))) {
-        return(FALSE)
-      }
-      val <- as.vector(val, "double")
-      all(
-        is.finite(val) &
-          val >= (-.Machine$integer.max - 1) &
-          val <= .Machine$integer.max &
-          val == trunc(val)
-      )
-    },
-    "string" = all(types == "character"),
-    "any" = TRUE,
-    FALSE
+    typeof(val),
+    "character" = "string",
+    "logical" = "bool",
+    "double" = "float",
+    "integer" = "integer",
+    "list" = "YAML collection",
+    typeof(val)
   )
-}
-
-cli_value_leaf_types <- function(x) {
-  if (!is.list(x)) {
-    return(typeof(x))
-  }
-
-  out <- unlist(lapply(x, cli_value_leaf_types), use.names = FALSE)
-  if (is.null(out)) character() else out
 }
 
 to_snake_case <- function(x) gsub("-", "_", x, fixed = TRUE)
