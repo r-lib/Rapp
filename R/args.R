@@ -136,19 +136,10 @@ process_args <- function(args, app) {
       val <- if (mode == "any") {
         tryCatch(parse_yaml(val), error = function(e) received_val)
       } else {
-        parse_yaml(val)
+        parse_yaml(val, simplify = TRUE)
       }
       if (mode == "double" && identical(typeof(val), "integer")) {
         val <- as.vector(val, mode)
-      }
-      if (mode != "any" && is.list(val)) {
-        types <- vapply(val, typeof, character(1))
-        if (
-          all(types == mode) ||
-            mode == "double" && all(types %in% c("integer", "double"))
-        ) {
-          val <- as.vector(val, mode)
-        }
       }
       if (mode != "any" && !identical(typeof(val), mode)) {
         stop(
