@@ -21,4 +21,4 @@ Config/testthat/edition: 3
 Config/testthat/parallel: true
 Config/testthat/start-first: help-snapshots, basics
 Imports: 
-    yaml
+    yaml12

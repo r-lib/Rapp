@@ -32,7 +32,7 @@ add_launcher_default_packages(
 )
 add_launcher_default_packages(
   file.path(fake[["exec"]], "todo.R"),
-  packages = c("base", "utils", "yaml")
+  packages = c("base", "utils", "yaml12")
 )
 add_launcher_default_packages(
   file.path(fake[["exec"]], "nested-commands.R"),

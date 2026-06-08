@@ -1,16 +1,6 @@
-#' @export
-print.yaml <- function(x, file = "", ..., append = FALSE) {
-  out <- encode_yaml(x, ...)
-  for (f in file) {
-    cat(out, file = f, sep = "\n", append = append)
-  }
-
-  invisible(out)
+parse_yaml <- function(text, ..., simplify = FALSE) {
+  yaml12::parse_yaml(text, ..., simplify = simplify)
 }
-
-read_yaml <- function(...) maybe_as_yaml(yaml::read_yaml(...))
-
-parse_yaml <- function(...) maybe_as_yaml(yaml::yaml.load(...))
 
 parse_hashpipe_yaml <- function(x, ...) {
   x <- sub("^[ \t]+", "", x, perl = TRUE)
@@ -18,53 +8,3 @@ parse_hashpipe_yaml <- function(x, ...) {
   x <- substr(x, 4L, .Machine$integer.max)
   parse_yaml(x, ...)
 }
-
-as_yaml <- function(x) maybe_as_yaml(as.list(x))
-
-encode_yaml <- function(x, ..., precision = 16L, handlers = list()) {
-  handlers[["complex"]] <- as.character
-  out <- do.call(
-    yaml::as.yaml,
-    list(x, ..., precision = precision, handlers = handlers)
-  )
-  strsplit(out, "\n", fixed = TRUE)[[1L]]
-}
-
-# yaml <- function(...)
-#   as_yaml(rlang::dots_list(..., .named = TRUE))
-
-maybe_as_yaml <- function(x) {
-  if (is.null(x)) {
-    return(NULL)
-  }
-  if (is.atomic(x) && length(x) != 1L) {
-    x <- as.list(x)
-  }
-  if (is.list(x)) {
-    class(x) <- "yaml"
-  }
-  x
-}
-
-
-# no partial matching, preserve 'yaml' class on sublists
-#' @export
-`$.yaml` <- function(x, ...) maybe_as_yaml(unclass(x)[[...]])
-
-#' @export
-`[[.yaml` <- function(x, ...) maybe_as_yaml(NextMethod())
-
-#' @export
-`[.yaml` <- `[[.yaml`
-
-# @importFrom utils str
-# str.yaml <- function(x, ...) {
-#   cat("YAML ")
-#   str(unclass(x), ...)
-# }
-
-# registerS3method("print", "yaml", print.yaml)
-# registerS3method("$", "yaml", `$.yaml`)
-# registerS3method("[[", "yaml", `[[.yaml`)
-# registerS3method("[", "yaml", `[.yaml`)
-# registerS3method("str", "yaml", str.yaml)

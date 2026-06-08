@@ -13,7 +13,7 @@ process_args <- function(args, app) {
   short_opt_to_long_opt <- function(short_opt) {
     short <- str_drop_prefix(short_opt, "-")
     for (i in seq_along(app_opts)) {
-      if (identical(short, app_opts[[i]]$short)) {
+      if (identical(short, app_opts[[i]][["short"]])) {
         return(paste0("--", names(app_opts)[[i]]))
       }
     }
@@ -135,6 +135,9 @@ process_args <- function(args, app) {
     # NAs cannot be injected from cli args via regular yaml,
     # NAs are sentinals users can use to check if an opt was supplied.
     # (but anything is possible with '!expr ...')
+    if (identical(spec$val_type, "bool")) {
+      val <- normalize_bool_cli_value(val)
+    }
     if (mode != "character") {
       tryCatch(
         {
@@ -186,7 +189,7 @@ process_args <- function(args, app) {
       if (n_short < 0) {
         # If a collector is present but there aren't enough positional args,
         # drop the collector slot only when it's not explicitly required.
-        if (!isTRUE(specs[[collector]]$required)) {
+        if (!isTRUE(specs[[collector]][["required"]])) {
           specs[[collector]] <- NULL
         }
       } else if (n_short > 0) {
@@ -206,7 +209,7 @@ process_args <- function(args, app) {
 
     if (length(specs) != length(positional_args)) {
       for (i in rev(seq_along(specs))) {
-        if (isFALSE(specs[[i]]$required)) {
+        if (isFALSE(specs[[i]][["required"]])) {
           specs[[i]] <- NULL
         }
         if (length(specs) == length(positional_args)) break
@@ -224,7 +227,9 @@ process_args <- function(args, app) {
     for (i in seq_along(positional_args)) {
       spec <- specs[[i]]
       if (identical(spec$action, "append")) {
-        append_arg(app$exprs[[spec$.val_pos_in_exprs]]) <- positional_args[[i]]
+        append_arg(
+          app$exprs[[spec$.val_pos_in_exprs]]
+        ) <- positional_args[[i]]
       } else {
         app$exprs[[spec$.val_pos_in_exprs]] <- positional_args[[i]]
       }
@@ -238,6 +243,23 @@ process_args <- function(args, app) {
 #   should short should negate the default and inject FALSE? might be confusing.
 # TODO: support 'desc' for 'description' in yaml header (meh)
 # TODO: think through what character() can/should mean (meh)
+
+normalize_bool_cli_value <- function(val) {
+  stopifnot(is.character(val), length(val) == 1L)
+
+  switch(
+    val,
+    "true" = , "True" = , "TRUE" = ,
+    "y" = , "Y" = , "yes" = , "Yes" = , "YES" = ,
+    "on" = , "On" = , "ON" = ,
+    "1" = "true",
+    "false" = , "False" = , "FALSE" = ,
+    "n" = , "N" = , "no" = , "No" = , "NO" = ,
+    "off" = , "Off" = , "OFF" = ,
+    "0" = "false",
+    val
+  )
+}
 
 to_snake_case <- function(x) gsub("-", "_", x, fixed = TRUE)
 to_kebab_case <- function(x) gsub("_", "-", x, fixed = TRUE)

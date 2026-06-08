@@ -54,7 +54,7 @@ get_app_data <- function(app) {
 
     parse_hashpipe_yaml(app$lines[hashpipe_start:hashpipe_end])
   } else {
-    as_yaml(list())
+    structure(list(), names = character())
   }
 
   data
@@ -242,13 +242,13 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
     # positionals and those explicitly marked via `#| arg-type: positional`.
     if (
       identical(arg$arg_type, "positional") &&
-        is.null(arg$required) &&
+        is.null(arg[["required"]]) &&
         !(endsWith(name, "...") || startsWith(name, "..."))
     ) {
       arg$required <- TRUE
     }
 
-    if (arg$arg_type == "positional") {
+    if (identical(arg$arg_type, "positional")) {
       args[[name]] <- arg
     } else {
       opts[[name]] <- arg
@@ -285,14 +285,12 @@ parse_expr_anno <- function(lineno, lines, is_hashpipe) {
 normalize_anno_keys <- function(x) {
   is.list(x) || return(x)
 
-  cls <- attr(x, "class", TRUE)
   x <- lapply(x, normalize_anno_keys)
 
   if (!is.null(nms <- names(x))) {
     names(x) <- gsub("-", "_", nms, fixed = TRUE)
   }
 
-  class(x) <- cls
   x
 }
 

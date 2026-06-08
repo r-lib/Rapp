@@ -121,10 +121,11 @@
     Output
       launcher:
         default_packages:
-        - base
-        - utils
+          - base
+          - utils
       name: flip-coin
-      description: Flip a coin.
+      description: |
+        Flip a coin.
       options:
         flips:
           default: 1
@@ -132,19 +133,19 @@
           arg_type: option
           action: replace
           description: Number of coin flips
-          short: 'n'
+          short: n
         sep:
-          default: ' '
+          default: " "
           val_type: string
           arg_type: option
           action: replace
         wrap:
-          default: yes
+          default: true
           val_type: bool
           arg_type: switch
           action: replace
         seed:
-          default: .na.integer
+          default: ~
           val_type: integer
           arg_type: option
           action: replace
@@ -158,15 +159,15 @@
     Output
       launcher:
         default_packages:
-        - base
-        - utils
-        - yaml
+          - base
+          - utils
+          - yaml12
       name: todo
       title: Todo manager
       description: Manage a simple todo list.
       options:
         store:
-          default: .todo.yml
+          default: ".todo.yml"
           val_type: string
           arg_type: option
           action: replace
@@ -197,7 +198,7 @@
               arg_type: positional
               action: replace
               description: Task description to add.
-              required: yes
+              required: true
           commands: ~
         done:
           title: Mark a task as completed
@@ -224,8 +225,8 @@
     Output
       launcher:
         default_packages:
-        - base
-        - utils
+          - base
+          - utils
       options:
         top_opt:
           default: top-default
@@ -242,7 +243,7 @@
               arg_type: option
               action: replace
             parent_switch:
-              default: yes
+              default: true
               val_type: bool
               arg_type: switch
               action: replace
@@ -265,7 +266,7 @@
                   arg_type: option
                   action: replace
                 child2_switch:
-                  default: no
+                  default: false
                   val_type: bool
                   arg_type: switch
                   action: replace
@@ -275,7 +276,7 @@
                   val_type: string
                   arg_type: positional
                   action: replace
-                  required: yes
+                  required: true
               commands: ~
             help:
               options: ~
@@ -293,15 +294,15 @@
     Output
       launcher:
         default_packages:
-        - base
-        - utils
-        - yaml
+          - base
+          - utils
+          - yaml12
       name: todo
       title: Todo manager
       description: Manage a simple todo list.
       options:
         store:
-          default: .todo.yml
+          default: ".todo.yml"
           val_type: string
           arg_type: option
           action: replace
@@ -332,7 +333,7 @@
               arg_type: positional
               action: replace
               description: Task description to add.
-              required: yes
+              required: true
           commands: ~
         done:
           title: Mark a task as completed
@@ -359,8 +360,8 @@
     Output
       launcher:
         default_packages:
-        - base
-        - utils
+          - base
+          - utils
       options:
         top_opt:
           default: top-default
@@ -377,7 +378,7 @@
               arg_type: option
               action: replace
             parent_switch:
-              default: yes
+              default: true
               val_type: bool
               arg_type: switch
               action: replace
@@ -400,7 +401,7 @@
                   arg_type: option
                   action: replace
                 child2_switch:
-                  default: no
+                  default: false
                   val_type: bool
                   arg_type: switch
                   action: replace
@@ -410,7 +411,7 @@
                   val_type: string
                   arg_type: positional
                   action: replace
-                  required: yes
+                  required: true
               commands: ~
             help:
               options: ~

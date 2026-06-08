@@ -4,12 +4,12 @@
       run_ls_app(c(dir, "-p", "alpha", "-p", "\\.txt$"))
     Output
       pattern:
-      - alpha
-      - \.txt$
+        - alpha
+        - "\\.txt$"
       paths:
-      - alpha.txt
-      - alphabet.txt
-      - beta.txt
+        - alpha.txt
+        - alphabet.txt
+        - beta.txt
 
 ---
 
@@ -17,11 +17,11 @@
       run_ls_app(c(dir, "--pattern", "t$", "-p", "^beta"))
     Output
       pattern:
-      - t$
-      - ^beta
+        - t$
+        - ^beta
       paths:
-      - alpha.txt
-      - alphabet.txt
-      - beta.R
-      - beta.txt
+        - alpha.txt
+        - alphabet.txt
+        - beta.R
+        - beta.txt
 

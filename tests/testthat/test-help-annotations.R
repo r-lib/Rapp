@@ -50,6 +50,43 @@ test_that("short annotation values stay character", {
   expect_true(any(grepl("-1, --option <OPTION>", lines, fixed = TRUE)))
 })
 
+test_that("short-like annotation keys do not partially match", {
+  app_path <- local_rapp_script(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: short-extra-test",
+      "",
+      "#| short-extra: x",
+      "#| description: Example option.",
+      "option <- \"\""
+    ),
+    prefix = "rapp-short-extra-"
+  )
+
+  lines <- capture.output(Rapp::run(app_path, "--help"))
+  expect_true(any(grepl("--option <OPTION>", lines, fixed = TRUE)))
+  expect_false(any(grepl("-x, --option <OPTION>", lines, fixed = TRUE)))
+})
+
+test_that("required-like annotation keys do not partially match", {
+  app_path <- local_rapp_script(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: required-extra-test",
+      "",
+      "#| required-extra: false",
+      "name <- NULL",
+      "cat(name, '\\n')"
+    ),
+    prefix = "rapp-required-extra-"
+  )
+
+  expect_error(
+    Rapp::run(app_path, character()),
+    "Missing required argument: NAME"
+  )
+})
+
 test_that("help output lists option defaults, types, and toggle hints", {
   build_help <- function(option_block, prefix) {
     help_lines_from_script(
@@ -133,6 +170,26 @@ test_that("list-like annotations are parsed via yaml", {
 
   app <- Rapp:::as_app(app_path)
   expect_identical(unclass(app$args$root$info), list("alpha", "beta"))
+})
+
+test_that("help metadata keys do not partially match", {
+  app_path <- local_rapp_script(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| title-extra: Do not use as title.",
+      "#| description-extra: Do not use as description.",
+      "",
+      "flag <- TRUE"
+    ),
+    prefix = "rapp-no-partial-meta-"
+  )
+
+  lines <- capture.output(Rapp::run(app_path, "--help"))
+  expect_match(lines[[1]], "^Usage: ")
+  expect_false(any(lines %in% c(
+    "Do not use as title.",
+    "Do not use as description."
+  )))
 })
 
 test_that("launcher name is used in help when provided", {

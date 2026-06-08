@@ -2,13 +2,14 @@ build_help_yaml_spec <- function(app) {
   opts <- sanitize_help_entries(app$opts)
   args <- sanitize_help_entries(app$args)
   commands <- build_help_command_specs(app$commands)
+  generated <- list(
+    options = opts,
+    arguments = args,
+    commands = commands
+  )
   c(
-    app$data,
-    list(
-      options = opts,
-      arguments = args,
-      commands = commands
-    )
+    app$data[setdiff(names(app$data), names(generated))],
+    generated
   )
 }
 
@@ -49,11 +50,11 @@ build_help_scope <- function(app, command_path = character()) {
   app <- as_app(app)
 
   meta <- if (length(app$data)) {
-    prune_empty(as.list(unclass(app$data)))
+    prune_empty(app$data)
   }
 
   scope <- list(list(
-    name = app$data$name %||% basename(app$filepath),
+    name = app$data[["name"]] %||% basename(app$filepath),
     opts = app$opts,
     args = app$args,
     commands = app$commands %||% list(),
@@ -67,7 +68,7 @@ build_help_scope <- function(app, command_path = character()) {
       break
     }
     command_meta <- if (!is.null(command$meta)) {
-      prune_empty(as.list(unclass(command$meta)))
+      prune_empty(command$meta)
     }
     scope[[length(scope) + 1L]] <- list(
       name = cmd,
@@ -86,7 +87,8 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   app <- as_app(app)
   if (yaml) {
     spec <- build_help_yaml_spec(app)
-    print.yaml(spec)
+    spec <- eval_help_yaml_calls(spec)
+    writeLines(format_help_yaml(spec))
     return()
   }
   scope <- build_help_scope(app, command_path)
@@ -156,13 +158,13 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   }
   format_option_entry <- function(opt, name) {
     cli_name <- format_cli_name(name)
-    short_flag <- opt$short
+    short_flag <- opt[["short"]]
     flag <- paste0("--", cli_name)
     if (!is.null(short_flag) && nzchar(short_flag)) {
       flag <- paste0("-", short_flag, ", ", flag)
     }
 
-    description <- opt$description %||% character()
+    description <- opt[["description"]] %||% character()
     details <- character()
 
     if (identical(opt$arg_type, "option")) {
@@ -315,14 +317,14 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
     for (i in seq_along(args)) {
       arg <- args[[i]]
       name <- names(args)[[i]]
-      desc <- arg$description
+      desc <- arg[["description"]]
       if (!length(desc)) {
         next
       }
       label <- sub("^\\.\\.\\.|\\.\\.\\.$", "", name)
       label <- format_cli_name(label)
       placeholder <- format_placeholder(label)
-      if (isTRUE(arg$variadic) || grepl("\\.\\.\\.", name, fixed = TRUE)) {
+      if (isTRUE(arg[["variadic"]]) || grepl("\\.\\.\\.", name, fixed = TRUE)) {
         placeholder <- paste0(placeholder, "...")
       }
       entries[[length(entries) + 1L]] <- list(
@@ -346,7 +348,7 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
     entries <- lapply(command_names, function(name) {
       command <- commands[[name]]
       meta <- command$meta %||% list()
-      label <- meta$title %||% meta$description %||% ""
+      label <- meta[["title"]] %||% meta[["description"]] %||% ""
       list(label = name, text = label)
     })
 
@@ -363,12 +365,12 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
         name <- names(args)[[i]]
         arg <- args[[i]]
         placeholder <- format_placeholder(name)
-        variadic <- isTRUE(arg$variadic) ||
+        variadic <- isTRUE(arg[["variadic"]]) ||
           grepl("\\.\\.\\.", name, fixed = TRUE)
         if (variadic) {
           placeholder <- paste0(placeholder, "...")
         }
-        required <- isTRUE(arg$required)
+        required <- isTRUE(arg[["required"]])
         if (required) {
           placeholder
         } else {
@@ -420,8 +422,8 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   usage_components <- c(usage_components, build_usage_args(current_args))
   usage_line <- paste("Usage:", paste(usage_components, collapse = " "))
 
-  title <- current_meta$title
-  description <- current_meta$description
+  title <- current_meta[["title"]]
+  description <- current_meta[["description"]]
 
   if (length(scope) == 1L) {
     if (is.null(description) && is.null(title)) {
@@ -523,4 +525,113 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   }
   writeLines(sections)
   return()
+}
+
+eval_help_yaml_calls <- function(x) {
+  rapply(
+    x,
+    function(value) {
+      if (is.call(value)) {
+        value <- eval(value, envir = baseenv())
+      }
+      if (is.complex(value)) {
+        value <- as.character(value)
+      }
+      value
+    },
+    how = "replace"
+  )
+}
+
+format_help_yaml <- function(spec) {
+  sentinels <- help_yaml_nonfinite_sentinels(spec)
+  yaml <- yaml12::format_yaml(mark_help_yaml_nonfinite(spec, sentinels))
+  replacements <- help_yaml_nonfinite_replacements(sentinels)
+  for (sentinel in names(replacements)) {
+    yaml <- gsub(
+      sprintf("\"%s\"", sentinel),
+      replacements[[sentinel]],
+      yaml,
+      fixed = TRUE
+    )
+  }
+  yaml
+}
+
+mark_help_yaml_nonfinite <- function(x, sentinels) {
+  if (is.list(x)) {
+    return(lapply(x, mark_help_yaml_nonfinite, sentinels = sentinels))
+  }
+  if (is.double(x) && any(is.nan(x) | is.infinite(x))) {
+    if (length(x) == 1L) {
+      return(help_yaml_nonfinite_sentinel(x, sentinels))
+    }
+    return(lapply(
+      unname(as.list(x)),
+      mark_help_yaml_nonfinite,
+      sentinels = sentinels
+    ))
+  }
+  x
+}
+
+help_yaml_nonfinite_sentinels <- function(spec) {
+  existing <- help_yaml_strings(spec)
+  labels <- c(inf = "INF", neg_inf = "NEG_INF", nan = "NAN")
+  i <- 0L
+  repeat {
+    prefix <- if (i == 0L) {
+      "@@RAPP_YAML_NONFINITE"
+    } else {
+      sprintf("@@RAPP_YAML_NONFINITE_%d", i)
+    }
+    sentinels <- paste0(prefix, "_", labels, "@@")
+    names(sentinels) <- names(labels)
+    if (!any(sentinels %in% existing)) {
+      return(sentinels)
+    }
+    i <- i + 1L
+  }
+}
+
+help_yaml_strings <- function(x) {
+  strings <- names(x) %||% character()
+  if (is.list(x)) {
+    for (value in x) {
+      strings <- c(strings, help_yaml_strings(value))
+    }
+    return(strings)
+  }
+  if (is.character(x)) {
+    strings <- c(strings, x)
+  }
+  strings
+}
+
+help_yaml_nonfinite_sentinel <- function(value, sentinels) {
+  stopifnot(
+    is.double(value),
+    length(value) == 1L,
+    is.nan(value) || is.infinite(value),
+    is.character(sentinels),
+    all(c("inf", "neg_inf", "nan") %in% names(sentinels))
+  )
+  if (is.nan(value)) {
+    return(sentinels[["nan"]])
+  }
+  if (value > 0) {
+    sentinels[["inf"]]
+  } else {
+    sentinels[["neg_inf"]]
+  }
+}
+
+help_yaml_nonfinite_replacements <- function(sentinels) {
+  stopifnot(
+    is.character(sentinels),
+    all(c("inf", "neg_inf", "nan") %in% names(sentinels))
+  )
+  replacements <- c(".inf", "-.inf", ".nan")
+  names(replacements) <- sentinels
+  replacements
 }

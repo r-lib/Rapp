@@ -1,5 +1,14 @@
 # Rapp (development version)
 
+## Breaking changes
+
+-   Rapp now parses YAML with YAML 1.2 semantics. Bare `yes` and `no`
+    non-bool option values are strings, not boolean aliases. Declared
+    bool options still accept YAML 1.1 bool aliases such as `yes`, `no`,
+    `y`, `n`, `on`, and `off` for backward compatibility.
+
+## Bug fixes
+
 -   Running tests no longer modifies the user `PATH` on Windows (#26).
 
 # Rapp 0.3.0
@@ -28,4 +37,3 @@
 # Rapp 0.1.0
 
 -   Initial release
-
