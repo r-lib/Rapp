@@ -10,6 +10,8 @@
 ## Bug fixes
 
 -   Running tests no longer modifies the user `PATH` on Windows (#26).
+-   Rapp now installs from source on R versions before 4.0.0 by avoiding
+    raw string literal syntax (#30).
 
 # Rapp 0.3.0
 
