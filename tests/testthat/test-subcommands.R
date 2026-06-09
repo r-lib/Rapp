@@ -21,9 +21,9 @@ snapshot_command_run <- function(app_path, args, invocation) {
   output <- capture.output(result <- Rapp::run(app_path, args))
 
   snapshot <- list(
-    app = readLines(app_path),
+    app = paste(readLines(app_path), collapse = "\\n"),
     invocation = paste0("$ ", invocation),
-    output = output
+    output = paste(output, collapse = "\\n")
   )
   expect_snapshot(yaml12::write_yaml(snapshot))
 
@@ -124,6 +124,39 @@ test_that("required false command switch allows missing command", {
 
   expect_identical(run$output, "no command")
   expect_identical(run$result$command, "")
+})
+
+test_that("missing command prints help before matching positionals", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: command-with-positional-test",
+      "",
+      "#| description: Input path.",
+      "input <- NULL",
+      "",
+      "switch('',",
+      "  #| title: Run command",
+      "  run = { cat('run ', input, '\\n', sep = '') }",
+      ")",
+      "cat('no command\\n')"
+    ),
+    prefix = "rapp-command-with-positional-"
+  )
+
+  lines <- snapshot_missing_command_help(
+    app_path,
+    "data.csv",
+    "command-with-positional-test data.csv"
+  )
+
+  expect_true(any(grepl(
+    "Usage: command-with-positional-test <COMMAND> <INPUT>",
+    lines,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Commands:", lines, fixed = TRUE)))
+  expect_true(any(grepl("run", lines, fixed = TRUE)))
 })
 
 test_that("missing nested command prints scoped help", {

@@ -170,8 +170,7 @@ process_args <- function(args, app) {
 
   command_names <- setdiff(names(app_commands), ".val_pos_in_exprs")
   if (
-    !length(positional_args) &&
-      length(command_names) &&
+    length(command_names) &&
       isTRUE(attr(app_commands, "help_on_missing_command"))
   ) {
     print_app_help(app, command_path = command_path, yaml = FALSE)
