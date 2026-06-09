@@ -124,6 +124,14 @@ test_that("required false command switch allows missing command", {
 
   expect_identical(run$output, "no command")
   expect_identical(run$result$command, "")
+
+  help_output <- capture.output(help_result <- Rapp::run(app_path, "--help"))
+  expect_null(help_result)
+  expect_true(any(grepl(
+    "Usage: optional-command-test [<COMMAND>]",
+    help_output,
+    fixed = TRUE
+  )))
 })
 
 test_that("missing command prints help before matching positionals", {
