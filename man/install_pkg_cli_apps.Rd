@@ -73,8 +73,10 @@ If \code{destdir} is not provided, it is resolved in this order:
 
 On Windows, the resolved \code{destdir} is explicitly added to \code{PATH} (it
 generally is not by default). On macOS, when the default \verb{~/.local/bin}
-destination is not already on \code{PATH}, it is added to \verb{~/.zprofile}. To
-disable adding it to the \code{PATH}, set envvar \code{RAPP_NO_MODIFY_PATH=1}.
+destination is not already on \code{PATH}, it is added to \verb{~/.zprofile}, or
+\verb{$ZDOTDIR/.zprofile} when \code{ZDOTDIR} is set. If the profile cannot be
+updated, a warning is emitted and installation continues. To disable adding it
+to the \code{PATH}, set envvar \code{RAPP_NO_MODIFY_PATH=1}.
 
 On Linux, \verb{~/.local/bin} is typically already on \code{PATH} if it
 exists. Note: some shells add \verb{~/.local/bin} to \code{PATH} only if it exists at
