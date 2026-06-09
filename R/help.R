@@ -453,8 +453,16 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
   if (any_opts) {
     usage_components <- c(usage_components, "[OPTIONS]")
   }
-  if (length(setdiff(names(current_commands), ".val_pos_in_exprs"))) {
-    usage_components <- c(usage_components, "<COMMAND>")
+  command_names <- setdiff(names(current_commands), ".val_pos_in_exprs")
+  if (length(command_names)) {
+    command_usage <- if (
+      isFALSE(attr(current_commands, "help_on_missing_command"))
+    ) {
+      "[<COMMAND>]"
+    } else {
+      "<COMMAND>"
+    }
+    usage_components <- c(usage_components, command_usage)
   }
   usage_components <- c(usage_components, build_usage_args(current_args))
   usage_line <- paste("Usage:", paste(usage_components, collapse = " "))

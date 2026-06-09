@@ -77,11 +77,14 @@ arguments, and commands. The sections below cover the supported patterns.
 
 ### Help
 
-All Rapps comes with built-in flags for help.
+All Rapps come with built-in flags for help.
 
 -   `--help` shows usage, description, and options for the app (and for subcommands
     when used after a command, e.g., `todo list --help`).
 -   `--help-yaml` prints machine-readable metadata for the app as YAML.
+
+When a command is missing, Rapp automatically prints the same help as
+`--help`.
 
 ### Options
 
@@ -212,11 +215,13 @@ This changes the usage to `Usage: greet [<NAME>]` (with brackets).
 ### Commands
 
 Use a `switch()` statement whose first argument is either a character
-scalar or an assignment (for example `switch("")` or
-`switch(command <- "", ...)`) to declare commands. The corresponding
-branch runs when the matching command is supplied on the command line.
-Declare command specific options and positional arguments with the same
-rules inside the branch.
+scalar or an assignment to declare commands. Command switches are
+required by default; if no command is supplied, Rapp prints help for the
+current command level. To allow running without a command, add
+`#| required: false` above the `switch()`. The corresponding branch runs
+when the matching command is supplied on the command line. Declare
+command specific options and positional arguments with the same rules
+inside the branch.
 
 ``` r
 #!/usr/bin/env Rapp
@@ -358,7 +363,7 @@ command line arguments.
 | Assignment of `TRUE` or `FALSE`<br>`foo <- TRUE` | Boolean switch<br>`APP --foo` or `APP --no-foo` |
 | Assignment of `c()` or `list()`<br>`foo <- c()` | Repeatable option<br>`APP --foo val1 --foo val2` |
 | Assignment of `NULL` to name with `...`<br>`args... <- NULL` | Positional Arg Collector<br>`APP foo bar baz` |
-| Switch with string literal<br>`switch("", cmd1 = {}, cmd2 = {})` | Commands<br>`APP cmd1 --help`<br>`APP cmd2 --help` |
+| Switch with string literal<br>`switch("", cmd1 = {}, cmd2 = {})` | Required commands<br>`APP --help`<br>`APP cmd1 --help`<br>`APP cmd2 --help` |
 
 ### Running interactively
 

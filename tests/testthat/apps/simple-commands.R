@@ -2,6 +2,7 @@
 
 global_opt <- "global_opt_default"
 
+#| required: false
 switch(
   cmd <- "",
 

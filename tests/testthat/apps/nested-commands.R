@@ -8,6 +8,7 @@ switch(
     parent_opt <- "parent-default"
     parent_switch <- TRUE
 
+    #| required: false
     switch(
       child_cmd <- "",
       child1 = {

@@ -10,6 +10,9 @@
     types instead of coercing them. Integer options no longer accept
     float or logical values such as `10.2` or `true`; float options still
     accept integer values (#18).
+-   Command switches are now required by default. When a command is
+    omitted, Rapp prints scoped help; add `#| required: false` above the
+    `switch()` to allow running without a command (#21).
 
 ## New features
 
