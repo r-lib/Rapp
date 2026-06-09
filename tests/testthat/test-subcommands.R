@@ -10,24 +10,39 @@ capture_nested_env <- function(args = character()) {
   capture_app_env(nested_app, args)
 }
 
-snapshot_missing_command_help <- function(app_path, args, invocation) {
-  run <- snapshot_command_run(app_path, args, invocation)
-  expect_null(run$result)
+command_invocation <- function(usage, args = character()) {
+  stopifnot(is.character(usage), length(usage) == 1)
+  stopifnot(is.character(args))
 
-  run$output
+  list(usage = usage, args = args)
 }
 
-snapshot_command_run <- function(app_path, args, invocation) {
-  output <- capture.output(result <- Rapp::run(app_path, args))
+snapshot_command_runs <- function(app_path, ...) {
+  invocations <- list(...)
+  stopifnot(length(invocations) > 0)
+
+  runs <- lapply(invocations, function(invocation) {
+    output <- capture.output(result <- Rapp::run(app_path, invocation$args))
+
+    list(
+      usage = paste0("$ ", invocation$usage),
+      output = output,
+      result = result
+    )
+  })
 
   snapshot <- list(
-    app = paste(readLines(app_path), collapse = "\\n"),
-    invocation = paste0("$ ", invocation),
-    output = paste(output, collapse = "\\n")
+    app = paste(readLines(app_path), collapse = "\n"),
+    invocation = lapply(runs, function(run) {
+      list(
+        usage = run$usage,
+        output = paste(run$output, collapse = "\n")
+      )
+    })
   )
   expect_snapshot(yaml12::write_yaml(snapshot))
 
-  list(output = output, result = result)
+  runs
 }
 
 test_that("simple app uses defaults without args", {
@@ -51,11 +66,15 @@ test_that("missing literal command switch prints help", {
     prefix = "rapp-required-command-"
   )
 
-  lines <- snapshot_missing_command_help(
+  runs <- snapshot_command_runs(
     app_path,
-    character(),
-    "required-command-test"
+    command_invocation("required-command-test"),
+    command_invocation("required-command-test list", "list")
   )
+  lines <- runs[[1]]$output
+
+  expect_null(runs[[1]]$result)
+  expect_identical(runs[[2]]$output, "list called")
 
   expect_true(any(grepl(
     "Usage: required-command-test <COMMAND>",
@@ -81,11 +100,16 @@ test_that("missing command assignment prints help by default", {
     prefix = "rapp-assigned-command-"
   )
 
-  lines <- snapshot_missing_command_help(
+  runs <- snapshot_command_runs(
     app_path,
-    character(),
-    "assigned-command-test"
+    command_invocation("assigned-command-test"),
+    command_invocation("assigned-command-test list", "list")
   )
+  lines <- runs[[1]]$output
+
+  expect_null(runs[[1]]$result)
+  expect_identical(runs[[2]]$output, "list")
+  expect_identical(runs[[2]]$result$command, "list")
 
   expect_true(any(grepl(
     "Usage: assigned-command-test <COMMAND>",
@@ -95,9 +119,6 @@ test_that("missing command assignment prints help by default", {
   expect_true(any(grepl("Commands:", lines, fixed = TRUE)))
   expect_true(any(grepl("list", lines, fixed = TRUE)))
 
-  run_lines <- capture.output(env <- Rapp::run(app_path, "list"))
-  expect_identical(run_lines, "list")
-  expect_identical(env$command, "list")
 })
 
 test_that("required false command switch allows missing command", {
@@ -116,20 +137,22 @@ test_that("required false command switch allows missing command", {
     prefix = "rapp-optional-command-"
   )
 
-  run <- snapshot_command_run(
+  runs <- snapshot_command_runs(
     app_path,
-    character(),
-    "optional-command-test"
+    command_invocation("optional-command-test"),
+    command_invocation("optional-command-test list", "list"),
+    command_invocation("optional-command-test --help", "--help")
   )
 
-  expect_identical(run$output, "no command")
-  expect_identical(run$result$command, "")
+  expect_identical(runs[[1]]$output, "no command")
+  expect_identical(runs[[1]]$result$command, "")
+  expect_identical(runs[[2]]$output, c("list", "no command"))
+  expect_identical(runs[[2]]$result$command, "list")
 
-  help_output <- capture.output(help_result <- Rapp::run(app_path, "--help"))
-  expect_null(help_result)
+  expect_null(runs[[3]]$result)
   expect_true(any(grepl(
     "Usage: optional-command-test [<COMMAND>]",
-    help_output,
+    runs[[3]]$output,
     fixed = TRUE
   )))
 })
@@ -152,11 +175,18 @@ test_that("missing command prints help before matching positionals", {
     prefix = "rapp-command-with-positional-"
   )
 
-  lines <- snapshot_missing_command_help(
+  runs <- snapshot_command_runs(
     app_path,
-    "data.csv",
-    "command-with-positional-test data.csv"
+    command_invocation("command-with-positional-test data.csv", "data.csv"),
+    command_invocation(
+      "command-with-positional-test run data.csv",
+      c("run", "data.csv")
+    )
   )
+  lines <- runs[[1]]$output
+
+  expect_null(runs[[1]]$result)
+  expect_identical(runs[[2]]$output, c("run data.csv", "no command"))
 
   expect_true(any(grepl(
     "Usage: command-with-positional-test <COMMAND> <INPUT>",
@@ -186,11 +216,18 @@ test_that("missing nested command prints scoped help", {
     prefix = "rapp-nested-required-command-"
   )
 
-  lines <- snapshot_missing_command_help(
+  runs <- snapshot_command_runs(
     app_path,
-    "parent",
-    "nested-required-command-test parent"
+    command_invocation("nested-required-command-test parent", "parent"),
+    command_invocation(
+      "nested-required-command-test parent child",
+      c("parent", "child")
+    )
   )
+  lines <- runs[[1]]$output
+
+  expect_null(runs[[1]]$result)
+  expect_identical(runs[[2]]$output, "child called")
 
   expect_true(any(grepl(
     "Usage: nested-required-command-test parent <COMMAND>",
@@ -221,11 +258,21 @@ test_that("optional parent command preserves required child help", {
     prefix = "rapp-optional-parent-required-child-"
   )
 
-  lines <- snapshot_missing_command_help(
+  runs <- snapshot_command_runs(
     app_path,
-    "parent",
-    "optional-parent-required-child-test parent"
+    command_invocation(
+      "optional-parent-required-child-test parent",
+      "parent"
+    ),
+    command_invocation(
+      "optional-parent-required-child-test parent child",
+      c("parent", "child")
+    )
   )
+  lines <- runs[[1]]$output
+
+  expect_null(runs[[1]]$result)
+  expect_identical(runs[[2]]$output, "child called")
 
   expect_true(any(grepl(
     "Usage: optional-parent-required-child-test parent <COMMAND>",
