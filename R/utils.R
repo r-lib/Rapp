@@ -68,28 +68,43 @@ compact <- function(x) x[lengths(x) > 0]
 `%||%` <- function(x, y) if (is.null(x)) y else x
 `subtract<-` <- function(x, value) x - value
 
-is_bool_switch_default <- function(x) identical(x, TRUE) || identical(x, FALSE)
+is_auto_bool_switch_default <- function(x) {
+  identical(x, TRUE) || identical(x, FALSE)
+}
+
+is_bool_switch_default <- function(x) is.logical(x) && length(x) == 1L
+
+check_bool_switch_default <- function(default) {
+  if (!is_bool_switch_default(default)) {
+    stop(
+      "Boolean switches must have a TRUE, FALSE, or NA default.",
+      call. = FALSE
+    )
+  }
+}
 
 has_positive_alias <- function(opt) {
   stopifnot(identical(opt[["arg_type"]], "switch"))
 
   default <- opt[["default"]]
-  stopifnot(is_bool_switch_default(default))
+  check_bool_switch_default(default)
 
-  isFALSE(default) || isFALSE(opt[["negative_alias"]])
+  isFALSE(default) ||
+    isTRUE(is.na(default)) ||
+    isFALSE(opt[["negative_alias"]])
 }
 
 has_negative_alias <- function(opt) {
   stopifnot(identical(opt[["arg_type"]], "switch"))
 
   default <- opt[["default"]]
-  stopifnot(is_bool_switch_default(default))
+  check_bool_switch_default(default)
 
   if (!is.null(opt[["negative_alias"]])) {
     return(!isFALSE(opt[["negative_alias"]]))
   }
 
-  isTRUE(default)
+  isTRUE(default) || isTRUE(is.na(default))
 }
 
 `append<-` <- function(x, after = NULL, value) {

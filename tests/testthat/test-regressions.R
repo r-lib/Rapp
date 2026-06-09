@@ -218,6 +218,59 @@ test_that("boolean aliases follow logical defaults without consuming NA", {
   )
 })
 
+test_that("annotated NA boolean switches use explicit switch aliases", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| arg_type: switch",
+      "flag <- NA",
+      "cat(sprintf('flag=%s\\n', flag))"
+    ),
+    prefix = "rapp-annotated-na-switch-"
+  )
+
+  help <- capture.output(Rapp::run(app_path, "--help"))
+  expect_true(any(grepl("--flag / --no-flag", help, fixed = TRUE)))
+
+  expect_output(Rapp::run(app_path, character()), "flag=NA")
+  expect_output(Rapp::run(app_path, "--flag"), "flag=TRUE")
+  expect_output(Rapp::run(app_path, "--no-flag"), "flag=FALSE")
+})
+
+test_that("disabled boolean aliases are rejected before positional matching", {
+  true_default_app <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "flag <- TRUE",
+      "file <- NULL",
+      "cat(sprintf('flag=%s file=%s\\n', flag, file))"
+    ),
+    prefix = "rapp-disabled-positive-alias-positional-"
+  )
+
+  expect_error(
+    Rapp::run(true_default_app, "--flag=false"),
+    "Arguments not recognized: --flag=false",
+    fixed = TRUE
+  )
+
+  false_default_app <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "flag <- FALSE",
+      "file <- NULL",
+      "cat(sprintf('flag=%s file=%s\\n', flag, file))"
+    ),
+    prefix = "rapp-disabled-negative-alias-positional-"
+  )
+
+  expect_error(
+    Rapp::run(false_default_app, "--no-flag"),
+    "Arguments not recognized: --no-flag",
+    fixed = TRUE
+  )
+})
+
 test_that("YAML 1.2 strings are preserved in parsed option values", {
   app_path <- local_rapp_app(
     c(

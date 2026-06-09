@@ -10,6 +10,10 @@ process_args <- function(args, app) {
     on.exit(close(args))
   }
 
+  stop_unrecognized_arg <- function(arg) {
+    stop("Arguments not recognized: ", arg, call. = FALSE)
+  }
+
   short_opt_to_long_opt <- function(short_opt) {
     short <- str_drop_prefix(short_opt, "-")
     for (i in seq_along(app_opts)) {
@@ -95,7 +99,7 @@ process_args <- function(args, app) {
           identical(spec$arg_type, "switch") &&
           !has_positive_alias(spec)
       ) {
-        spec <- NULL
+        stop_unrecognized_arg(a)
       }
     } else {
       # --name
@@ -108,7 +112,7 @@ process_args <- function(args, app) {
           identical(spec$arg_type, "switch") &&
           !has_positive_alias(spec)
       ) {
-        spec <- NULL
+        stop_unrecognized_arg(a)
       }
 
       # if flag not known, maybe this is a switch flag
@@ -117,12 +121,15 @@ process_args <- function(args, app) {
         alt_spec <- app_opts[[alt_name]]
         if (
           !is.null(alt_spec) &&
-            identical(alt_spec$arg_type, "switch") &&
-            has_negative_alias(alt_spec)
+            identical(alt_spec$arg_type, "switch")
         ) {
-          spec <- alt_spec
-          val <- "false"
-          name <- alt_name
+          if (has_negative_alias(alt_spec)) {
+            spec <- alt_spec
+            val <- "false"
+            name <- alt_name
+          } else {
+            stop_unrecognized_arg(a)
+          }
         }
       }
     }

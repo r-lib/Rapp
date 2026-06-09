@@ -228,7 +228,7 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
         "NULL" = "string"
       ),
 
-      arg_type = if (is_bool_switch_default(default)) {
+      arg_type = if (is_auto_bool_switch_default(default)) {
         "switch"
       } else if (is.null(default)) {
         "positional"
