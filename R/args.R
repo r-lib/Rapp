@@ -169,13 +169,9 @@ process_args <- function(args, app) {
   }
 
   command_names <- setdiff(names(app_commands), ".val_pos_in_exprs")
-  if (
+  missing_required_command <-
     length(command_names) &&
       isTRUE(attr(app_commands, "help_on_missing_command"))
-  ) {
-    print_app_help(app, command_path = command_path, yaml = FALSE)
-    return(FALSE)
-  }
 
   if (length(positional_args) || length(app_args)) {
     # we've parsed all the command line args,
@@ -213,10 +209,18 @@ process_args <- function(args, app) {
     }
 
     if (length(specs) < length(positional_args)) {
+      unrecognized_args <- positional_args[
+        seq.int(length(specs) + 1L, length(positional_args))
+      ]
       stop(
         "Arguments not recognized: ",
-        paste0(positional_args[-seq_along(specs)], collapse = " ")
+        paste0(unrecognized_args, collapse = " ")
       )
+    }
+
+    if (missing_required_command) {
+      print_app_help(app, command_path = command_path, yaml = FALSE)
+      return(FALSE)
     }
 
     if (length(specs) != length(positional_args)) {
@@ -246,6 +250,11 @@ process_args <- function(args, app) {
         app$exprs[[spec$.val_pos_in_exprs]] <- positional_args[[i]]
       }
     }
+  }
+
+  if (missing_required_command) {
+    print_app_help(app, command_path = command_path, yaml = FALSE)
+    return(FALSE)
   }
 
   TRUE

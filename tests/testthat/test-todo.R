@@ -41,6 +41,13 @@ test_that("todo without a command prints help", {
   expect_true(any(grepl("Commands:", lines, fixed = TRUE)))
 })
 
+test_that("todo rejects unknown command tokens", {
+  expect_error(
+    run_todo_app("lisst", capture = FALSE),
+    "Arguments not recognized: lisst"
+  )
+})
+
 test_that("todo commands update the store", {
   store <- tempfile(fileext = ".yml")
   on.exit(unlink(store), add = TRUE)
