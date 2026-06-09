@@ -269,6 +269,11 @@ test_that("disabled boolean aliases are rejected before positional matching", {
     "Arguments not recognized: --no-flag",
     fixed = TRUE
   )
+  expect_error(
+    Rapp::run(false_default_app, "--no-flag=false"),
+    "Arguments not recognized: --no-flag=false",
+    fixed = TRUE
+  )
 })
 
 test_that("YAML 1.2 strings are preserved in parsed option values", {

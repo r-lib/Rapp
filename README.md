@@ -139,7 +139,7 @@ To omit the generated `--no-*` alias for a boolean switch, add
 ``` r
 #| description: Print version and exit.
 #| negative_alias: false
-version <- TRUE
+version <- FALSE
 ```
 
 Rapp parses option values as YAML 1.2, where bare `yes` and `no` are

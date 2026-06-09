@@ -101,6 +101,17 @@ process_args <- function(args, app) {
       ) {
         stop_unrecognized_arg(a)
       }
+      if (is.null(spec) && startsWith(a, "--no-")) {
+        alt_name <- str_drop_prefix(name, "no_")
+        alt_spec <- app_opts[[alt_name]]
+        if (
+          !is.null(alt_spec) &&
+            identical(alt_spec$arg_type, "switch") &&
+            !has_negative_alias(alt_spec)
+        ) {
+          stop_unrecognized_arg(a)
+        }
+      }
     } else {
       # --name
       name <- str_drop_prefix(a, "--")
