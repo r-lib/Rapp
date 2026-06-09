@@ -13,8 +13,8 @@ process_args <- function(args, app) {
   short_opt_to_long_opt <- function(short_opt) {
     short <- str_drop_prefix(short_opt, "-")
     for (i in seq_along(app_opts)) {
-      if (identical(short, app_opts[[i]]$short)) {
-        if (identical(app_opts[[i]]$arg_type, "switch")) {
+      if (identical(short, app_opts[[i]][["short"]])) {
+        if (identical(app_opts[[i]][["arg_type"]], "switch")) {
           if (has_positive_alias(app_opts[[i]])) {
             return(paste0("--", names(app_opts)[[i]]))
           }
@@ -156,24 +156,30 @@ process_args <- function(args, app) {
     # right now, a val like [1,2,3] gets parsed and is injected as a
     # length 3 integer vector.
     # Decide if this needs a guardrail or paving and signage.
-
-    # Try coerce to the R type, but if coercion fails, e.g.:
-    # Warning in as.vector("1a", "integer") : NAs introduced by coercion
-    # Then keep the original yaml parsed val as is.
-    # NAs cannot be injected from cli args via regular yaml,
-    # NAs are sentinals users can use to check if an opt was supplied.
-    # (but anything is possible with '!expr ...')
+    if (identical(spec$val_type, "bool")) {
+      val <- normalize_bool_cli_value(val)
+    }
     if (mode != "character") {
-      tryCatch(
-        {
-          val <- parse_yaml(val)
-          if (!is.na(coerced_val <- as.vector(val, mode))) {
-            val <- coerced_val
-          }
-        },
-        error = identity,
-        warning = identity
-      )
+      received_val <- val
+      val <- if (mode == "any") {
+        tryCatch(parse_yaml(val), error = function(e) received_val)
+      } else {
+        parse_yaml(val, simplify = TRUE)
+      }
+      if (mode == "double" && identical(typeof(val), "integer")) {
+        val <- as.vector(val, mode)
+      }
+      if (mode != "any" && !identical(typeof(val), mode)) {
+        stop(
+          sprintf(
+            "Invalid value for --%s: expected %s, received %s.",
+            to_kebab_case(name),
+            spec$val_type,
+            encodeString(received_val, quote = '"')
+          ),
+          call. = FALSE
+        )
+      }
     }
 
     # val can be NULL
@@ -189,6 +195,11 @@ process_args <- function(args, app) {
 
     app$exprs[[spec$.val_pos_in_exprs]] <- val
   }
+
+  command_names <- setdiff(names(app_commands), ".val_pos_in_exprs")
+  missing_required_command <-
+    length(command_names) &&
+      isTRUE(attr(app_commands, "help_on_missing_command"))
 
   if (length(positional_args) || length(app_args)) {
     # we've parsed all the command line args,
@@ -214,7 +225,7 @@ process_args <- function(args, app) {
       if (n_short < 0) {
         # If a collector is present but there aren't enough positional args,
         # drop the collector slot only when it's not explicitly required.
-        if (!isTRUE(specs[[collector]]$required)) {
+        if (!isTRUE(specs[[collector]][["required"]])) {
           specs[[collector]] <- NULL
         }
       } else if (n_short > 0) {
@@ -226,20 +237,23 @@ process_args <- function(args, app) {
     }
 
     if (length(specs) < length(positional_args)) {
-      unknown_args <- if (length(specs)) {
-        positional_args[-seq_along(specs)]
-      } else {
-        positional_args
-      }
+      unrecognized_args <- positional_args[
+        seq.int(length(specs) + 1L, length(positional_args))
+      ]
       stop(
         "Arguments not recognized: ",
-        paste0(unknown_args, collapse = " ")
+        paste0(unrecognized_args, collapse = " ")
       )
+    }
+
+    if (missing_required_command) {
+      print_app_help(app, command_path = command_path, yaml = FALSE)
+      return(FALSE)
     }
 
     if (length(specs) != length(positional_args)) {
       for (i in rev(seq_along(specs))) {
-        if (isFALSE(specs[[i]]$required)) {
+        if (isFALSE(specs[[i]][["required"]])) {
           specs[[i]] <- NULL
         }
         if (length(specs) == length(positional_args)) break
@@ -257,11 +271,18 @@ process_args <- function(args, app) {
     for (i in seq_along(positional_args)) {
       spec <- specs[[i]]
       if (identical(spec$action, "append")) {
-        append_arg(app$exprs[[spec$.val_pos_in_exprs]]) <- positional_args[[i]]
+        append_arg(
+          app$exprs[[spec$.val_pos_in_exprs]]
+        ) <- positional_args[[i]]
       } else {
         app$exprs[[spec$.val_pos_in_exprs]] <- positional_args[[i]]
       }
     }
+  }
+
+  if (missing_required_command) {
+    print_app_help(app, command_path = command_path, yaml = FALSE)
+    return(FALSE)
   }
 
   TRUE
@@ -271,6 +292,23 @@ process_args <- function(args, app) {
 #   should short should negate the default and inject FALSE? might be confusing.
 # TODO: support 'desc' for 'description' in yaml header (meh)
 # TODO: think through what character() can/should mean (meh)
+
+normalize_bool_cli_value <- function(val) {
+  stopifnot(is.character(val), length(val) == 1L)
+
+  switch(
+    val,
+    "true" = , "True" = , "TRUE" = ,
+    "y" = , "Y" = , "yes" = , "Yes" = , "YES" = ,
+    "on" = , "On" = , "ON" = ,
+    "1" = "true",
+    "false" = , "False" = , "FALSE" = ,
+    "n" = , "N" = , "no" = , "No" = , "NO" = ,
+    "off" = , "Off" = , "OFF" = ,
+    "0" = "false",
+    val
+  )
+}
 
 to_snake_case <- function(x) gsub("-", "_", x, fixed = TRUE)
 to_kebab_case <- function(x) gsub("_", "-", x, fixed = TRUE)

@@ -12,6 +12,10 @@
         --sep <SEP>          [default: " "] [type: string]
         --no-wrap            [default: true] Disable with `--no-wrap`.
         --seed <SEED>        [default: NA] [type: integer]
+      
+      Examples:
+        flip-coin --flips 3
+        flip-coin -n 30 --no-wrap
 
 ---
 
@@ -33,6 +37,10 @@
       Options:
         -s, --store <STORE>  Path to the todo list file.
                              [default: ".todo.yml"] [type: string]
+      
+      Examples:
+        todo add write-tests
+        todo list
       
       For help with a specific command, run: `todo <command> --help`.
 
@@ -72,6 +80,9 @@
       Global options:
         -s, --store <STORE>  Path to the todo list file.
                              [default: ".todo.yml"] [type: string]
+      
+      Examples:
+        todo list --limit 5
 
 ---
 
@@ -91,6 +102,9 @@
       Global options:
         -s, --store <STORE>  Path to the todo list file.
                              [default: ".todo.yml"] [type: string]
+      
+      Examples:
+        todo done --index 1
 
 ---
 
@@ -119,10 +133,13 @@
     Output
       launcher:
         default_packages:
-        - base
-        - utils
+          - base
+          - utils
       name: flip-coin
-      description: Flip a coin.
+      description: |
+        Flip a coin.
+      examples:
+        - flip-coin --flips 3
       options:
         flips:
           default: 1
@@ -130,19 +147,21 @@
           arg_type: option
           action: replace
           description: Number of coin flips
-          short: 'n'
+          short: n
+          examples:
+            - flip-coin -n 30 --no-wrap
         sep:
-          default: ' '
+          default: " "
           val_type: string
           arg_type: option
           action: replace
         wrap:
-          default: yes
+          default: true
           val_type: bool
           arg_type: switch
           action: replace
         seed:
-          default: .na.integer
+          default: ~
           val_type: integer
           arg_type: option
           action: replace
@@ -156,15 +175,18 @@
     Output
       launcher:
         default_packages:
-        - base
-        - utils
-        - yaml
+          - base
+          - utils
+          - yaml12
       name: todo
       title: Todo manager
       description: Manage a simple todo list.
+      examples:
+        - todo add write-tests
+        - todo list
       options:
         store:
-          default: .todo.yml
+          default: ".todo.yml"
           val_type: string
           arg_type: option
           action: replace
@@ -175,6 +197,8 @@
         list:
           title: Display the todos
           description: Print the contents of the todo list.
+          examples:
+            - todo list --limit 5
           options:
             limit:
               default: 30
@@ -195,11 +219,13 @@
               arg_type: positional
               action: replace
               description: Task description to add.
-              required: yes
+              required: true
           commands: ~
         done:
           title: Mark a task as completed
           description: Remove a task from the todo list using its index.
+          examples:
+            - todo done --index 1
           options:
             index:
               default: 1
@@ -222,8 +248,8 @@
     Output
       launcher:
         default_packages:
-        - base
-        - utils
+          - base
+          - utils
       options:
         top_opt:
           default: top-default
@@ -240,7 +266,7 @@
               arg_type: option
               action: replace
             parent_switch:
-              default: yes
+              default: true
               val_type: bool
               arg_type: switch
               action: replace
@@ -263,7 +289,7 @@
                   arg_type: option
                   action: replace
                 child2_switch:
-                  default: no
+                  default: false
                   val_type: bool
                   arg_type: switch
                   action: replace
@@ -273,7 +299,7 @@
                   val_type: string
                   arg_type: positional
                   action: replace
-                  required: yes
+                  required: true
               commands: ~
             help:
               options: ~
@@ -291,15 +317,18 @@
     Output
       launcher:
         default_packages:
-        - base
-        - utils
-        - yaml
+          - base
+          - utils
+          - yaml12
       name: todo
       title: Todo manager
       description: Manage a simple todo list.
+      examples:
+        - todo add write-tests
+        - todo list
       options:
         store:
-          default: .todo.yml
+          default: ".todo.yml"
           val_type: string
           arg_type: option
           action: replace
@@ -310,6 +339,8 @@
         list:
           title: Display the todos
           description: Print the contents of the todo list.
+          examples:
+            - todo list --limit 5
           options:
             limit:
               default: 30
@@ -330,11 +361,13 @@
               arg_type: positional
               action: replace
               description: Task description to add.
-              required: yes
+              required: true
           commands: ~
         done:
           title: Mark a task as completed
           description: Remove a task from the todo list using its index.
+          examples:
+            - todo done --index 1
           options:
             index:
               default: 1
@@ -357,8 +390,8 @@
     Output
       launcher:
         default_packages:
-        - base
-        - utils
+          - base
+          - utils
       options:
         top_opt:
           default: top-default
@@ -375,7 +408,7 @@
               arg_type: option
               action: replace
             parent_switch:
-              default: yes
+              default: true
               val_type: bool
               arg_type: switch
               action: replace
@@ -398,7 +431,7 @@
                   arg_type: option
                   action: replace
                 child2_switch:
-                  default: no
+                  default: false
                   val_type: bool
                   arg_type: switch
                   action: replace
@@ -408,7 +441,7 @@
                   val_type: string
                   arg_type: positional
                   action: replace
-                  required: yes
+                  required: true
               commands: ~
             help:
               options: ~

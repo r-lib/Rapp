@@ -27,3 +27,10 @@ test_that("ls app accepts same option multiple times", {
     fixed = FALSE
   )))
 })
+
+test_that("ls app emits YAML help for append options", {
+  lines <- capture.output(Rapp::run(ls_app, "--help-yaml"))
+  spec <- yaml12::parse_yaml(lines)
+
+  expect_identical(spec[["options"]][["pattern"]][["action"]], "append")
+})

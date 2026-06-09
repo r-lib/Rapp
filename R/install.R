@@ -5,12 +5,15 @@
 #' Rapp`) or `Rscript` (for example, `#!/usr/bin/env Rscript`). Each discovered
 #' script gets a lightweight launcher in `destdir` that invokes `Rapp` or
 #' `Rscript` to run the app. The launcher encodes the absolute path to the R
-#' binary this function is called from.
+#' binary this function is called from, and its name defaults to the script
+#' basename without the `.R` extension.
 #'
-#' Optional `#| launcher:` front matter in the script lets authors tune the
-#' `Rscript` flags. By default, for both `Rscript` and `Rapp`, R is invoked with
-#' `--default-packages=base,<pkg>`, where `<pkg>` is the package providing the
-#' executable.
+#' Optional `#| launcher:` front matter in the script lets authors set the
+#' installed launcher `name` and tune the `Rscript` flags. By default, package
+#' apps are invoked with `--default-packages=base,<pkg>`, where `<pkg>` is the
+#' package providing the executable. The top-level `Rapp` launcher installed by
+#' `install_pkg_cli_apps("Rapp")` invokes `Rscript -e Rapp::run()` without
+#' package app defaults.
 #'
 #' @param package Package names to process. Defaults to the calling package when
 #'   run inside a package; otherwise all installed packages.
@@ -27,10 +30,10 @@
 #' @details
 #'
 #' Launchers are regenerated each time `install_pkg_cli_apps()` is called, and
-#' any obsolete launchers for the same package are removed. `RAPP_INSTALL_DIR`
+#' any obsolete launchers for the same package are removed. `RAPP_BIN_DIR`
 #' overrides the default destination. Launchers are POSIX shell scripts on
 #' Unix-like systems and `.bat` files on Windows. Front-matter options such as
-#' `vanilla`, `no-environ`, and `default_packages` map directly to the
+#' `name`, `vanilla`, `no-environ`, and `default-packages` map directly to the
 #' corresponding `Rscript` arguments.
 #'
 #' When `overwrite` is `NA`, files previously written by Rapp are always
@@ -39,7 +42,7 @@
 #' executable.
 #'
 #' If `destdir` is not provided, it is resolved in this order:
-#'   - env var `RAPP_INSTALL_DIR`
+#'   - env var `RAPP_BIN_DIR`
 #'   - env var `XDG_BIN_HOME`
 #'   - env var `XDG_DATA_HOME/../bin`
 #'   - the default location:
@@ -47,10 +50,13 @@
 #'     - Windows: `%LOCALAPPDATA%\Programs\R\Rapp\bin`
 #'
 #' On Windows, the resolved `destdir` is explicitly added to `PATH` (it
-#' generally is not by default). To disable adding it to the `PATH`, set envvar
-#' `RAPP_NO_MODIFY_PATH=1`.
+#' generally is not by default). On macOS, when the default `~/.local/bin`
+#' destination is not already on `PATH`, it is added to `~/.zprofile`, or
+#' `$ZDOTDIR/.zprofile` when `ZDOTDIR` is set. If the profile cannot be
+#' updated, a warning is emitted and installation continues. To disable adding
+#' it to the `PATH`, set envvar `RAPP_NO_MODIFY_PATH=1`.
 #'
-#' On macOS or Linux, `~/.local/bin` is typically already on `PATH` if it
+#' On Linux, `~/.local/bin` is typically already on `PATH` if it
 #' exists. Note: some shells add `~/.local/bin` to `PATH` only if it exists at
 #' login. If `install_pkg_cli_apps()` created the directory, you may need to
 #' restart the shell for the new apps to be found on `PATH`.
@@ -61,6 +67,7 @@
 #' #!/usr/bin/env Rapp
 #' #| description: About this app
 #' #| launcher:
+#' #|   name: about
 #' #|   vanilla: true
 #' #|   default-packages: [base, utils, mypkg]
 #' ```
@@ -85,6 +92,8 @@ install_pkg_cli_apps <- function(
 
   if (is_windows()) {
     ensure_path_windows(destdir)
+  } else if (is_macos()) {
+    ensure_path_macos(destdir)
   }
 
   # existing Rapp launchers we're either overwriting or deleting
@@ -236,8 +245,8 @@ rapp_install_dir <- function() {
 launcher_path <- function(app_path, destdir) {
   data <- get_app_data(app_path)
   name <-
-    data$launcher$name %||%
-    data$name %||%
+    data[["launcher"]][["name"]] %||%
+    data[["name"]] %||%
     sub("\\.[rR]$", "", basename(app_path))
   switch(
     .Platform$OS.type,
@@ -256,16 +265,16 @@ launcher_contents <- function(app_path, package) {
 
   app_data <- get_app_data(app_path)
   launcher_name <-
-    app_data$launcher$name %||%
-    app_data$name %||%
+    app_data[["launcher"]][["name"]] %||%
+    app_data[["name"]] %||%
     sub("\\.[rR]$", "", basename(app_path))
   # if (!nzchar(launcher_name) || !grepl("^[[:alnum:]_-]+$", launcher_name)) {
   #   stop("Launcher name must match ^[[:alnum:]_-]+$")
   # }
 
-  rscript_opts <- app_data$launcher
+  rscript_opts <- app_data[["launcher"]]
 
-  default_packages <- rscript_opts$default_packages %||% c("base", package)
+  default_packages <- rscript_opts[["default_packages"]] %||% c("base", package)
   default_packages <- if (length(default_packages)) {
     shQuote(sprintf(
       "--default-packages=%s",
@@ -277,13 +286,13 @@ launcher_contents <- function(app_path, package) {
 
   # assemble rscript opts
   rscript_opts <- c(
-    if (isTRUE(rscript_opts$vanilla)) "--vanilla",
-    if (isTRUE(rscript_opts$`no-environ`)) "--no-environ",
-    if (isTRUE(rscript_opts$`no-site-file`)) "--no-site-file",
-    if (isTRUE(rscript_opts$`no-init-file`)) "--no-init-file",
-    if (isTRUE(rscript_opts$restore)) "--restore",
-    if (isTRUE(rscript_opts$save)) "--save",
-    if (isTRUE(rscript_opts$verbose)) "--verbose",
+    if (isTRUE(rscript_opts[["vanilla"]])) "--vanilla",
+    if (isTRUE(rscript_opts[["no_environ"]])) "--no-environ",
+    if (isTRUE(rscript_opts[["no_site_file"]])) "--no-site-file",
+    if (isTRUE(rscript_opts[["no_init_file"]])) "--no-init-file",
+    if (isTRUE(rscript_opts[["restore"]])) "--restore",
+    if (isTRUE(rscript_opts[["save"]])) "--save",
+    if (isTRUE(rscript_opts[["verbose"]])) "--verbose",
     default_packages
   )
   rscript_opts <- paste0(rscript_opts, collapse = " ")
@@ -405,7 +414,7 @@ install_rapp_launcher <- function(destdir, overwrite = NA) {
       paste("::", sentinel),
       "setlocal",
       sprintf(
-        r"("%s/Rscript.exe" -e Rapp::run() %%*)",
+        '"%s/Rscript.exe" -e Rapp::run() %%*',
         R.home("bin")
       )
     ),
@@ -413,7 +422,7 @@ install_rapp_launcher <- function(destdir, overwrite = NA) {
       "#!/bin/sh",
       paste("#", sentinel),
       sprintf(
-        r"(exec %s/Rscript -e 'Rapp::run()' "$@")",
+        'exec %s/Rscript -e "Rapp::run()" "$@"',
         R.home("bin")
       )
     )
@@ -512,6 +521,126 @@ ensure_path_windows <- function(destdir = rapp_install_dir()) {
 
 get_env_win_registry <- function(name) {
   utils::readRegistry("Environment", hive = "HCU", view = "default")[[name]]
+}
+
+ensure_path_macos <- function(destdir = rapp_install_dir()) {
+  if (Sys.getenv("RAPP_NO_MODIFY_PATH") != "") {
+    return(FALSE)
+  }
+  stopifnot(is_macos())
+
+  destdir <- normalizePath(destdir, mustWork = TRUE)
+  if (!identical(destdir, macos_default_install_dir())) {
+    return(FALSE)
+  }
+  if (path_has_dir(destdir)) {
+    return(FALSE)
+  }
+
+  zprofile <- macos_zprofile()
+  zprofile_display <- macos_zprofile_display(zprofile)
+  lines <- macos_path_lines()
+
+  if (profile_has_lines(zprofile, lines)) {
+    warning(
+      "~/.local/bin PATH setup is already present in ",
+      zprofile_display,
+      ", ",
+      "but ~/.local/bin is still not on PATH.\n",
+      "Restart your shell, or run:\n\n",
+      "  source ", zprofile_display,
+      call. = FALSE
+    )
+  } else if (write_macos_path_lines(zprofile, lines, zprofile_display)) {
+    message(
+      "Added ~/.local/bin to PATH in ", zprofile_display, ".\n",
+      "Restart your shell, or run:\n\n",
+      "  source ", zprofile_display
+    )
+  }
+
+  Sys.setenv(PATH = paste(destdir, Sys.getenv("PATH"), sep = .Platform$path.sep))
+  TRUE
+}
+
+macos_default_install_dir <- function() {
+  normalizePath(file.path(path.expand("~"), ".local", "bin"), mustWork = FALSE)
+}
+
+macos_zprofile <- function() {
+  zdotdir <- Sys.getenv("ZDOTDIR")
+  if (!nzchar(zdotdir)) {
+    zdotdir <- path.expand("~")
+  }
+  path(zdotdir, ".zprofile")
+}
+
+macos_zprofile_display <- function(zprofile) {
+  if (identical(path(zprofile), path(path.expand("~"), ".zprofile"))) {
+    "~/.zprofile"
+  } else {
+    zprofile
+  }
+}
+
+macos_path_lines <- function() {
+  c(
+    'case ":$PATH:" in',
+    '  *:"$HOME/.local/bin":*) ;;',
+    '  *) export PATH="$HOME/.local/bin:$PATH" ;;',
+    "esac"
+  )
+}
+
+profile_has_lines <- function(profile, lines) {
+  if (!file.exists(profile)) {
+    return(FALSE)
+  }
+  profile <- tryCatch(
+    paste(readLines(profile, warn = FALSE), collapse = "\n"),
+    error = function(e) "",
+    warning = function(w) ""
+  )
+  grepl(paste(lines, collapse = "\n"), profile, fixed = TRUE)
+}
+
+write_macos_path_lines <- function(profile, lines, profile_display) {
+  tryCatch(
+    {
+      suppressWarnings(cat(
+        paste0(c("", lines), collapse = "\n"),
+        "\n",
+        file = profile,
+        append = TRUE,
+        sep = ""
+      ))
+      TRUE
+    },
+    error = function(e) {
+      warning(
+        "Could not add ~/.local/bin to PATH in ",
+        profile_display,
+        ": ",
+        conditionMessage(e),
+        call. = FALSE
+      )
+      FALSE
+    }
+  )
+}
+
+path_has_dir <- function(dir, env_path = Sys.getenv("PATH")) {
+  normalizePath(dir, mustWork = FALSE) %in% path_entries(env_path)
+}
+
+path_entries <- function(env_path = Sys.getenv("PATH")) {
+  entries <- strsplit(env_path, .Platform$path.sep, fixed = TRUE)[[1L]]
+  entries <- entries[nzchar(entries)]
+  normalizePath(entries, mustWork = FALSE)
+}
+
+is_macos <- function() {
+  identical(Sys.info()[["sysname"]], "Darwin")
 }
 
 path <- function(...) {

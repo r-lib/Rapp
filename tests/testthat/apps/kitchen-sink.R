@@ -35,6 +35,7 @@ optional_positional <- NULL
 #| required: false
 optional_positional_default <- "foo"
 
+#| required: false
 switch(
   mode <- "",
   #| title: Summary Mode

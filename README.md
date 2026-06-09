@@ -77,11 +77,14 @@ arguments, and commands. The sections below cover the supported patterns.
 
 ### Help
 
-All Rapps comes with built-in flags for help.
+All Rapps come with built-in flags for help.
 
 -   `--help` shows usage, description, and options for the app (and for subcommands
     when used after a command, e.g., `todo list --help`).
 -   `--help-yaml` prints machine-readable metadata for the app as YAML.
+
+When a command is missing, Rapp automatically prints the same help as
+`--help`.
 
 ### Options
 
@@ -99,9 +102,11 @@ flip-coin --n 1
 ```
 
 Non-string option values passed from the command line are parsed as
-YAML/JSON, and then coerced to the original R type. Values can be
-supplied after the option flag, or as part of the option flag string
-with `=`. The following two usages are the same:
+YAML/JSON and must match the original R type. For example, an integer
+option rejects values like `10.2` or `true`, while float options accept
+integer or float YAML values. Values can be supplied after the option
+flag, or as part of the option flag string with `=`. The following two
+usages are the same:
 
 ``` bash
 flip-coin --n=1
@@ -136,6 +141,11 @@ To omit the generated `--no-*` alias for a boolean switch, add
 #| negative_alias: false
 version <- TRUE
 ```
+
+Rapp parses option values as YAML 1.2, where bare `yes` and `no` are
+strings rather than boolean aliases for non-bool values. For declared
+bool options, Rapp also accepts YAML 1.1 bool aliases such as `yes`,
+`no`, `y`, `n`, `on`, and `off` for backward compatibility.
 
 Assigning `c()` or `list()` declares an option that can be supplied
 multiple times. Use `c()` when you want to keep the exact strings
@@ -214,11 +224,13 @@ This changes the usage to `Usage: greet [<NAME>]` (with brackets).
 ### Commands
 
 Use a `switch()` statement whose first argument is either a character
-scalar or an assignment (for example `switch("")` or
-`switch(command <- "", ...)`) to declare commands. The corresponding
-branch runs when the matching command is supplied on the command line.
-Declare command specific options and positional arguments with the same
-rules inside the branch.
+scalar or an assignment to declare commands. Command switches are
+required by default; if no command is supplied, Rapp prints help for the
+current command level. To allow running without a command, add
+`#| required: false` above the `switch()`. The corresponding branch runs
+when the matching command is supplied on the command line. Declare
+command specific options and positional arguments with the same rules
+inside the branch.
 
 ``` r
 #!/usr/bin/env Rapp
@@ -347,6 +359,8 @@ Other YAML fields you can supply to change the behavior of Rapp
   repeatable options and collectors).
 - `negative_alias`: override whether boolean switches include a generated
   `--no-*` alias.
+- `examples`: usage examples to show in `--help`. Use a YAML sequence to list
+  multiple examples.
 
 ## Summary
 
@@ -362,7 +376,7 @@ command line arguments.
 | Assignment of `NA`<br>`foo <- NA` | Boolean option<br>`APP --foo true` or `APP --foo false` |
 | Assignment of `c()` or `list()`<br>`foo <- c()` | Repeatable option<br>`APP --foo val1 --foo val2` |
 | Assignment of `NULL` to name with `...`<br>`args... <- NULL` | Positional Arg Collector<br>`APP foo bar baz` |
-| Switch with string literal<br>`switch("", cmd1 = {}, cmd2 = {})` | Commands<br>`APP cmd1 --help`<br>`APP cmd2 --help` |
+| Switch with string literal<br>`switch("", cmd1 = {}, cmd2 = {})` | Required commands<br>`APP --help`<br>`APP cmd1 --help`<br>`APP cmd2 --help` |
 
 ### Running interactively
 
@@ -404,8 +418,9 @@ prefer, call the front end explicitly with `Rapp flip-coin.R --n 3`.
 
 If you are shipping Rapps via an R package, you can call
 `Rapp::install_pkg_cli_apps("mypackage")` to install lightweight
-launchers for every Rapp (and Rscript shebang) in the package's `exec/`
-directory.
+launchers for every `.R` script in the package's `exec/` directory whose
+shebang line invokes `Rapp` or `Rscript`. A script named `exec/myapp.R`
+is installed as the command `myapp` by default.
 
 ``` r
 Rapp::install_pkg_cli_apps("mypackage")
@@ -425,23 +440,42 @@ install_mypackage_cli <- function(...) {
 ```
 
 App launchers are written to `destdir`, which defaults to the first
-available location from `RAPP_INSTALL_DIR`, `XDG_BIN_HOME`,
+available location from `RAPP_BIN_DIR`, `XDG_BIN_HOME`,
 `XDG_DATA_HOME/../bin`, or the default location, `~/.local/bin` on macOS
 and Linux and `%LOCALAPPDATA%\Programs\R\Rapp\bin` on Windows. On
-Windows the directory is automatically added to `PATH`; on macOS and
-Linux the directory generally is already present on `PATH` (you may need
-to restart your shell if the Rapp installer created the directory). Use
-the `destdir` argument if you prefer an alternate location. If you are
-working with a standalone `.R` file on Windows, call the launcher
-explicitly (`Rapp path\to\flip-coin.R --n 3`) because native shebangs
-are not supported.
+Windows the directory is automatically added to `PATH`; on macOS, the
+default `~/.local/bin` directory is added to `~/.zprofile` when needed
+(`$ZDOTDIR/.zprofile` when `ZDOTDIR` is set). If that profile cannot be
+updated, Rapp warns and continues installing launchers. On Linux the
+directory generally is already present on `PATH` (you may need to log
+out and back in if the Rapp installer created the directory). Use the
+`destdir` argument if you prefer an alternate location.
+
+Use `#| launcher:` front matter to customize the installed launcher. For
+example, `name` changes the installed command name, and `vanilla`,
+`no-environ`, and `default-packages` tune the generated `Rscript`
+invocation.
+
+``` r
+#!/usr/bin/env Rapp
+#| launcher:
+#|   name: myapp-fast
+#|   vanilla: true
+#|   default-packages: [base, utils, mypackage]
+```
+
+If you are working with a standalone `.R` file on Windows, call the
+launcher explicitly (`Rapp path\to\flip-coin.R --n 3`) because native
+shebangs are not supported.
 
 ### Using package `exec/` directories directly
 
 Launchers are optional. You can add `Rapp` and a package's `exec/`
 directory to the `PATH` and run the apps directly from the package's
-installed directory. For example, after installing {Rapp}, you can place
-something like this in a shell startup script like `.bashrc`:
+installed directory. Direct execution uses the script filename, such as
+`myapp.R`; extensionless command names come from generated launchers. For
+example, after installing {Rapp}, you can place something like this in a
+shell startup script like `.bashrc`:
 
 ``` bash
 export PATH="$(Rscript -e 'cat(normalizePath(system.file("exec", package = "Rapp")))'):$PATH"
@@ -460,8 +494,10 @@ package.
 
 -   Add {Rapp} as a dependency in your DESCRIPTION.
 
--   Place your app in the `exec` folder in your package (for example
-    `exec/myapp`). Apps are automatically installed as executables.
+-   Place your app in the `exec` folder in your package as an `.R` script
+    with a `Rapp` or `Rscript` shebang line (for example,
+    `exec/myapp.R`). `install_pkg_cli_apps()` installs it as `myapp` by
+    default.
 
 -   Encourage users to run `Rapp::install_pkg_cli_apps("mypackage")` or
     your own exported wrapper `mypackage::install_mypackage_cli()` after

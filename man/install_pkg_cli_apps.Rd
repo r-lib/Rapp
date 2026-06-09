@@ -36,19 +36,22 @@ Invisibly returns the paths of launchers that were (re)written.
 \code{.R} scripts whose shebang line invokes \code{Rapp} (for example, \verb{#!/usr/bin/env Rapp}) or \code{Rscript} (for example, \verb{#!/usr/bin/env Rscript}). Each discovered
 script gets a lightweight launcher in \code{destdir} that invokes \code{Rapp} or
 \code{Rscript} to run the app. The launcher encodes the absolute path to the R
-binary this function is called from.
+binary this function is called from, and its name defaults to the script
+basename without the \code{.R} extension.
 }
 \details{
-Optional \verb{#| launcher:} front matter in the script lets authors tune the
-\code{Rscript} flags. By default, for both \code{Rscript} and \code{Rapp}, R is invoked with
-\verb{--default-packages=base,<pkg>}, where \verb{<pkg>} is the package providing the
-executable.
+Optional \verb{#| launcher:} front matter in the script lets authors set the
+installed launcher \code{name} and tune the \code{Rscript} flags. By default, package
+apps are invoked with \verb{--default-packages=base,<pkg>}, where \verb{<pkg>} is the
+package providing the executable. The top-level \code{Rapp} launcher installed by
+\code{install_pkg_cli_apps("Rapp")} invokes \verb{Rscript -e Rapp::run()} without
+package app defaults.
 
 Launchers are regenerated each time \code{install_pkg_cli_apps()} is called, and
-any obsolete launchers for the same package are removed. \code{RAPP_INSTALL_DIR}
+any obsolete launchers for the same package are removed. \code{RAPP_BIN_DIR}
 overrides the default destination. Launchers are POSIX shell scripts on
 Unix-like systems and \code{.bat} files on Windows. Front-matter options such as
-\code{vanilla}, \code{no-environ}, and \code{default_packages} map directly to the
+\code{name}, \code{vanilla}, \code{no-environ}, and \code{default-packages} map directly to the
 corresponding \code{Rscript} arguments.
 
 When \code{overwrite} is \code{NA}, files previously written by Rapp are always
@@ -58,7 +61,7 @@ executable.
 
 If \code{destdir} is not provided, it is resolved in this order:
 \itemize{
-\item env var \code{RAPP_INSTALL_DIR}
+\item env var \code{RAPP_BIN_DIR}
 \item env var \code{XDG_BIN_HOME}
 \item env var \code{XDG_DATA_HOME/../bin}
 \item the default location:
@@ -69,10 +72,13 @@ If \code{destdir} is not provided, it is resolved in this order:
 }
 
 On Windows, the resolved \code{destdir} is explicitly added to \code{PATH} (it
-generally is not by default). To disable adding it to the \code{PATH}, set envvar
-\code{RAPP_NO_MODIFY_PATH=1}.
+generally is not by default). On macOS, when the default \verb{~/.local/bin}
+destination is not already on \code{PATH}, it is added to \verb{~/.zprofile}, or
+\verb{$ZDOTDIR/.zprofile} when \code{ZDOTDIR} is set. If the profile cannot be
+updated, a warning is emitted and installation continues. To disable adding
+it to the \code{PATH}, set envvar \code{RAPP_NO_MODIFY_PATH=1}.
 
-On macOS or Linux, \verb{~/.local/bin} is typically already on \code{PATH} if it
+On Linux, \verb{~/.local/bin} is typically already on \code{PATH} if it
 exists. Note: some shells add \verb{~/.local/bin} to \code{PATH} only if it exists at
 login. If \code{install_pkg_cli_apps()} created the directory, you may need to
 restart the shell for the new apps to be found on \code{PATH}.
@@ -82,6 +88,7 @@ Example setting \code{launcher} args:
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{#!/usr/bin/env Rapp
 #| description: About this app
 #| launcher:
+#|   name: about
 #|   vanilla: true
 #|   default-packages: [base, utils, mypkg]
 }\if{html}{\out{</div>}}

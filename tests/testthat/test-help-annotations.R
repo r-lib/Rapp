@@ -50,6 +50,144 @@ test_that("short annotation values stay character", {
   expect_true(any(grepl("-1, --option <OPTION>", lines, fixed = TRUE)))
 })
 
+test_that("short-like annotation keys do not partially match", {
+  app_path <- local_rapp_script(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: short-extra-test",
+      "",
+      "#| short-extra: x",
+      "#| description: Example option.",
+      "option <- \"\""
+    ),
+    prefix = "rapp-short-extra-"
+  )
+
+  lines <- capture.output(Rapp::run(app_path, "--help"))
+  expect_true(any(grepl("--option <OPTION>", lines, fixed = TRUE)))
+  expect_false(any(grepl("-x, --option <OPTION>", lines, fixed = TRUE)))
+})
+
+test_that("examples annotation appears in help", {
+  lines <- c(
+    "#!/usr/bin/env Rapp",
+    "#| name: italyparl",
+    "switch('',",
+    "  #| title: Parliamentary bills",
+    "  #| description: Search bills from Camera or Senato.",
+    "  #| examples:",
+    "  #|   - italyparl bills --approved --camera cd",
+    "  #|   - italyparl bills --keyword energia --camera sn --format json",
+    "  bills = {",
+    "    #| description: cd or sn",
+    "    #| examples: italyparl bills --camera sn",
+    "    camera <- 'cd'",
+    "    #| description: Only approved bills",
+    "    approved <- FALSE",
+    "  }",
+    ")"
+  )
+
+  help <- help_lines_from_script(
+    lines,
+    command_path = "bills",
+    prefix = "rapp-examples-"
+  )
+
+  examples <- help[seq(
+    which(help == "Examples:") + 1L,
+    length.out = 3L
+  )]
+  expect_identical(examples, c(
+    "  italyparl bills --approved --camera cd",
+    "  italyparl bills --keyword energia --camera sn --format json",
+    "  italyparl bills --camera sn"
+  ))
+
+  yaml_lines <- help_lines_from_script(
+    lines,
+    format = "yaml",
+    prefix = "rapp-examples-yaml-"
+  )
+  expect_true("        examples:" %in% yaml_lines)
+  expect_true("          - italyparl bills --camera sn" %in% yaml_lines)
+
+  yaml <- yaml12::parse_yaml(yaml_lines)
+  expect_identical(yaml$commands$bills$options$camera$examples, c(
+    "italyparl bills --camera sn"
+  ))
+  expect_identical(yaml$commands$bills$examples, c(
+    "italyparl bills --approved --camera cd",
+    "italyparl bills --keyword energia --camera sn --format json"
+  ))
+})
+
+test_that("inherited option examples appear in command help", {
+  lines <- c(
+    "#!/usr/bin/env Rapp",
+    "#| name: inherited-examples",
+    "",
+    "#| description: Config file.",
+    "#| examples: inherited-examples --config config.yml child",
+    "config <- \"\"",
+    "",
+    "switch('',",
+    "  child = {",
+    "    flag <- TRUE",
+    "  }",
+    ")"
+  )
+
+  help <- help_lines_from_script(
+    lines,
+    command_path = "child",
+    prefix = "rapp-inherited-examples-"
+  )
+
+  examples <- help[seq(
+    which(help == "Examples:") + 1L,
+    length.out = 1L
+  )]
+  expect_identical(
+    examples,
+    "  inherited-examples --config config.yml child"
+  )
+})
+
+test_that("YAML help preserves generated entries named examples", {
+  yaml <- yaml12::parse_yaml(help_lines_from_script(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: examples-option",
+      "examples <- \"\""
+    ),
+    format = "yaml",
+    prefix = "rapp-examples-option-"
+  ))
+
+  expect_identical(yaml$options$examples$arg_type, "option")
+  expect_identical(yaml$options$examples$val_type, "string")
+})
+
+test_that("required-like annotation keys do not partially match", {
+  app_path <- local_rapp_script(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: required-extra-test",
+      "",
+      "#| required-extra: false",
+      "name <- NULL",
+      "cat(name, '\\n')"
+    ),
+    prefix = "rapp-required-extra-"
+  )
+
+  expect_error(
+    Rapp::run(app_path, character()),
+    "Missing required argument: NAME"
+  )
+})
+
 test_that("help output lists option defaults, types, and toggle hints", {
   build_help <- function(option_block, prefix) {
     help_lines_from_script(
@@ -133,6 +271,26 @@ test_that("list-like annotations are parsed via yaml", {
 
   app <- Rapp:::as_app(app_path)
   expect_identical(unclass(app$args$root$info), list("alpha", "beta"))
+})
+
+test_that("help metadata keys do not partially match", {
+  app_path <- local_rapp_script(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| title-extra: Do not use as title.",
+      "#| description-extra: Do not use as description.",
+      "",
+      "flag <- TRUE"
+    ),
+    prefix = "rapp-no-partial-meta-"
+  )
+
+  lines <- capture.output(Rapp::run(app_path, "--help"))
+  expect_match(lines[[1]], "^Usage: ")
+  expect_false(any(lines %in% c(
+    "Do not use as title.",
+    "Do not use as description."
+  )))
 })
 
 test_that("launcher name is used in help when provided", {

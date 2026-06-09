@@ -33,36 +33,51 @@ test_that("todo help output", {
   )
 })
 
+test_that("todo without a command prints help", {
+  lines <- run_todo_app()
+
+  expect_true(any(grepl("Todo manager", lines, fixed = TRUE)))
+  expect_true(any(grepl("Usage: todo [OPTIONS] <COMMAND>", lines, fixed = TRUE)))
+  expect_true(any(grepl("Commands:", lines, fixed = TRUE)))
+})
+
+test_that("todo rejects unknown command tokens", {
+  expect_error(
+    run_todo_app("lisst", capture = FALSE),
+    "Arguments not recognized: lisst"
+  )
+})
+
 test_that("todo commands update the store", {
   store <- tempfile(fileext = ".yml")
   on.exit(unlink(store), add = TRUE)
 
   run_todo_app(c("add", "buy milk", "--store", store))
   expect_equal(
-    yaml::read_yaml(store),
+    yaml12::read_yaml(store),
     "buy milk"
   )
 
   run_todo_app(c("add", "write tests", "--store", store))
   expect_equal(
-    yaml::read_yaml(store),
+    yaml12::read_yaml(store),
     c("buy milk", "write tests")
   )
 
   run_todo_app(c("add", "call mom", "--store", store))
   expect_equal(
-    yaml::read_yaml(store),
+    yaml12::read_yaml(store),
     c("buy milk", "write tests", "call mom")
   )
 
   done_default <- run_todo_app(c("done", "--store", store))
   expect_match(done_default[[1]], "Completed: buy milk")
   expect_equal(
-    yaml::read_yaml(store),
+    yaml12::read_yaml(store),
     c("write tests", "call mom")
   )
 
   done_output <- run_todo_app(c("done", "-i", "2", "--store", store))
   expect_match(done_output[[1]], "Completed: call mom")
-  expect_equal(yaml::read_yaml(store), "write tests")
+  expect_equal(yaml12::read_yaml(store), "write tests")
 })

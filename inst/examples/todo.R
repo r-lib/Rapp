@@ -2,6 +2,9 @@
 #| name: todo
 #| title: Todo manager
 #| description: Manage a simple todo list.
+#| examples:
+#|   - todo add write-tests
+#|   - todo list
 
 #| description: Path to the todo list file.
 #| short: s
@@ -12,11 +15,12 @@ switch(
 
   #| title: Display the todos
   #| description: Print the contents of the todo list.
+  #| examples: todo list --limit 5
   list = {
     #| description: Maximum number of entries to display (-1 for all).
     limit <- 30L
 
-    tasks <- if (file.exists(store)) yaml::read_yaml(store) else list()
+    tasks <- if (file.exists(store)) yaml12::read_yaml(store) else list()
     if (!length(tasks)) {
       cat("No tasks yet.\n")
     } else {
@@ -37,7 +41,7 @@ switch(
       stop("Please supply a task description.", call. = FALSE)
     }
 
-    tasks <- if (file.exists(store)) yaml::read_yaml(store) else list()
+    tasks <- if (file.exists(store)) yaml12::read_yaml(store) else list()
     if (is.null(tasks)) {
       tasks <- list()
     }
@@ -45,18 +49,19 @@ switch(
       tasks <- as.list(tasks)
     }
     tasks[[length(tasks) + 1L]] <- task
-    yaml::write_yaml(tasks, store)
+    yaml12::write_yaml(tasks, store)
     cat("Added:", task, "\n")
   },
 
   #| title: Mark a task as completed
   #| description: Remove a task from the todo list using its index.
+  #| examples: todo done --index 1
   done = {
     #| description: Index of the task to complete.
     #| short: i
     index <- 1L
 
-    tasks <- if (file.exists(store)) yaml::read_yaml(store) else list()
+    tasks <- if (file.exists(store)) yaml12::read_yaml(store) else list()
     if (is.null(tasks)) {
       tasks <- list()
     }
@@ -73,7 +78,7 @@ switch(
 
     task <- tasks[[index]]
     tasks[[index]] <- NULL
-    yaml::write_yaml(tasks, store)
+    yaml12::write_yaml(tasks, store)
     cat("Completed:", task, "\n")
   },
 

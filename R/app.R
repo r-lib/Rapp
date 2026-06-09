@@ -54,7 +54,11 @@ get_app_data <- function(app) {
 
     parse_hashpipe_yaml(app$lines[hashpipe_start:hashpipe_end])
   } else {
-    as_yaml(list())
+    structure(list(), names = character())
+  }
+
+  if (!is.null(data[["launcher"]])) {
+    data[["launcher"]] <- normalize_anno_keys(data[["launcher"]])
   }
 
   data
@@ -79,6 +83,10 @@ is_command_switch <- function(e) {
   }
   switch_expr <- e[[2L]]
   typeof(switch_expr) == "character" || is_simple_assignment_call(switch_expr)
+}
+
+command_switch_help_on_missing <- function(anno) {
+  !isFALSE((anno %||% list())[["required"]])
 }
 
 .simple_call_syms <-
@@ -117,6 +125,8 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
       if (length(commands)) {
         stop("Only one app command switch() block allowed per expression level")
       }
+      switch_expr <- e[[2L]]
+      switch_anno <- parse_expr_anno(getSrcLineNo(exprs[i]), lines, is_hashpipe)
       branches <- as.list(e)[-(1:2)]
       if (".val_pos_in_exprs" %in% names(branches)) {
         stop('command name ".val_pos_in_exprs" not permitted.')
@@ -136,9 +146,10 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
         }
       )
       names(commands) <- gsub("_", "-", names(commands), fixed = TRUE)
-      switch_expr <- e[[2L]]
       commands$.val_pos_in_exprs <-
         c(pos, i, 2L, if (is.call(switch_expr)) 3L)
+      attr(commands, "help_on_missing_command") <-
+        command_switch_help_on_missing(switch_anno)
 
       next
     }
@@ -242,13 +253,13 @@ get_app_inputs <- function(app, exprs = app$exprs, pos = integer()) {
     # positionals and those explicitly marked via `#| arg-type: positional`.
     if (
       identical(arg$arg_type, "positional") &&
-        is.null(arg$required) &&
+        is.null(arg[["required"]]) &&
         !(endsWith(name, "...") || startsWith(name, "..."))
     ) {
       arg$required <- TRUE
     }
 
-    if (arg$arg_type == "positional") {
+    if (identical(arg$arg_type, "positional")) {
       args[[name]] <- arg
     } else {
       opts[[name]] <- arg
@@ -285,14 +296,12 @@ parse_expr_anno <- function(lineno, lines, is_hashpipe) {
 normalize_anno_keys <- function(x) {
   is.list(x) || return(x)
 
-  cls <- attr(x, "class", TRUE)
   x <- lapply(x, normalize_anno_keys)
 
   if (!is.null(nms <- names(x))) {
     names(x) <- gsub("-", "_", nms, fixed = TRUE)
   }
 
-  class(x) <- cls
   x
 }
 

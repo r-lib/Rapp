@@ -1,12 +1,43 @@
 # Rapp (development version)
 
+## Breaking changes
+
 -   Boolean switch aliases now follow logical defaults: `FALSE` exposes the
     positive flag and `TRUE` exposes the generated `--no-*` flag. `NA` remains
     a value-taking boolean option, so it can still indicate that an option was
     not supplied.
+-   Rapp now parses YAML with YAML 1.2 semantics. Bare `yes` and `no`
+    non-bool option values are strings, not boolean aliases. Declared
+    bool options still accept YAML 1.1 bool aliases such as `yes`, `no`,
+    `y`, `n`, `on`, and `off` for backward compatibility.
+-   Rapp now checks parsed command line values against declared option
+    types instead of coercing them. Integer options no longer accept
+    float or logical values such as `10.2` or `true`; float options still
+    accept integer values (#18).
+-   Command switches are now required by default. When a command is
+    omitted, Rapp prints scoped help; add `#| required: false` above the
+    `switch()` to allow running without a command (#21).
+
+## New features
+
+-   `#| examples` annotations now add usage examples to `--help` output
+    (#23).
+
+## Bug fixes
 
 -   Boolean switches annotated with `#| negative_alias: false` no longer include
     or accept a generated `--no-*` alias (#24).
+-   On macOS, `install_pkg_cli_apps()` now adds the default `~/.local/bin`
+    install directory to the user's zsh profile when it is not already
+    on `PATH`, respecting `ZDOTDIR` and warning rather than failing if
+    the profile cannot be updated (#35).
+-   Launcher front matter now accepts documented kebab-case option names
+    such as `default-packages`. Installation docs now clarify that package
+    apps are discovered as `exec/*.R`, installed without the `.R` extension
+    by default, and installed to `RAPP_BIN_DIR` when set (#19, #20).
+-   Running tests no longer modifies the user `PATH` on Windows (#26).
+-   Rapp now installs from source on R versions before 4.0.0 by avoiding
+    raw string literal syntax (#30).
 
 # Rapp 0.3.0
 

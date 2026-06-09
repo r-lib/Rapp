@@ -13,7 +13,6 @@ URL: https://github.com/r-lib/Rapp
 BugReports: https://github.com/r-lib/Rapp/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Suggests: 
     testthat (>= 3.0.0),
     withr
@@ -21,4 +20,5 @@ Config/testthat/edition: 3
 Config/testthat/parallel: true
 Config/testthat/start-first: help-snapshots, basics
 Imports: 
-    yaml
+    yaml12
+Config/roxygen2/version: 8.0.0
