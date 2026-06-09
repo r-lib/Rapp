@@ -11,17 +11,23 @@ capture_nested_env <- function(args = character()) {
 }
 
 snapshot_missing_command_help <- function(app_path, args, invocation) {
+  run <- snapshot_command_run(app_path, args, invocation)
+  expect_null(run$result)
+
+  run$output
+}
+
+snapshot_command_run <- function(app_path, args, invocation) {
   output <- capture.output(result <- Rapp::run(app_path, args))
-  expect_null(result)
 
   snapshot <- list(
-    app = paste(readLines(app_path), collapse = "\n"),
+    app = readLines(app_path),
     invocation = paste0("$ ", invocation),
-    output = paste(output, collapse = "\n")
+    output = output
   )
   expect_snapshot(yaml12::write_yaml(snapshot))
 
-  output
+  list(output = output, result = result)
 }
 
 test_that("simple app uses defaults without args", {
@@ -60,29 +66,29 @@ test_that("missing literal command switch prints help", {
   expect_true(any(grepl("list", lines, fixed = TRUE)))
 })
 
-test_that("missing NULL command assignment prints help", {
+test_that("missing command assignment prints help by default", {
   app_path <- local_rapp_app(
     c(
       "#!/usr/bin/env Rapp",
-      "#| name: null-command-test",
+      "#| name: assigned-command-test",
       "#| description: Exercise missing command help.",
       "",
-      "switch(command <- NULL,",
+      "switch(command <- '',",
       "  #| title: List entries",
       "  list = { cat(command, '\\n', sep = '') }",
       ")"
     ),
-    prefix = "rapp-null-command-"
+    prefix = "rapp-assigned-command-"
   )
 
   lines <- snapshot_missing_command_help(
     app_path,
     character(),
-    "null-command-test"
+    "assigned-command-test"
   )
 
   expect_true(any(grepl(
-    "Usage: null-command-test <COMMAND>",
+    "Usage: assigned-command-test <COMMAND>",
     lines,
     fixed = TRUE
   )))
@@ -92,6 +98,32 @@ test_that("missing NULL command assignment prints help", {
   run_lines <- capture.output(env <- Rapp::run(app_path, "list"))
   expect_identical(run_lines, "list")
   expect_identical(env$command, "list")
+})
+
+test_that("required false command switch allows missing command", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: optional-command-test",
+      "",
+      "#| required: false",
+      "switch(command <- '',",
+      "  #| title: List entries",
+      "  list = { cat(command, '\\n', sep = '') }",
+      ")",
+      "cat('no command\\n')"
+    ),
+    prefix = "rapp-optional-command-"
+  )
+
+  run <- snapshot_command_run(
+    app_path,
+    character(),
+    "optional-command-test"
+  )
+
+  expect_identical(run$output, "no command")
+  expect_identical(run$result$command, "")
 })
 
 test_that("missing nested command prints scoped help", {
@@ -121,6 +153,41 @@ test_that("missing nested command prints scoped help", {
 
   expect_true(any(grepl(
     "Usage: nested-required-command-test parent <COMMAND>",
+    lines,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Commands:", lines, fixed = TRUE)))
+  expect_true(any(grepl("child", lines, fixed = TRUE)))
+})
+
+test_that("optional parent command preserves required child help", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: optional-parent-required-child-test",
+      "",
+      "#| required: false",
+      "switch(parent_cmd <- '',",
+      "  #| title: Parent command",
+      "  parent = {",
+      "    switch(child_cmd <- NULL,",
+      "      #| title: Child command",
+      "      child = { cat('child called\\n') }",
+      "    )",
+      "  }",
+      ")"
+    ),
+    prefix = "rapp-optional-parent-required-child-"
+  )
+
+  lines <- snapshot_missing_command_help(
+    app_path,
+    "parent",
+    "optional-parent-required-child-test parent"
+  )
+
+  expect_true(any(grepl(
+    "Usage: optional-parent-required-child-test parent <COMMAND>",
     lines,
     fixed = TRUE
   )))
