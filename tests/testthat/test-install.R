@@ -213,6 +213,250 @@ test_that("non-Rapp executables respect overwrite flag", {
 })
 
 
+test_that("install_pkg_cli_apps adds default macOS install dir to PATH setup", {
+  skip_if_not(identical(Sys.info()[["sysname"]], "Darwin"))
+  skip_on_cran()
+
+  home <- tempfile("rapp-home-")
+  dir.create(home, recursive = TRUE)
+  withr::local_envvar(
+    HOME = home,
+    RAPP_NO_MODIFY_PATH = NA,
+    RAPP_BIN_DIR = NA,
+    XDG_BIN_HOME = NA,
+    XDG_DATA_HOME = NA,
+    PATH = "/usr/bin"
+  )
+  on.exit(unlink(home, recursive = TRUE), add = TRUE)
+
+  pkg <- "rappTestMacPath"
+  fake <- setup_fake_rapp_package(tempdir(), "-install-mac-path", package = pkg)
+  on.exit(unlink(fake[["lib"]], recursive = TRUE), add = TRUE)
+
+  app_path <- file.path(fake[["exec"]], "hello.R")
+  writeLines(c("#!/usr/bin/env Rapp", "print('hello')"), app_path)
+
+  messages <- character()
+  created <- withCallingHandlers(
+    install_pkg_cli_apps(pkg, lib.loc = fake[["lib"]]),
+    message = function(m) {
+      messages <<- c(messages, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+
+  destdir <- path(home, ".local", "bin")
+  expect_same_path(created, path(destdir, "hello"))
+  expect_true(any(grepl("Added .*\\.local/bin to PATH", messages)))
+  expect_true(any(grepl("source ~/.zprofile", messages, fixed = TRUE)))
+
+  zprofile <- file.path(home, ".zprofile")
+  expect_true(file.exists(zprofile))
+  expect_identical(
+    readLines(zprofile),
+    c(
+      "",
+      'case ":$PATH:" in',
+      '  *:"$HOME/.local/bin":*) ;;',
+      '  *) export PATH="$HOME/.local/bin:$PATH" ;;',
+      "esac"
+    )
+  )
+  expect_true(grepl(destdir, Sys.getenv("PATH"), fixed = TRUE))
+})
+
+
+test_that("install_pkg_cli_apps does not duplicate macOS PATH setup", {
+  skip_if_not(identical(Sys.info()[["sysname"]], "Darwin"))
+  skip_on_cran()
+
+  home <- tempfile("rapp-home-")
+  dir.create(home, recursive = TRUE)
+  withr::local_envvar(
+    HOME = home,
+    RAPP_NO_MODIFY_PATH = NA,
+    RAPP_BIN_DIR = NA,
+    XDG_BIN_HOME = NA,
+    XDG_DATA_HOME = NA,
+    PATH = "/usr/bin"
+  )
+  on.exit(unlink(home, recursive = TRUE), add = TRUE)
+
+  pkg <- "rappTestMacPathTwice"
+  fake <- setup_fake_rapp_package(tempdir(), "-install-mac-path-twice", package = pkg)
+  on.exit(unlink(fake[["lib"]], recursive = TRUE), add = TRUE)
+
+  app_path <- file.path(fake[["exec"]], "hello.R")
+  writeLines(c("#!/usr/bin/env Rapp", "print('hello')"), app_path)
+
+  suppressMessages(install_pkg_cli_apps(pkg, lib.loc = fake[["lib"]]))
+  suppressMessages(install_pkg_cli_apps(pkg, lib.loc = fake[["lib"]]))
+
+  zprofile <- file.path(home, ".zprofile")
+  lines <- readLines(zprofile)
+  expect_equal(sum(grepl('case ":\\$PATH:" in', lines)), 1L)
+})
+
+
+test_that("install_pkg_cli_apps ignores unrelated macOS profile mentions", {
+  skip_if_not(identical(Sys.info()[["sysname"]], "Darwin"))
+  skip_on_cran()
+
+  home <- tempfile("rapp-home-")
+  dir.create(home, recursive = TRUE)
+  withr::local_envvar(
+    HOME = home,
+    RAPP_NO_MODIFY_PATH = NA,
+    RAPP_BIN_DIR = NA,
+    XDG_BIN_HOME = NA,
+    XDG_DATA_HOME = NA,
+    PATH = "/usr/bin"
+  )
+  on.exit(unlink(home, recursive = TRUE), add = TRUE)
+
+  zprofile <- file.path(home, ".zprofile")
+  writeLines("# ~/.local/bin is where Rapp writes launchers", zprofile)
+
+  pkg <- "rappTestMacPathComment"
+  fake <- setup_fake_rapp_package(
+    tempdir(),
+    "-install-mac-path-comment",
+    package = pkg
+  )
+  on.exit(unlink(fake[["lib"]], recursive = TRUE), add = TRUE)
+
+  app_path <- file.path(fake[["exec"]], "hello.R")
+  writeLines(c("#!/usr/bin/env Rapp", "print('hello')"), app_path)
+
+  suppressMessages(install_pkg_cli_apps(pkg, lib.loc = fake[["lib"]]))
+
+  expect_identical(
+    readLines(zprofile),
+    c(
+      "# ~/.local/bin is where Rapp writes launchers",
+      "",
+      'case ":$PATH:" in',
+      '  *:"$HOME/.local/bin":*) ;;',
+      '  *) export PATH="$HOME/.local/bin:$PATH" ;;',
+      "esac"
+    )
+  )
+})
+
+
+test_that("install_pkg_cli_apps warns when macOS PATH setup already exists but PATH is stale", {
+  skip_if_not(identical(Sys.info()[["sysname"]], "Darwin"))
+  skip_on_cran()
+
+  home <- tempfile("rapp-home-")
+  dir.create(home, recursive = TRUE)
+  withr::local_envvar(
+    HOME = home,
+    RAPP_NO_MODIFY_PATH = NA,
+    RAPP_BIN_DIR = NA,
+    XDG_BIN_HOME = NA,
+    XDG_DATA_HOME = NA,
+    PATH = "/usr/bin"
+  )
+  on.exit(unlink(home, recursive = TRUE), add = TRUE)
+
+  zprofile <- file.path(home, ".zprofile")
+  writeLines(
+    c(
+      'case ":$PATH:" in',
+      '  *:"$HOME/.local/bin":*) ;;',
+      '  *) export PATH="$HOME/.local/bin:$PATH" ;;',
+      "esac"
+    ),
+    zprofile
+  )
+
+  pkg <- "rappTestMacPathStale"
+  fake <- setup_fake_rapp_package(
+    tempdir(),
+    "-install-mac-path-stale",
+    package = pkg
+  )
+  on.exit(unlink(fake[["lib"]], recursive = TRUE), add = TRUE)
+
+  app_path <- file.path(fake[["exec"]], "hello.R")
+  writeLines(c("#!/usr/bin/env Rapp", "print('hello')"), app_path)
+
+  expect_warning(
+    suppressMessages(install_pkg_cli_apps(pkg, lib.loc = fake[["lib"]])),
+    "~/.local/bin is still not on PATH"
+  )
+  expect_equal(sum(grepl('case ":\\$PATH:" in', readLines(zprofile))), 1L)
+})
+
+
+test_that("install_pkg_cli_apps leaves macOS profile alone when PATH already includes destdir", {
+  skip_if_not(identical(Sys.info()[["sysname"]], "Darwin"))
+  skip_on_cran()
+
+  home <- tempfile("rapp-home-")
+  dir.create(home, recursive = TRUE)
+  destdir <- path(home, ".local", "bin")
+  withr::local_envvar(
+    HOME = home,
+    RAPP_NO_MODIFY_PATH = NA,
+    RAPP_BIN_DIR = NA,
+    XDG_BIN_HOME = NA,
+    XDG_DATA_HOME = NA,
+    PATH = paste(destdir, "/usr/bin", sep = .Platform$path.sep)
+  )
+  on.exit(unlink(home, recursive = TRUE), add = TRUE)
+
+  pkg <- "rappTestMacPathPresent"
+  fake <- setup_fake_rapp_package(
+    tempdir(),
+    "-install-mac-path-present",
+    package = pkg
+  )
+  on.exit(unlink(fake[["lib"]], recursive = TRUE), add = TRUE)
+
+  app_path <- file.path(fake[["exec"]], "hello.R")
+  writeLines(c("#!/usr/bin/env Rapp", "print('hello')"), app_path)
+
+  suppressMessages(install_pkg_cli_apps(pkg, lib.loc = fake[["lib"]]))
+
+  expect_false(file.exists(file.path(home, ".zprofile")))
+})
+
+
+test_that("install_pkg_cli_apps leaves macOS PATH setup alone when disabled", {
+  skip_if_not(identical(Sys.info()[["sysname"]], "Darwin"))
+  skip_on_cran()
+
+  home <- tempfile("rapp-home-")
+  dir.create(home, recursive = TRUE)
+  withr::local_envvar(
+    HOME = home,
+    RAPP_NO_MODIFY_PATH = "1",
+    RAPP_BIN_DIR = NA,
+    XDG_BIN_HOME = NA,
+    XDG_DATA_HOME = NA,
+    PATH = "/usr/bin"
+  )
+  on.exit(unlink(home, recursive = TRUE), add = TRUE)
+
+  pkg <- "rappTestMacPathDisabled"
+  fake <- setup_fake_rapp_package(
+    tempdir(),
+    "-install-mac-path-disabled",
+    package = pkg
+  )
+  on.exit(unlink(fake[["lib"]], recursive = TRUE), add = TRUE)
+
+  app_path <- file.path(fake[["exec"]], "hello.R")
+  writeLines(c("#!/usr/bin/env Rapp", "print('hello')"), app_path)
+
+  suppressMessages(install_pkg_cli_apps(pkg, lib.loc = fake[["lib"]]))
+
+  expect_false(file.exists(file.path(home, ".zprofile")))
+})
+
+
 test_that("front matter customises launcher options", {
   withr::local_envvar(RAPP_NO_MODIFY_PATH = "1")
 

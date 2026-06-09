@@ -18,6 +18,9 @@
 
 ## Bug fixes
 
+-   On macOS, `install_pkg_cli_apps()` now adds the default `~/.local/bin`
+    install directory to `~/.zprofile` when it is not already on `PATH`
+    (#35).
 -   Launcher front matter now accepts documented kebab-case option names
     such as `default-packages`. Installation docs now clarify that package
     apps are discovered as `exec/*.R`, installed without the `.R` extension
