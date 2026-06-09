@@ -194,38 +194,49 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
       default_value <- format_default_value(opt$default)
       positive_flag <- paste0("--", cli_name)
       negative_flag <- paste0("--no-", cli_name)
-      show_positive <- has_positive_alias(opt)
-      show_negative <- has_negative_alias(opt)
-      flags <- c(
-        if (show_positive) positive_flag,
-        if (show_negative) negative_flag
-      )
-      flag <- paste(flags, collapse = " / ")
-      if (!is.null(short_flag) && nzchar(short_flag)) {
-        flag <- paste0("-", short_flag, ", ", flag)
-      }
-      toggle_note <- if (isTRUE(opt$default)) {
-        if (show_negative) {
-          sprintf("Disable with `%s`.", negative_flag)
-        } else {
-          character()
+      show_positive <- show_positive_alias(opt)
+      show_negative <- show_negative_alias(opt)
+      if (!show_positive && !show_negative) {
+        flag <- paste(positive_flag, format_placeholder(name))
+        if (!is.null(short_flag) && nzchar(short_flag)) {
+          flag <- paste0("-", short_flag, ", ", flag)
         }
-      } else if (isFALSE(opt$default)) {
-        if (show_positive) {
-          sprintf("Enable with `%s`.", positive_flag)
-        } else {
-          character()
+        if (!is.null(default_value)) {
+          details <- c(details, sprintf("[default: %s]", default_value))
         }
+        details <- c(details, "[type: bool]")
       } else {
-        c(
-          if (show_positive) sprintf("Enable with `%s`.", positive_flag),
-          if (show_negative) sprintf("Disable with `%s`.", negative_flag)
+        flags <- c(
+          if (show_positive) positive_flag,
+          if (show_negative) negative_flag
         )
+        flag <- paste(flags, collapse = " / ")
+        if (!is.null(short_flag) && nzchar(short_flag)) {
+          flag <- paste0("-", short_flag, ", ", flag)
+        }
+        toggle_note <- if (isTRUE(opt$default)) {
+          if (show_negative) {
+            sprintf("Disable with `%s`.", negative_flag)
+          } else {
+            character()
+          }
+        } else if (isFALSE(opt$default)) {
+          if (show_positive) {
+            sprintf("Enable with `%s`.", positive_flag)
+          } else {
+            character()
+          }
+        } else {
+          c(
+            if (show_positive) sprintf("Enable with `%s`.", positive_flag),
+            if (show_negative) sprintf("Disable with `%s`.", negative_flag)
+          )
+        }
+        if (!is.null(default_value)) {
+          details <- c(details, sprintf("[default: %s]", default_value))
+        }
+        details <- c(details, toggle_note)
       }
-      if (!is.null(default_value)) {
-        details <- c(details, sprintf("[default: %s]", default_value))
-      }
-      details <- c(details, toggle_note)
     }
 
     if (identical(opt$action, "append")) {

@@ -2,10 +2,10 @@
 
 ## Breaking changes
 
--   Boolean switch aliases now follow logical defaults: `FALSE` exposes the
-    positive flag and `TRUE` exposes the generated `--no-*` flag. `NA` remains
-    a value-taking boolean option, so it can still indicate that an option was
-    not supplied.
+-   Boolean switch aliases now follow logical defaults in help output: `FALSE`
+    exposes the positive flag, `TRUE` exposes the generated `--no-*` flag, and
+    `NA` exposes both as a tri-state switch. Boolean switches also accept
+    explicit values such as `--foo=false`.
 -   Rapp now parses YAML with YAML 1.2 semantics. Bare `yes` and `no`
     non-bool option values are strings, not boolean aliases. Declared
     bool options still accept YAML 1.1 bool aliases such as `yes`, `no`,
