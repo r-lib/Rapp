@@ -50,10 +50,13 @@
 #'     - Windows: `%LOCALAPPDATA%\Programs\R\Rapp\bin`
 #'
 #' On Windows, the resolved `destdir` is explicitly added to `PATH` (it
-#' generally is not by default). To disable adding it to the `PATH`, set envvar
-#' `RAPP_NO_MODIFY_PATH=1`.
+#' generally is not by default). On macOS, when the default `~/.local/bin`
+#' destination is not already on `PATH`, it is added to `~/.zprofile`, or
+#' `$ZDOTDIR/.zprofile` when `ZDOTDIR` is set. If the profile cannot be
+#' updated, a warning is emitted and installation continues. To disable adding
+#' it to the `PATH`, set envvar `RAPP_NO_MODIFY_PATH=1`.
 #'
-#' On macOS or Linux, `~/.local/bin` is typically already on `PATH` if it
+#' On Linux, `~/.local/bin` is typically already on `PATH` if it
 #' exists. Note: some shells add `~/.local/bin` to `PATH` only if it exists at
 #' login. If `install_pkg_cli_apps()` created the directory, you may need to
 #' restart the shell for the new apps to be found on `PATH`.
@@ -89,6 +92,8 @@ install_pkg_cli_apps <- function(
 
   if (is_windows()) {
     ensure_path_windows(destdir)
+  } else if (is_macos()) {
+    ensure_path_macos(destdir)
   }
 
   # existing Rapp launchers we're either overwriting or deleting
@@ -516,6 +521,126 @@ ensure_path_windows <- function(destdir = rapp_install_dir()) {
 
 get_env_win_registry <- function(name) {
   utils::readRegistry("Environment", hive = "HCU", view = "default")[[name]]
+}
+
+ensure_path_macos <- function(destdir = rapp_install_dir()) {
+  if (Sys.getenv("RAPP_NO_MODIFY_PATH") != "") {
+    return(FALSE)
+  }
+  stopifnot(is_macos())
+
+  destdir <- normalizePath(destdir, mustWork = TRUE)
+  if (!identical(destdir, macos_default_install_dir())) {
+    return(FALSE)
+  }
+  if (path_has_dir(destdir)) {
+    return(FALSE)
+  }
+
+  zprofile <- macos_zprofile()
+  zprofile_display <- macos_zprofile_display(zprofile)
+  lines <- macos_path_lines()
+
+  if (profile_has_lines(zprofile, lines)) {
+    warning(
+      "~/.local/bin PATH setup is already present in ",
+      zprofile_display,
+      ", ",
+      "but ~/.local/bin is still not on PATH.\n",
+      "Restart your shell, or run:\n\n",
+      "  source ", zprofile_display,
+      call. = FALSE
+    )
+  } else if (write_macos_path_lines(zprofile, lines, zprofile_display)) {
+    message(
+      "Added ~/.local/bin to PATH in ", zprofile_display, ".\n",
+      "Restart your shell, or run:\n\n",
+      "  source ", zprofile_display
+    )
+  }
+
+  Sys.setenv(PATH = paste(destdir, Sys.getenv("PATH"), sep = .Platform$path.sep))
+  TRUE
+}
+
+macos_default_install_dir <- function() {
+  normalizePath(file.path(path.expand("~"), ".local", "bin"), mustWork = FALSE)
+}
+
+macos_zprofile <- function() {
+  zdotdir <- Sys.getenv("ZDOTDIR")
+  if (!nzchar(zdotdir)) {
+    zdotdir <- path.expand("~")
+  }
+  path(zdotdir, ".zprofile")
+}
+
+macos_zprofile_display <- function(zprofile) {
+  if (identical(path(zprofile), path(path.expand("~"), ".zprofile"))) {
+    "~/.zprofile"
+  } else {
+    zprofile
+  }
+}
+
+macos_path_lines <- function() {
+  c(
+    'case ":$PATH:" in',
+    '  *:"$HOME/.local/bin":*) ;;',
+    '  *) export PATH="$HOME/.local/bin:$PATH" ;;',
+    "esac"
+  )
+}
+
+profile_has_lines <- function(profile, lines) {
+  if (!file.exists(profile)) {
+    return(FALSE)
+  }
+  profile <- tryCatch(
+    paste(readLines(profile, warn = FALSE), collapse = "\n"),
+    error = function(e) "",
+    warning = function(w) ""
+  )
+  grepl(paste(lines, collapse = "\n"), profile, fixed = TRUE)
+}
+
+write_macos_path_lines <- function(profile, lines, profile_display) {
+  tryCatch(
+    {
+      suppressWarnings(cat(
+        paste0(c("", lines), collapse = "\n"),
+        "\n",
+        file = profile,
+        append = TRUE,
+        sep = ""
+      ))
+      TRUE
+    },
+    error = function(e) {
+      warning(
+        "Could not add ~/.local/bin to PATH in ",
+        profile_display,
+        ": ",
+        conditionMessage(e),
+        call. = FALSE
+      )
+      FALSE
+    }
+  )
+}
+
+path_has_dir <- function(dir, env_path = Sys.getenv("PATH")) {
+  normalizePath(dir, mustWork = FALSE) %in% path_entries(env_path)
+}
+
+path_entries <- function(env_path = Sys.getenv("PATH")) {
+  entries <- strsplit(env_path, .Platform$path.sep, fixed = TRUE)[[1L]]
+  entries <- entries[nzchar(entries)]
+  normalizePath(entries, mustWork = FALSE)
+}
+
+is_macos <- function() {
+  identical(Sys.info()[["sysname"]], "Darwin")
 }
 
 path <- function(...) {

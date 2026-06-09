@@ -425,10 +425,13 @@ App launchers are written to `destdir`, which defaults to the first
 available location from `RAPP_BIN_DIR`, `XDG_BIN_HOME`,
 `XDG_DATA_HOME/../bin`, or the default location, `~/.local/bin` on macOS
 and Linux and `%LOCALAPPDATA%\Programs\R\Rapp\bin` on Windows. On
-Windows the directory is automatically added to `PATH`; on macOS and
-Linux the directory generally is already present on `PATH` (you may need
-to restart your shell if the Rapp installer created the directory). Use
-the `destdir` argument if you prefer an alternate location.
+Windows the directory is automatically added to `PATH`; on macOS, the
+default `~/.local/bin` directory is added to `~/.zprofile` when needed
+(`$ZDOTDIR/.zprofile` when `ZDOTDIR` is set). If that profile cannot be
+updated, Rapp warns and continues installing launchers. On Linux the
+directory generally is already present on `PATH` (you may need to log
+out and back in if the Rapp installer created the directory). Use the
+`destdir` argument if you prefer an alternate location.
 
 Use `#| launcher:` front matter to customize the installed launcher. For
 example, `name` changes the installed command name, and `vanilla`,
