@@ -2,66 +2,73 @@
 
 ## Breaking changes
 
--   Boolean switch aliases now follow logical defaults in help output: `FALSE`
-    exposes the positive flag, `TRUE` exposes the generated `--no-*` flag, and
-    `NA` exposes both as a tri-state switch. Boolean switches also accept
-    explicit values such as `--foo=false`.
--   Rapp now parses YAML with YAML 1.2 semantics. Bare `yes` and `no`
-    non-bool option values are strings, not boolean aliases. Declared
-    bool options still accept YAML 1.1 bool aliases such as `yes`, `no`,
-    `y`, `n`, `on`, and `off` for backward compatibility.
--   Rapp now checks parsed command line values against declared option
-    types instead of coercing them. Integer options no longer accept
-    float or logical values such as `10.2` or `true`; float options still
-    accept integer values (#18).
--   Command switches are now required by default. When a command is
-    omitted, Rapp prints scoped help; add `#| required: false` above the
-    `switch()` to allow running without a command (#21).
+- Rapp now checks parsed command line values against declared option
+  types instead of coercing them. Integer options require integer
+  values, so values like `10.2` or `true` produce an error; float
+  options still accept integer values (#18).
+- Rapp now parses YAML with YAML 1.2 semantics. Bare `yes` and `no`
+  non-Boolean option values are strings, not Boolean aliases. Boolean
+  options still accept YAML 1.1 aliases such as `yes`, `no`, `y`, `n`,
+  `on`, and `off` for backward compatibility.
+- Command switches are now required by default. If a command is omitted,
+  Rapp prints scoped help. Add `#| required: false` above the `switch()`
+  to allow running without a command (#21).
+- Boolean switch help now shows the command-line form that changes the
+  default: `foo <- FALSE` shows `--foo`, `foo <- TRUE` shows `--no-foo`,
+  and `foo <- NA` shows `--foo / --no-foo`. Passing values remains more
+  permissive: switches accept explicit values such as `--foo=false` and
+  `--foo false`. See the
+  [Boolean option behavior](docs/boolean-options.md) table for the full
+  set of accepted forms (#28).
 
 ## New features
 
--   `#| examples` annotations now add usage examples to `--help` output
-    (#23).
+- `#| examples:` annotations now add usage examples to `--help` output
+  (#23).
+- Boolean switches now do the expected thing for most users without
+  additional configuration. For exceptional needs,
+  `#| negative_alias: false` disables generated `--no-*` command-line
+  aliases while keeping the positive alias and explicit value forms such
+  as `--foo=false` (#24, #28).
 
 ## Bug fixes
 
--   Boolean switches annotated with `#| negative_alias: false` no longer include
-    or accept a generated `--no-*` alias (#24).
--   On macOS, `install_pkg_cli_apps()` now adds the default `~/.local/bin`
-    install directory to the user's zsh profile when it is not already
-    on `PATH`, respecting `ZDOTDIR` and warning rather than failing if
-    the profile cannot be updated (#35).
--   Launcher front matter now accepts documented kebab-case option names
-    such as `default-packages`. Installation docs now clarify that package
-    apps are discovered as `exec/*.R`, installed without the `.R` extension
-    by default, and installed to `RAPP_BIN_DIR` when set (#19, #20).
--   Running tests no longer modifies the user `PATH` on Windows (#26).
--   Rapp now installs from source on R versions before 4.0.0 by avoiding
-    raw string literal syntax (#30).
+- Launcher front matter now accepts documented kebab-case option names,
+  such as `default-packages` (#19).
+- On Windows, tests now preserve the user `PATH` (#26).
+- Rapp can now be installed from source on R versions before 4.0.0
+  (#30).
+- The installation docs now clarify that package apps are discovered as
+  `exec/*.R`, installed without the `.R` extension by default, and
+  installed to `RAPP_BIN_DIR` when set (#20).
+- `install_pkg_cli_apps()` now adds the default `~/.local/bin` install
+  directory to the user's zsh profile on macOS when it is not already on
+  `PATH`. It respects `ZDOTDIR` and warns if the profile cannot be
+  updated (#35).
 
 # Rapp 0.3.0
 
 ## Breaking changes
 
--   Positional arguments are now required by default. Use
-    `#| required: false` to make an argument optional (#13).
+- Positional arguments are now required by default. Use
+  `#| required: false` to make an argument optional (#13).
 
 ## New features
 
--   `#| short` now adds a short option alias like `-n` (#4, #5).
--   `c()` and `list()` assignments now declare repeatable options.
--   `install_pkg_cli_apps()` installs launchers for `Rapp` and `Rscript`
-    apps in a package's `exec/` directory on the user's `PATH` (#3, #7).
--   `switch()` blocks can now declare commands in Rapp applications (#8,
-    #11).
+- `#| short` now adds a short option alias like `-n` (#4, #5).
+- `c()` and `list()` assignments now declare repeatable options.
+- `install_pkg_cli_apps()` installs launchers for `Rapp` and `Rscript`
+  apps in a package's `exec/` directory on the user's `PATH` (#3, #7).
+- `switch()` blocks can now declare commands in Rapp applications (#8,
+  #11).
 
 # Rapp 0.2.0
 
--   Updated default `--help` output.
--   Added a package logo.
--   Moved repository to 'r-lib' on Github
--   Added a `NEWS.md` file to track changes to the package.
+- The default `--help` output is updated.
+- Rapp gains a package logo.
+- Rapp is now part of the `r-lib` organization on GitHub.
+- Rapp now includes `NEWS.md` to track changes to the package.
 
 # Rapp 0.1.0
 
--   Initial release
+- Initial release.
