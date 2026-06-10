@@ -229,14 +229,14 @@ test_that("help output lists option defaults, types, and toggle hints", {
         "#| description: Wrap output.",
         "wrap <- TRUE"
       ),
-      patterns = c("[default: true]", "Disable with `--no-wrap`.")
+      patterns = c("[enabled by default]")
     ),
     switch_false = list(
       option = c(
         "#| description: Verbose output.",
         "verbose <- FALSE"
       ),
-      patterns = c("[default: false]", "Enable with `--verbose`.")
+      patterns = c("[disabled by default]")
     )
   )
 

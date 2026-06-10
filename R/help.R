@@ -170,6 +170,15 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
     }
     deparse1(value)
   }
+  format_switch_default <- function(default) {
+    if (isTRUE(default)) {
+      "[enabled by default]"
+    } else if (isFALSE(default)) {
+      "[disabled by default]"
+    } else {
+      "[unset by default]"
+    }
+  }
   format_option_entry <- function(opt, name) {
     cli_name <- format_cli_name(name)
     short_flag <- opt[["short"]]
@@ -191,7 +200,6 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
         details <- c(details, sprintf("[type: %s]", opt$val_type))
       }
     } else if (identical(opt$arg_type, "switch")) {
-      default_value <- format_default_value(opt$default)
       positive_flag <- paste0("--", cli_name)
       negative_flag <- paste0("--no-", cli_name)
       show_positive <- shows_positive_alias(opt)
@@ -201,9 +209,7 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
         if (!is.null(short_flag) && nzchar(short_flag)) {
           flag <- paste0("-", short_flag, ", ", flag)
         }
-        if (!is.null(default_value)) {
-          details <- c(details, sprintf("[default: %s]", default_value))
-        }
+        details <- c(details, format_switch_default(opt$default))
         details <- c(details, "[type: bool]")
       } else {
         flags <- c(
@@ -214,28 +220,7 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
         if (!is.null(short_flag) && nzchar(short_flag)) {
           flag <- paste0("-", short_flag, ", ", flag)
         }
-        toggle_note <- if (isTRUE(opt$default)) {
-          if (show_negative) {
-            sprintf("Disable with `%s`.", negative_flag)
-          } else {
-            character()
-          }
-        } else if (isFALSE(opt$default)) {
-          if (show_positive) {
-            sprintf("Enable with `%s`.", positive_flag)
-          } else {
-            character()
-          }
-        } else {
-          c(
-            if (show_positive) sprintf("Enable with `%s`.", positive_flag),
-            if (show_negative) sprintf("Disable with `%s`.", negative_flag)
-          )
-        }
-        if (!is.null(default_value)) {
-          details <- c(details, sprintf("[default: %s]", default_value))
-        }
-        details <- c(details, toggle_note)
+        details <- c(details, format_switch_default(opt$default))
       }
     }
 

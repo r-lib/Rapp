@@ -137,8 +137,9 @@ test_that("boolean switches can disable negative aliases", {
   )
   true_default_help <- capture.output(Rapp::run(true_default_app, "--help"))
   expect_false(any(grepl("--no-wrap", true_default_help, fixed = TRUE)))
-  expect_false(any(grepl(
-    "Enable with `--wrap`.",
+  expect_true(any(grepl("--wrap <WRAP>", true_default_help, fixed = TRUE)))
+  expect_true(any(grepl(
+    "[enabled by default]",
     true_default_help,
     fixed = TRUE
   )))
