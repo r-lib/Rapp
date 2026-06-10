@@ -1,4 +1,4 @@
-# Rapp (development version)
+# Rapp 0.4.0
 
 ## Breaking changes
 
