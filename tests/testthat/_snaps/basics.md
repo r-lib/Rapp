@@ -10,7 +10,7 @@
       Options:
         -n, --flips <FLIPS>  Number of coin flips [default: 1] [type: integer]
         --sep <SEP>          [default: " "] [type: string]
-        --no-wrap            [enabled by default]
+        --no-wrap
         --seed <SEED>        [default: NA] [type: integer]
       
       Examples:

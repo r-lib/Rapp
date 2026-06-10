@@ -139,6 +139,11 @@ test_that("boolean switches can disable negative aliases", {
   expect_false(any(grepl("--no-wrap", true_default_help, fixed = TRUE)))
   expect_true(any(grepl("--wrap <WRAP>", true_default_help, fixed = TRUE)))
   expect_true(any(grepl(
+    "Keep output wrapped.",
+    true_default_help,
+    fixed = TRUE
+  )))
+  expect_false(any(grepl(
     "[enabled by default]",
     true_default_help,
     fixed = TRUE

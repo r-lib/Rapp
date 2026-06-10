@@ -170,15 +170,6 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
     }
     deparse1(value)
   }
-  format_switch_default <- function(default) {
-    if (isTRUE(default)) {
-      "[enabled by default]"
-    } else if (isFALSE(default)) {
-      "[disabled by default]"
-    } else {
-      "[unset by default]"
-    }
-  }
   format_option_entry <- function(opt, name) {
     cli_name <- format_cli_name(name)
     short_flag <- opt[["short"]]
@@ -209,7 +200,6 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
         if (!is.null(short_flag) && nzchar(short_flag)) {
           flag <- paste0("-", short_flag, ", ", flag)
         }
-        details <- c(details, format_switch_default(opt$default))
         details <- c(details, "[type: bool]")
       } else {
         flags <- c(
@@ -220,7 +210,6 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
         if (!is.null(short_flag) && nzchar(short_flag)) {
           flag <- paste0("-", short_flag, ", ", flag)
         }
-        details <- c(details, format_switch_default(opt$default))
       }
     }
 
@@ -272,7 +261,7 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
       ctx <- label_context(entry$label, indent, label_width)
       text <- entry$text
       if (!length(text)) {
-        out <- c(out, ctx$initial)
+        out <- c(out, paste0(strrep(" ", indent), entry$label))
         next
       }
       for (i in seq_along(text)) {

@@ -188,7 +188,7 @@ test_that("required-like annotation keys do not partially match", {
   )
 })
 
-test_that("help output lists option defaults, types, and toggle hints", {
+test_that("help output lists option defaults, types, and switch descriptions", {
   build_help <- function(option_block, prefix) {
     help_lines_from_script(
       c(
@@ -229,14 +229,16 @@ test_that("help output lists option defaults, types, and toggle hints", {
         "#| description: Wrap output.",
         "wrap <- TRUE"
       ),
-      patterns = c("[enabled by default]")
+      patterns = c("Wrap output."),
+      absent_patterns = c("[default: true]", "[enabled by default]")
     ),
     switch_false = list(
       option = c(
         "#| description: Verbose output.",
         "verbose <- FALSE"
       ),
-      patterns = c("[disabled by default]")
+      patterns = c("Verbose output."),
+      absent_patterns = c("[default: false]", "[disabled by default]")
     )
   )
 
@@ -250,6 +252,16 @@ test_that("help output lists option defaults, types, and toggle hints", {
       expect_true(
         any(grepl(pattern, lines, fixed = TRUE)),
         info = sprintf("Missing pattern '%s' for case '%s'", pattern, case_name)
+      )
+    }
+    for (pattern in case[["absent_patterns"]] %||% character()) {
+      expect_false(
+        any(grepl(pattern, lines, fixed = TRUE)),
+        info = sprintf(
+          "Unexpected pattern '%s' for case '%s'",
+          pattern,
+          case_name
+        )
       )
     }
   }

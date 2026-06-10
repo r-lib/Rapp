@@ -10,7 +10,7 @@
       Options:
         -n, --flips <FLIPS>  Number of coin flips [default: 1] [type: integer]
         --sep <SEP>          [default: " "] [type: string]
-        --no-wrap            [enabled by default]
+        --no-wrap
         --seed <SEED>        [default: NA] [type: integer]
       
       Examples:
@@ -117,11 +117,11 @@
       
       Options:
         --child2-opt <CHILD2-OPT>  [default: "child2-default"] [type: string]
-        --child2-switch            [disabled by default]
+        --child2-switch
       
       Parent options:
         --parent-opt <PARENT-OPT>  [default: "parent-default"] [type: string]
-        --no-parent-switch         [enabled by default]
+        --no-parent-switch
       
       Global options:
         --top-opt <TOP-OPT>  [default: "top-default"] [type: string]
