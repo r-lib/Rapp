@@ -2,6 +2,10 @@
 
 ## Breaking changes
 
+-   Boolean switch aliases now follow logical defaults in help output: `FALSE`
+    exposes the positive flag, `TRUE` exposes the generated `--no-*` flag, and
+    `NA` exposes both as a tri-state switch. Boolean switches also accept
+    explicit values such as `--foo=false`.
 -   Rapp now parses YAML with YAML 1.2 semantics. Bare `yes` and `no`
     non-bool option values are strings, not boolean aliases. Declared
     bool options still accept YAML 1.1 bool aliases such as `yes`, `no`,
@@ -21,6 +25,8 @@
 
 ## Bug fixes
 
+-   Boolean switches annotated with `#| negative_alias: false` no longer include
+    or accept a generated `--no-*` alias (#24).
 -   On macOS, `install_pkg_cli_apps()` now adds the default `~/.local/bin`
     install directory to the user's zsh profile when it is not already
     on `PATH`, respecting `ZDOTDIR` and warning rather than failing if

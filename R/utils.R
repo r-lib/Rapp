@@ -68,6 +68,59 @@ compact <- function(x) x[lengths(x) > 0]
 `%||%` <- function(x, y) if (is.null(x)) y else x
 `subtract<-` <- function(x, value) x - value
 
+is_bool_switch_default <- function(x) is.logical(x) && length(x) == 1L
+
+check_bool_switch_default <- function(default) {
+  if (!is_bool_switch_default(default)) {
+    stop(
+      "Boolean switches must have a TRUE, FALSE, or NA default.",
+      call. = FALSE
+    )
+  }
+}
+
+# Parsing is intentionally more permissive than help. accepts_* controls
+# command-line forms; shows_* controls the concise help surface.
+accepts_positive_alias <- function(opt) {
+  stopifnot(identical(opt[["arg_type"]], "switch"))
+
+  default <- opt[["default"]]
+  check_bool_switch_default(default)
+
+  TRUE
+}
+
+accepts_negative_alias <- function(opt) {
+  stopifnot(identical(opt[["arg_type"]], "switch"))
+
+  default <- opt[["default"]]
+  check_bool_switch_default(default)
+
+  if (!is.null(opt[["negative_alias"]])) {
+    return(!isFALSE(opt[["negative_alias"]]))
+  }
+
+  TRUE
+}
+
+shows_positive_alias <- function(opt) {
+  stopifnot(identical(opt[["arg_type"]], "switch"))
+
+  default <- opt[["default"]]
+  check_bool_switch_default(default)
+
+  isFALSE(default) || isTRUE(is.na(default))
+}
+
+shows_negative_alias <- function(opt) {
+  stopifnot(identical(opt[["arg_type"]], "switch"))
+
+  default <- opt[["default"]]
+  check_bool_switch_default(default)
+
+  accepts_negative_alias(opt) && (isTRUE(default) || isTRUE(is.na(default)))
+}
+
 `append<-` <- function(x, after = NULL, value) {
   if (is.null(after)) c(x, value) else append(x, value, after)
 }

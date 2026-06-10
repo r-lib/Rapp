@@ -10,11 +10,30 @@ process_args <- function(args, app) {
     on.exit(close(args))
   }
 
+  stop_unrecognized_arg <- function(arg) {
+    stop("Arguments not recognized: ", arg, call. = FALSE)
+  }
+  is_bool_option_spec <- function(spec) {
+    !is.null(spec) &&
+      identical(spec$arg_type, "option") &&
+      identical(spec$val_type, "bool")
+  }
+
   short_opt_to_long_opt <- function(short_opt) {
     short <- str_drop_prefix(short_opt, "-")
     for (i in seq_along(app_opts)) {
       if (identical(short, app_opts[[i]][["short"]])) {
-        return(paste0("--", names(app_opts)[[i]]))
+        if (identical(app_opts[[i]][["arg_type"]], "switch")) {
+          if (shows_positive_alias(app_opts[[i]])) {
+            return(paste0("--", names(app_opts)[[i]]))
+          }
+          if (shows_negative_alias(app_opts[[i]])) {
+            return(paste0("--no-", names(app_opts)[[i]]))
+          }
+          return(paste0("--", names(app_opts)[[i]]))
+        } else {
+          return(paste0("--", names(app_opts)[[i]]))
+        }
       }
     }
   }
@@ -73,6 +92,7 @@ process_args <- function(args, app) {
 
     # resolve these values in this block
     name <- val <- spec <- NULL
+    positive_switch <- FALSE
 
     # --name=val
     equals_idx <- regexpr("=", a)
@@ -81,20 +101,63 @@ process_args <- function(args, app) {
       name <- gsub("-", "_", name, fixed = TRUE)
       val <- str_drop_prefix(a, equals_idx)
       spec <- app_opts[[name]]
+      if (
+        !is.null(spec) &&
+          identical(spec$arg_type, "switch") &&
+          !accepts_positive_alias(spec)
+      ) {
+        stop_unrecognized_arg(a)
+      }
+      if (!is.null(spec) && identical(spec$arg_type, "switch")) {
+        positive_switch <- TRUE
+      }
+      if (is.null(spec) && startsWith(a, "--no-")) {
+        alt_name <- str_drop_prefix(name, "no_")
+        alt_spec <- app_opts[[alt_name]]
+        if (
+          !is.null(alt_spec) &&
+            (
+              identical(alt_spec$arg_type, "switch") ||
+                is_bool_option_spec(alt_spec)
+            )
+        ) {
+          stop_unrecognized_arg(a)
+        }
+      }
     } else {
       # --name
       name <- str_drop_prefix(a, "--")
       name <- gsub("-", "_", name, fixed = TRUE)
 
       spec <- app_opts[[name]]
+      if (
+        !is.null(spec) &&
+          identical(spec$arg_type, "switch") &&
+          !accepts_positive_alias(spec)
+      ) {
+        stop_unrecognized_arg(a)
+      }
+      if (!is.null(spec) && identical(spec$arg_type, "switch")) {
+        positive_switch <- TRUE
+      }
 
       # if flag not known, maybe this is a switch flag
       if (is.null(spec) && startsWith(a, "--no-")) {
         alt_name <- str_drop_prefix(name, "no_")
-        spec <- app_opts[[alt_name]]
-        if (!is.null(spec)) {
-          val <- "false"
-          name <- alt_name
+        alt_spec <- app_opts[[alt_name]]
+        if (
+          !is.null(alt_spec) &&
+            identical(alt_spec$arg_type, "switch")
+        ) {
+          if (accepts_negative_alias(alt_spec)) {
+            spec <- alt_spec
+            val <- "false"
+            name <- alt_name
+          } else {
+            stop_unrecognized_arg(a)
+          }
+        } else if (is_bool_option_spec(alt_spec)) {
+          stop_unrecognized_arg(a)
         }
       }
     }
@@ -108,10 +171,28 @@ process_args <- function(args, app) {
 
     if (is.null(val)) {
       if (identical(spec$arg_type, "switch")) {
-        val <- "true"
+        if (positive_switch) {
+          next_arg <- readLines(args, 1L)
+          if (length(next_arg)) {
+            if (is_bool_cli_value(next_arg)) {
+              val <- next_arg
+            } else {
+              pushBack(next_arg, args)
+            }
+          }
+        }
+        if (is.null(val)) {
+          val <- "true"
+        }
       } else {
         # arg_type == "option"
         val <- readLines(args, 1L)
+        if (!length(val)) {
+          stop(
+            sprintf("Missing value for --%s.", to_kebab_case(name)),
+            call. = FALSE
+          )
+        }
       }
     }
 
@@ -280,6 +361,12 @@ normalize_bool_cli_value <- function(val) {
     "0" = "false",
     val
   )
+}
+
+is_bool_cli_value <- function(val) {
+  is.character(val) &&
+    length(val) == 1L &&
+    normalize_bool_cli_value(val) %in% c("true", "false")
 }
 
 to_snake_case <- function(x) gsub("-", "_", x, fixed = TRUE)

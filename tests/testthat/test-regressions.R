@@ -99,6 +99,250 @@ test_that("leading variadic positional collectors accumulate args", {
   expect_output(Rapp::run(app_path, c("alpha", "beta", "gamma")), "ok")
 })
 
+test_that("boolean switches can disable negative aliases", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| name: version-app",
+      "#| description: Version printer.",
+      "",
+      "#| description: Print version and exit.",
+      "#| negative_alias: false",
+      "version <- FALSE",
+      "",
+      "if (version) cat('version-app 1.0.0\\n')"
+    ),
+    prefix = "rapp-no-negative-switch-"
+  )
+
+  expect_output(Rapp::run(app_path, "--version"), "version-app 1.0.0")
+
+  help <- capture.output(Rapp::run(app_path, "--help"))
+  expect_true(any(grepl("--version", help, fixed = TRUE)))
+  expect_false(any(grepl("--no-version", help, fixed = TRUE)))
+  expect_error(
+    Rapp::run(app_path, "--no-version"),
+    "Arguments not recognized: --no-version",
+    fixed = TRUE
+  )
+
+  true_default_app <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| description: Keep output wrapped.",
+      "#| negative_alias: false",
+      "wrap <- TRUE"
+    ),
+    prefix = "rapp-no-negative-default-true-"
+  )
+  true_default_help <- capture.output(Rapp::run(true_default_app, "--help"))
+  expect_false(any(grepl("--no-wrap", true_default_help, fixed = TRUE)))
+  expect_true(any(grepl("--wrap <WRAP>", true_default_help, fixed = TRUE)))
+  expect_true(any(grepl(
+    "Keep output wrapped.",
+    true_default_help,
+    fixed = TRUE
+  )))
+  expect_false(any(grepl(
+    "[enabled by default]",
+    true_default_help,
+    fixed = TRUE
+  )))
+
+  negative_app <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| description: Legacy spelling is ignored.",
+      "#| negative: false",
+      "legacy <- TRUE"
+    ),
+    prefix = "rapp-negative-ignored-"
+  )
+  negative_help <- capture.output(Rapp::run(negative_app, "--help"))
+  expect_true(any(grepl("--no-legacy", negative_help, fixed = TRUE)))
+})
+
+test_that("boolean switches accept default-driven and explicit value forms", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "disabled <- FALSE",
+      "enabled <- TRUE",
+      "unknown <- NA",
+      "cat(",
+      "  sprintf(",
+      "    'disabled=%s enabled=%s unknown=%s\\n',",
+      "    disabled,",
+      "    enabled,",
+      "    unknown",
+      "  )",
+      ")"
+    ),
+    prefix = "rapp-bool-default-aliases-"
+  )
+
+  expect_output(
+    Rapp::run(app_path, character()),
+    "disabled=FALSE enabled=TRUE unknown=NA"
+  )
+  expect_output(
+    Rapp::run(app_path, c("--disabled", "--no-enabled", "--unknown")),
+    "disabled=TRUE enabled=FALSE unknown=TRUE"
+  )
+  expect_output(
+    Rapp::run(app_path, c("--disabled", "false", "--enabled", "false")),
+    "disabled=FALSE enabled=FALSE unknown=NA"
+  )
+  expect_output(
+    Rapp::run(app_path, c("--disabled=false", "--enabled=false")),
+    "disabled=FALSE enabled=FALSE unknown=NA"
+  )
+  expect_output(
+    Rapp::run(app_path, c("--no-disabled", "--enabled", "--unknown=false")),
+    "disabled=FALSE enabled=TRUE unknown=FALSE"
+  )
+  expect_output(
+    Rapp::run(app_path, c("--unknown", "false")),
+    "disabled=FALSE enabled=TRUE unknown=FALSE"
+  )
+
+  help <- capture.output(Rapp::run(app_path, "--help"))
+  expect_true(any(grepl("--disabled", help, fixed = TRUE)))
+  expect_false(any(grepl("--no-disabled", help, fixed = TRUE)))
+  expect_false(any(grepl("--enabled", help, fixed = TRUE)))
+  expect_true(any(grepl("--no-enabled", help, fixed = TRUE)))
+  expect_true(any(grepl("--unknown / --no-unknown", help, fixed = TRUE)))
+})
+
+test_that("short aliases follow the default-driven help spelling", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| short: d",
+      "disabled <- FALSE",
+      "#| short: e",
+      "enabled <- TRUE",
+      "cat(sprintf('disabled=%s enabled=%s\\n', disabled, enabled))"
+    ),
+    prefix = "rapp-bool-short-aliases-"
+  )
+
+  expect_output(
+    Rapp::run(app_path, c("-d", "-e")),
+    "disabled=TRUE enabled=FALSE"
+  )
+})
+
+test_that("annotated NA boolean switches use explicit switch aliases", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| arg_type: switch",
+      "flag <- NA",
+      "cat(sprintf('flag=%s\\n', flag))"
+    ),
+    prefix = "rapp-annotated-na-switch-"
+  )
+
+  help <- capture.output(Rapp::run(app_path, "--help"))
+  expect_true(any(grepl("--flag / --no-flag", help, fixed = TRUE)))
+
+  expect_output(Rapp::run(app_path, character()), "flag=NA")
+  expect_output(Rapp::run(app_path, "--flag"), "flag=TRUE")
+  expect_output(Rapp::run(app_path, "--no-flag"), "flag=FALSE")
+})
+
+test_that("negative_alias false only rejects negative aliases", {
+  true_default_app <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| negative_alias: false",
+      "flag <- TRUE",
+      "file <- NULL",
+      "cat(sprintf('flag=%s file=%s\\n', flag, file))"
+    ),
+    prefix = "rapp-disabled-positive-alias-positional-"
+  )
+
+  expect_output(
+    Rapp::run(true_default_app, c("--flag=false", "input")),
+    "flag=FALSE file=input"
+  )
+  expect_output(
+    Rapp::run(true_default_app, c("--flag", "false", "input")),
+    "flag=FALSE file=input"
+  )
+  expect_output(
+    Rapp::run(true_default_app, c("--flag", "input")),
+    "flag=TRUE file=input"
+  )
+
+  expect_error(
+    Rapp::run(true_default_app, "--no-flag"),
+    "Arguments not recognized: --no-flag",
+    fixed = TRUE
+  )
+
+  false_default_app <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| negative_alias: false",
+      "flag <- FALSE",
+      "file <- NULL",
+      "cat(sprintf('flag=%s file=%s\\n', flag, file))"
+    ),
+    prefix = "rapp-disabled-negative-alias-positional-"
+  )
+
+  expect_error(
+    Rapp::run(false_default_app, "--no-flag"),
+    "Arguments not recognized: --no-flag",
+    fixed = TRUE
+  )
+  expect_error(
+    Rapp::run(false_default_app, "--no-flag=false"),
+    "Arguments not recognized: --no-flag=false",
+    fixed = TRUE
+  )
+})
+
+test_that("boolean options can require explicit values", {
+  app_path <- local_rapp_app(
+    c(
+      "#!/usr/bin/env Rapp",
+      "#| arg_type: option",
+      "flag <- NA",
+      "file <- NULL",
+      "cat(sprintf('flag=%s file=%s\\n', flag, file))"
+    ),
+    prefix = "rapp-explicit-bool-option-"
+  )
+
+  expect_output(
+    Rapp::run(app_path, c("--flag", "false", "input")),
+    "flag=FALSE file=input"
+  )
+  expect_output(
+    Rapp::run(app_path, c("--flag=false", "input")),
+    "flag=FALSE file=input"
+  )
+  expect_error(
+    Rapp::run(app_path, "--flag"),
+    "Missing value for --flag.",
+    fixed = TRUE
+  )
+  expect_error(
+    Rapp::run(app_path, "--no-flag"),
+    "Arguments not recognized: --no-flag",
+    fixed = TRUE
+  )
+  expect_error(
+    Rapp::run(app_path, "--no-flag=false"),
+    "Arguments not recognized: --no-flag=false",
+    fixed = TRUE
+  )
+})
+
 test_that("YAML 1.2 strings are preserved in parsed option values", {
   app_path <- local_rapp_app(
     c(

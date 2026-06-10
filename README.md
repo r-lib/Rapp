@@ -113,30 +113,43 @@ flip-coin --n=1
 flip-coin --n 1
 ```
 
-Bool options, (that is, assignments of `TRUE` or `FALSE` in an R app)
-are a little different. They support usage as switches or toggles at the
-command line. For example in an R script:
+Assignments of `TRUE`, `FALSE`, or `NA` are a little different from other
+options. They support usage as switches or toggles at the command line,
+and the default controls which aliases are exposed. For example in an R
+script:
 
 ``` r
 echo <- TRUE
 ```
 
-means that at the command line the following are supported:
+means that at the command line the negative alias is supported:
 
 ``` r
-my-app --echo       # TRUE
-my-app --echo=true  # TRUE
-my-app --echo=1     # TRUE
-
 my-app --no-echo     # FALSE
-my-app --echo=false  # FALSE
-my-app --echo=0      # FALSE
+```
+
+With `echo <- FALSE`, the positive alias `--echo` is supported.
+Assignments of `NA` are tri-state boolean switches: omitting the flag
+leaves the value as `NA`, `--echo` sets it to `TRUE`, and `--no-echo`
+sets it to `FALSE`. Boolean switches also accept explicit values, such
+as `--echo=true`, `--echo=false`, `--echo true`, and `--echo false`.
+
+To omit the generated `--no-*` alias for a boolean switch, add
+`#| negative_alias: false` above the assignment:
+
+``` r
+#| description: Print version and exit.
+#| negative_alias: false
+version <- FALSE
 ```
 
 Rapp parses option values as YAML 1.2, where bare `yes` and `no` are
 strings rather than boolean aliases for non-bool values. For declared
 bool options, Rapp also accepts YAML 1.1 bool aliases such as `yes`,
 `no`, `y`, `n`, `on`, and `off` for backward compatibility.
+
+See [Boolean option behavior](docs/boolean-options.md) for a full table
+of boolean defaults, annotations, and accepted command-line forms.
 
 Assigning `c()` or `list()` declares an option that can be supplied
 multiple times. Use `c()` when you want to keep the exact strings
@@ -348,6 +361,8 @@ Other YAML fields you can supply to change the behavior of Rapp
 - `arg_type`: how the input appears on the CLI (`option`, `switch`, `positional`).
 - `action`: whether values replace or accumulate (`replace` vs `append` for
   repeatable options and collectors).
+- `negative_alias`: override whether boolean switches include a generated
+  `--no-*` alias.
 - `examples`: usage examples to show in `--help`. Use a YAML sequence to list
   multiple examples.
 
@@ -360,7 +375,9 @@ command line arguments.
 |----|----|
 | Assignment of scalar literal<br>`foo <- ""` | Option<br>`APP --foo value` |
 | Assignment of `NULL`<br>`foo <- NULL` | Positional Arg<br>`APP foo-value` |
-| Assignment of `TRUE` or `FALSE`<br>`foo <- TRUE` | Boolean switch<br>`APP --foo` or `APP --no-foo` |
+| Assignment of `FALSE`<br>`foo <- FALSE` | Boolean switch<br>`APP --foo` |
+| Assignment of `TRUE`<br>`foo <- TRUE` | Boolean switch<br>`APP --no-foo` |
+| Assignment of `NA`<br>`foo <- NA` | Tri-state boolean switch<br>`APP --foo` or `APP --no-foo` |
 | Assignment of `c()` or `list()`<br>`foo <- c()` | Repeatable option<br>`APP --foo val1 --foo val2` |
 | Assignment of `NULL` to name with `...`<br>`args... <- NULL` | Positional Arg Collector<br>`APP foo bar baz` |
 | Switch with string literal<br>`switch("", cmd1 = {}, cmd2 = {})` | Required commands<br>`APP --help`<br>`APP cmd1 --help`<br>`APP cmd2 --help` |

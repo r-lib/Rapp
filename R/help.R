@@ -191,18 +191,26 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
         details <- c(details, sprintf("[type: %s]", opt$val_type))
       }
     } else if (identical(opt$arg_type, "switch")) {
-      default_value <- format_default_value(opt$default)
-      toggle_flag <- paste0("--no-", cli_name)
-      toggle_note <- if (isTRUE(opt$default)) {
-        sprintf("Disable with `%s`.", toggle_flag)
+      positive_flag <- paste0("--", cli_name)
+      negative_flag <- paste0("--no-", cli_name)
+      show_positive <- shows_positive_alias(opt)
+      show_negative <- shows_negative_alias(opt)
+      if (!show_positive && !show_negative) {
+        flag <- paste(positive_flag, format_placeholder(name))
+        if (!is.null(short_flag) && nzchar(short_flag)) {
+          flag <- paste0("-", short_flag, ", ", flag)
+        }
+        details <- c(details, "[type: bool]")
       } else {
-        sprintf("Enable with `%s`.", paste0("--", cli_name))
+        flags <- c(
+          if (show_positive) positive_flag,
+          if (show_negative) negative_flag
+        )
+        flag <- paste(flags, collapse = " / ")
+        if (!is.null(short_flag) && nzchar(short_flag)) {
+          flag <- paste0("-", short_flag, ", ", flag)
+        }
       }
-      if (!is.null(default_value)) {
-        details <- c(details, sprintf("[default: %s]", default_value))
-      }
-      details <- c(details, toggle_note)
-      flag <- paste(flag, "/", toggle_flag)
     }
 
     if (identical(opt$action, "append")) {
@@ -253,7 +261,7 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
       ctx <- label_context(entry$label, indent, label_width)
       text <- entry$text
       if (!length(text)) {
-        out <- c(out, ctx$initial)
+        out <- c(out, paste0(strrep(" ", indent), entry$label))
         next
       }
       for (i in seq_along(text)) {
