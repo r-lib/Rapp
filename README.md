@@ -148,7 +148,7 @@ strings rather than boolean aliases for non-bool values. For declared
 bool options, Rapp also accepts YAML 1.1 bool aliases such as `yes`,
 `no`, `y`, `n`, `on`, and `off` for backward compatibility.
 
-See [Boolean option behavior](docs/boolean-options.md) for a full table
+See [Boolean option behavior](inst/notes/boolean-options.md) for a full table
 of boolean defaults, annotations, and accepted command-line forms.
 
 Assigning `c()` or `list()` declares an option that can be supplied

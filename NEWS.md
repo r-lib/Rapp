@@ -18,7 +18,7 @@
   and `foo <- NA` shows `--foo / --no-foo`. Passing values remains more
   permissive: switches accept explicit values such as `--foo=false` and
   `--foo false`. See the
-  [Boolean option behavior](docs/boolean-options.md) table for the full
+  [Boolean option behavior](inst/notes/boolean-options.md) table for the full
   set of accepted forms (#28).
 
 ## New features
