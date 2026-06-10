@@ -307,13 +307,20 @@ test_that("boolean options can require explicit values", {
       "#!/usr/bin/env Rapp",
       "#| arg_type: option",
       "flag <- NA",
-      "cat(sprintf('flag=%s\\n', flag))"
+      "file <- NULL",
+      "cat(sprintf('flag=%s file=%s\\n', flag, file))"
     ),
     prefix = "rapp-explicit-bool-option-"
   )
 
-  expect_output(Rapp::run(app_path, c("--flag", "false")), "flag=FALSE")
-  expect_output(Rapp::run(app_path, "--flag=false"), "flag=FALSE")
+  expect_output(
+    Rapp::run(app_path, c("--flag", "false", "input")),
+    "flag=FALSE file=input"
+  )
+  expect_output(
+    Rapp::run(app_path, c("--flag=false", "input")),
+    "flag=FALSE file=input"
+  )
   expect_error(
     Rapp::run(app_path, "--flag"),
     "Missing value for --flag.",
@@ -322,6 +329,11 @@ test_that("boolean options can require explicit values", {
   expect_error(
     Rapp::run(app_path, "--no-flag"),
     "Arguments not recognized: --no-flag",
+    fixed = TRUE
+  )
+  expect_error(
+    Rapp::run(app_path, "--no-flag=false"),
+    "Arguments not recognized: --no-flag=false",
     fixed = TRUE
   )
 })

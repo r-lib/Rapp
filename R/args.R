@@ -13,6 +13,11 @@ process_args <- function(args, app) {
   stop_unrecognized_arg <- function(arg) {
     stop("Arguments not recognized: ", arg, call. = FALSE)
   }
+  is_bool_option_spec <- function(spec) {
+    !is.null(spec) &&
+      identical(spec$arg_type, "option") &&
+      identical(spec$val_type, "bool")
+  }
 
   short_opt_to_long_opt <- function(short_opt) {
     short <- str_drop_prefix(short_opt, "-")
@@ -111,7 +116,10 @@ process_args <- function(args, app) {
         alt_spec <- app_opts[[alt_name]]
         if (
           !is.null(alt_spec) &&
-            identical(alt_spec$arg_type, "switch")
+            (
+              identical(alt_spec$arg_type, "switch") ||
+                is_bool_option_spec(alt_spec)
+            )
         ) {
           stop_unrecognized_arg(a)
         }
@@ -148,6 +156,8 @@ process_args <- function(args, app) {
           } else {
             stop_unrecognized_arg(a)
           }
+        } else if (is_bool_option_spec(alt_spec)) {
+          stop_unrecognized_arg(a)
         }
       }
     }
