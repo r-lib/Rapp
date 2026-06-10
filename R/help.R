@@ -194,8 +194,8 @@ print_app_help <- function(app, yaml = TRUE, command_path = character()) {
       default_value <- format_default_value(opt$default)
       positive_flag <- paste0("--", cli_name)
       negative_flag <- paste0("--no-", cli_name)
-      show_positive <- show_positive_alias(opt)
-      show_negative <- show_negative_alias(opt)
+      show_positive <- shows_positive_alias(opt)
+      show_negative <- shows_negative_alias(opt)
       if (!show_positive && !show_negative) {
         flag <- paste(positive_flag, format_placeholder(name))
         if (!is.null(short_flag) && nzchar(short_flag)) {

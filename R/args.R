@@ -19,10 +19,10 @@ process_args <- function(args, app) {
     for (i in seq_along(app_opts)) {
       if (identical(short, app_opts[[i]][["short"]])) {
         if (identical(app_opts[[i]][["arg_type"]], "switch")) {
-          if (show_positive_alias(app_opts[[i]])) {
+          if (shows_positive_alias(app_opts[[i]])) {
             return(paste0("--", names(app_opts)[[i]]))
           }
-          if (show_negative_alias(app_opts[[i]])) {
+          if (shows_negative_alias(app_opts[[i]])) {
             return(paste0("--no-", names(app_opts)[[i]]))
           }
           return(paste0("--", names(app_opts)[[i]]))
@@ -99,7 +99,7 @@ process_args <- function(args, app) {
       if (
         !is.null(spec) &&
           identical(spec$arg_type, "switch") &&
-          !has_positive_alias(spec)
+          !accepts_positive_alias(spec)
       ) {
         stop_unrecognized_arg(a)
       }
@@ -125,7 +125,7 @@ process_args <- function(args, app) {
       if (
         !is.null(spec) &&
           identical(spec$arg_type, "switch") &&
-          !has_positive_alias(spec)
+          !accepts_positive_alias(spec)
       ) {
         stop_unrecognized_arg(a)
       }
@@ -141,7 +141,7 @@ process_args <- function(args, app) {
           !is.null(alt_spec) &&
             identical(alt_spec$arg_type, "switch")
         ) {
-          if (has_negative_alias(alt_spec)) {
+          if (accepts_negative_alias(alt_spec)) {
             spec <- alt_spec
             val <- "false"
             name <- alt_name

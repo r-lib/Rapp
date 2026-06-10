@@ -79,7 +79,9 @@ check_bool_switch_default <- function(default) {
   }
 }
 
-has_positive_alias <- function(opt) {
+# Parsing is intentionally more permissive than help. accepts_* controls
+# command-line forms; shows_* controls the concise help surface.
+accepts_positive_alias <- function(opt) {
   stopifnot(identical(opt[["arg_type"]], "switch"))
 
   default <- opt[["default"]]
@@ -88,7 +90,7 @@ has_positive_alias <- function(opt) {
   TRUE
 }
 
-has_negative_alias <- function(opt) {
+accepts_negative_alias <- function(opt) {
   stopifnot(identical(opt[["arg_type"]], "switch"))
 
   default <- opt[["default"]]
@@ -101,7 +103,7 @@ has_negative_alias <- function(opt) {
   TRUE
 }
 
-show_positive_alias <- function(opt) {
+shows_positive_alias <- function(opt) {
   stopifnot(identical(opt[["arg_type"]], "switch"))
 
   default <- opt[["default"]]
@@ -110,13 +112,13 @@ show_positive_alias <- function(opt) {
   isFALSE(default) || isTRUE(is.na(default))
 }
 
-show_negative_alias <- function(opt) {
+shows_negative_alias <- function(opt) {
   stopifnot(identical(opt[["arg_type"]], "switch"))
 
   default <- opt[["default"]]
   check_bool_switch_default(default)
 
-  has_negative_alias(opt) && (isTRUE(default) || isTRUE(is.na(default)))
+  accepts_negative_alias(opt) && (isTRUE(default) || isTRUE(is.na(default)))
 }
 
 `append<-` <- function(x, after = NULL, value) {
