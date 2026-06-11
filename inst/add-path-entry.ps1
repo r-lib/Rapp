@@ -40,7 +40,17 @@ if ($NewPathEntryNorm -in $PathEntryNorms) {
 $NewPath = (,$NewPathEntry + $PathEntries) -join ';'
 
 if ($NewPath.Length -gt 32767) {
-  Write-Error "Adding $NewPathEntry would make your user-level PATH $($NewPath.Length) characters, exceeding the Windows environment variable limit of 32767."
+  $Hint = @(
+    "Rapp uses a Windows short path when one is available."
+    "Remove stale entries from your user-level PATH or choose a shorter launcher directory with RAPP_BIN_DIR."
+    "Windows long-path support does not increase this environment-variable limit."
+  ) -join ' '
+  $Message = @(
+    "Adding $NewPathEntry would make your user-level PATH $($NewPath.Length) characters,"
+    "exceeding the Windows environment variable limit of 32767."
+    $Hint
+  ) -join ' '
+  Write-Error $Message
   exit 3
 }
 

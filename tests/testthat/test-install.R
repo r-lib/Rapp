@@ -232,14 +232,14 @@ test_that("install_pkg_cli_apps leaves Windows PATH alone when destdir is alread
 })
 
 
-test_that("prepend_path_entry keeps the existing process PATH", {
+test_that("path_entries can keep the existing process PATH raw", {
   env_path <- paste("first", "second", sep = .Platform$path.sep)
 
   expect_identical(
-    Rapp:::prepend_path_entry("new", env_path),
-    paste("new", "first", "second", sep = .Platform$path.sep)
+    Rapp:::path_entries(env_path, normalize = FALSE),
+    c("first", "second")
   )
-  expect_identical(Rapp:::prepend_path_entry("new", ""), "new")
+  expect_identical(Rapp:::path_entries("", normalize = FALSE), character())
 })
 
 
