@@ -483,44 +483,82 @@ ensure_path_windows <- function(destdir = rapp_install_dir()) {
     return(FALSE)
   }
   stopifnot(.Platform$OS.type == "windows")
-  destdir <- normalizePath(destdir, winslash = "\\", mustWork = TRUE)
+  destdir <- normalizePath(destdir, mustWork = TRUE)
+  path_entry <- utils::shortPathName(destdir)
+  if (
+    is.na(path_entry) ||
+      !nzchar(path_entry) ||
+      nchar(path_entry) >= nchar(destdir)
+  ) {
+    path_entry <- destdir
+  }
 
-  # Check if we're already on PATH. If we are, do nothing
-  # Read current PATH from HKCU\Environment
-  path <- get_env_win_registry("Path")
-  path <- strsplit(path, ";", fixed = TRUE)[[1L]]
-  path <- path[nzchar(path)]
-  path <- unique(path)
+  is_on_path <- function(env_path = Sys.getenv("PATH")) {
+    path_has_dir(destdir, env_path, ignore_case = TRUE) ||
+      path_has_dir(path_entry, env_path, ignore_case = TRUE)
+  }
+  update_process_path <- function(env_path = Sys.getenv("PATH")) {
+    if (is_on_path(env_path)) {
+      return(FALSE)
+    }
+    Sys.setenv(
+      "PATH" = paste(
+        c(path_entry, path_entries(env_path, normalize = FALSE)),
+        collapse = .Platform$path.sep
+      )
+    )
+    TRUE
+  }
 
-  path_norm <- function(x) tolower(normalizePath(x, mustWork = FALSE))
-  present <- path_norm(destdir) %in% path_norm(path)
-  if (present) {
+  # Check if we're already on the user-level PATH. If we are, do nothing.
+  # Read current PATH from HKCU\Environment.
+  user_path <- get_env_win_registry("Path")
+  if (is_on_path(user_path)) {
+    update_process_path()
     return(FALSE)
   }
 
   # We are not on the PATH yet, we have to add it
   # Pass the new path entry via envvar to avoid quoting and encoding shenanigans
-  # also, propogate the new updated PATH from the registry to this R session
+  # and also propagate the new entry to this R session.
   old <- Sys.getenv("RAPP_NEW_PATH_ENTRY", NA_character_)
-  Sys.setenv("RAPP_NEW_PATH_ENTRY" = destdir)
+  old_path <- Sys.getenv("PATH")
+  Sys.setenv("RAPP_NEW_PATH_ENTRY" = path_entry)
   on.exit({
     if (is.na(old)) {
       Sys.unsetenv("RAPP_NEW_PATH_ENTRY")
     } else {
       Sys.setenv("RAPP_NEW_PATH_ENTRY" = old)
     }
-    Sys.setenv("PATH" = get_env_win_registry("Path"))
   })
 
   script <- shQuote(utils::shortPathName(
     system.file("add-path-entry.ps1", package = "Rapp")
   ))
   args <- c("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script)
-  system2("powershell", args)
+  status <- run_powershell(args)
+  if (!identical(status, 0L)) {
+    warning(
+      "Could not add ",
+      path_entry,
+      " to the user-level PATH; powershell exited with status ",
+      status,
+      ".",
+      call. = FALSE
+    )
+    return(FALSE)
+  }
+
+  update_process_path(old_path)
+  TRUE
 }
 
 get_env_win_registry <- function(name) {
   utils::readRegistry("Environment", hive = "HCU", view = "default")[[name]]
+}
+
+run_powershell <- function(args) {
+  system2("powershell", args)
 }
 
 ensure_path_macos <- function(destdir = rapp_install_dir()) {
@@ -629,14 +667,34 @@ write_macos_path_lines <- function(profile, lines, profile_display) {
   )
 }
 
-path_has_dir <- function(dir, env_path = Sys.getenv("PATH")) {
-  normalizePath(dir, mustWork = FALSE) %in% path_entries(env_path)
+path_has_dir <- function(
+  dir,
+  env_path = Sys.getenv("PATH"),
+  ignore_case = is_windows()
+) {
+  dir <- normalizePath(dir, mustWork = FALSE)
+  entries <- path_entries(env_path)
+
+  if (ignore_case) {
+    dir <- tolower(dir)
+    entries <- tolower(entries)
+  }
+
+  dir %in% entries
 }
 
-path_entries <- function(env_path = Sys.getenv("PATH")) {
+path_entries <- function(env_path = Sys.getenv("PATH"), normalize = TRUE) {
+  if (is.null(env_path) || !length(env_path) || is.na(env_path)) {
+    return(character())
+  }
+
   entries <- strsplit(env_path, .Platform$path.sep, fixed = TRUE)[[1L]]
   entries <- entries[nzchar(entries)]
-  normalizePath(entries, mustWork = FALSE)
+  if (normalize) {
+    normalizePath(entries, mustWork = FALSE)
+  } else {
+    entries
+  }
 }
 
 is_macos <- function() {

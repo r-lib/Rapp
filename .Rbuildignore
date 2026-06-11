@@ -9,3 +9,4 @@
 ^\.vscode$
 ^deps$
 ^\.git-blame-ignore-revs$
+^\.git$
