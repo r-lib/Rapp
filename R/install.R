@@ -493,20 +493,28 @@ ensure_path_windows <- function(destdir = rapp_install_dir()) {
     path_entry <- destdir
   }
 
-  if (
-    path_has_dir(destdir, ignore_case = TRUE) ||
-      path_has_dir(path_entry, ignore_case = TRUE)
-  ) {
-    return(FALSE)
+  is_on_path <- function(env_path = Sys.getenv("PATH")) {
+    path_has_dir(destdir, env_path, ignore_case = TRUE) ||
+      path_has_dir(path_entry, env_path, ignore_case = TRUE)
+  }
+  update_process_path <- function(env_path = Sys.getenv("PATH")) {
+    if (is_on_path(env_path)) {
+      return(FALSE)
+    }
+    Sys.setenv(
+      "PATH" = paste(
+        c(path_entry, path_entries(env_path, normalize = FALSE)),
+        collapse = .Platform$path.sep
+      )
+    )
+    TRUE
   }
 
   # Check if we're already on the user-level PATH. If we are, do nothing.
   # Read current PATH from HKCU\Environment.
   user_path <- get_env_win_registry("Path")
-  if (
-    path_has_dir(destdir, user_path, ignore_case = TRUE) ||
-      path_has_dir(path_entry, user_path, ignore_case = TRUE)
-  ) {
+  if (is_on_path(user_path)) {
+    update_process_path()
     return(FALSE)
   }
 
@@ -528,7 +536,7 @@ ensure_path_windows <- function(destdir = rapp_install_dir()) {
     system.file("add-path-entry.ps1", package = "Rapp")
   ))
   args <- c("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script)
-  status <- system2("powershell", args)
+  status <- run_powershell(args)
   if (!identical(status, 0L)) {
     warning(
       "Could not add ",
@@ -541,17 +549,16 @@ ensure_path_windows <- function(destdir = rapp_install_dir()) {
     return(FALSE)
   }
 
-  Sys.setenv(
-    "PATH" = paste(
-      c(path_entry, path_entries(old_path, normalize = FALSE)),
-      collapse = .Platform$path.sep
-    )
-  )
+  update_process_path(old_path)
   TRUE
 }
 
 get_env_win_registry <- function(name) {
   utils::readRegistry("Environment", hive = "HCU", view = "default")[[name]]
+}
+
+run_powershell <- function(args) {
+  system2("powershell", args)
 }
 
 ensure_path_macos <- function(destdir = rapp_install_dir()) {

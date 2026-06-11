@@ -213,7 +213,7 @@ test_that("non-Rapp executables respect overwrite flag", {
 })
 
 
-test_that("install_pkg_cli_apps leaves Windows PATH alone when destdir is already available", {
+test_that("install_pkg_cli_apps persists Windows PATH when destdir is only transient", {
   skip_if_not(is_windows())
 
   destdir <- tempfile("rapp-bin-win-path")
@@ -227,8 +227,26 @@ test_that("install_pkg_cli_apps leaves Windows PATH alone when destdir is alread
     PATH = path_with_destdir
   )
 
-  expect_false(Rapp:::ensure_path_windows(destdir))
+  powershell_calls <- list()
+  testthat::local_mocked_bindings(
+    get_env_win_registry = function(name) {
+      expect_identical(name, "Path")
+      "C:\\Windows\\system32"
+    },
+    run_powershell = function(args) {
+      powershell_calls <<- append(powershell_calls, list(list(
+        args = args,
+        path_entry = Sys.getenv("RAPP_NEW_PATH_ENTRY")
+      )))
+      0L
+    },
+    .package = "Rapp"
+  )
+
+  expect_true(Rapp:::ensure_path_windows(destdir))
   expect_identical(Sys.getenv("PATH"), path_with_destdir)
+  expect_length(powershell_calls, 1L)
+  expect_same_path(powershell_calls[[1L]][["path_entry"]], destdir)
 })
 
 
