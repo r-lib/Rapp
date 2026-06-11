@@ -213,6 +213,36 @@ test_that("non-Rapp executables respect overwrite flag", {
 })
 
 
+test_that("install_pkg_cli_apps leaves Windows PATH alone when destdir is already available", {
+  skip_if_not(is_windows())
+
+  destdir <- tempfile("rapp-bin-win-path")
+  dir.create(destdir, recursive = TRUE)
+  on.exit(unlink(destdir, recursive = TRUE), add = TRUE)
+
+  current_path <- Sys.getenv("PATH")
+  path_with_destdir <- paste(destdir, current_path, sep = .Platform$path.sep)
+  withr::local_envvar(
+    RAPP_NO_MODIFY_PATH = NA,
+    PATH = path_with_destdir
+  )
+
+  expect_false(Rapp:::ensure_path_windows(destdir))
+  expect_identical(Sys.getenv("PATH"), path_with_destdir)
+})
+
+
+test_that("prepend_path_entry keeps the existing process PATH", {
+  env_path <- paste("first", "second", sep = .Platform$path.sep)
+
+  expect_identical(
+    Rapp:::prepend_path_entry("new", env_path),
+    paste("new", "first", "second", sep = .Platform$path.sep)
+  )
+  expect_identical(Rapp:::prepend_path_entry("new", ""), "new")
+})
+
+
 test_that("install_pkg_cli_apps adds default macOS install dir to PATH setup", {
   skip_if_not(identical(Sys.info()[["sysname"]], "Darwin"))
   skip_on_cran()

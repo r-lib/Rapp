@@ -10,17 +10,39 @@ $NewPathEntry = if ($env:RAPP_NEW_PATH_ENTRY) { $env:RAPP_NEW_PATH_ENTRY } elsei
 
 Write-Verbose "Adding $NewPathEntry to your user-level PATH"
 
+function Normalize-PathEntry([string]$PathEntry) {
+  try {
+    $PathEntry = (Resolve-Path -LiteralPath $PathEntry -ErrorAction Stop).ProviderPath
+  } catch {
+  }
+
+  try {
+    $PathEntry = [System.IO.Path]::GetFullPath($PathEntry)
+  } catch {
+  }
+
+  return $PathEntry.TrimEnd('\').ToLowerInvariant()
+}
+
 # Read unexpanded PATH components
 $PathEntries = (Get-Item -LiteralPath $RegistryPath).GetValue(
   'Path', '', 'DoNotExpandEnvironmentNames') -split ';' -ne ''
 
-if ($NewPathEntry -in $PathEntries) {
+$NewPathEntryNorm = Normalize-PathEntry $NewPathEntry
+$PathEntryNorms = $PathEntries | ForEach-Object { Normalize-PathEntry $_ }
+
+if ($NewPathEntryNorm -in $PathEntryNorms) {
   Write-Verbose "Install directory $NewPathEntry already on PATH!"
-  exit 1
+  exit 0
 }
 
 # Prepend to PATH
 $NewPath = (,$NewPathEntry + $PathEntries) -join ';'
+
+if ($NewPath.Length -gt 32767) {
+  Write-Error "Adding $NewPathEntry would make your user-level PATH $($NewPath.Length) characters, exceeding the Windows environment variable limit of 32767."
+  exit 3
+}
 
 # Update registry as REG_EXPAND_SZ
 Set-ItemProperty -Type ExpandString -LiteralPath $RegistryPath Path -Value $NewPath

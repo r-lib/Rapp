@@ -485,23 +485,23 @@ ensure_path_windows <- function(destdir = rapp_install_dir()) {
   stopifnot(.Platform$OS.type == "windows")
   destdir <- normalizePath(destdir, winslash = "\\", mustWork = TRUE)
 
-  # Check if we're already on PATH. If we are, do nothing
-  # Read current PATH from HKCU\Environment
-  path <- get_env_win_registry("Path")
-  path <- strsplit(path, ";", fixed = TRUE)[[1L]]
-  path <- path[nzchar(path)]
-  path <- unique(path)
+  if (path_has_dir_windows(destdir)) {
+    return(FALSE)
+  }
 
-  path_norm <- function(x) tolower(normalizePath(x, mustWork = FALSE))
-  present <- path_norm(destdir) %in% path_norm(path)
+  # Check if we're already on the user-level PATH. If we are, do nothing.
+  # Read current PATH from HKCU\Environment.
+  path <- unique(raw_path_entries(get_env_win_registry("Path")))
+  present <- path_norm_windows(destdir) %in% path_norm_windows(path)
   if (present) {
     return(FALSE)
   }
 
   # We are not on the PATH yet, we have to add it
   # Pass the new path entry via envvar to avoid quoting and encoding shenanigans
-  # also, propogate the new updated PATH from the registry to this R session
+  # and also propagate the new entry to this R session.
   old <- Sys.getenv("RAPP_NEW_PATH_ENTRY", NA_character_)
+  old_path <- Sys.getenv("PATH")
   Sys.setenv("RAPP_NEW_PATH_ENTRY" = destdir)
   on.exit({
     if (is.na(old)) {
@@ -509,14 +509,27 @@ ensure_path_windows <- function(destdir = rapp_install_dir()) {
     } else {
       Sys.setenv("RAPP_NEW_PATH_ENTRY" = old)
     }
-    Sys.setenv("PATH" = get_env_win_registry("Path"))
   })
 
   script <- shQuote(utils::shortPathName(
     system.file("add-path-entry.ps1", package = "Rapp")
   ))
   args <- c("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script)
-  system2("powershell", args)
+  status <- system2("powershell", args)
+  if (!identical(status, 0L)) {
+    warning(
+      "Could not add ",
+      destdir,
+      " to the user-level PATH; powershell exited with status ",
+      status,
+      ".",
+      call. = FALSE
+    )
+    return(FALSE)
+  }
+
+  Sys.setenv("PATH" = prepend_path_entry(destdir, old_path))
+  TRUE
 }
 
 get_env_win_registry <- function(name) {
@@ -633,10 +646,28 @@ path_has_dir <- function(dir, env_path = Sys.getenv("PATH")) {
   normalizePath(dir, mustWork = FALSE) %in% path_entries(env_path)
 }
 
-path_entries <- function(env_path = Sys.getenv("PATH")) {
+path_has_dir_windows <- function(dir, env_path = Sys.getenv("PATH")) {
+  path_norm_windows(dir) %in% path_norm_windows(raw_path_entries(env_path))
+}
+
+path_norm_windows <- function(x) {
+  tolower(normalizePath(x, winslash = "\\", mustWork = FALSE))
+}
+
+prepend_path_entry <- function(dir, env_path = Sys.getenv("PATH")) {
+  paste(c(dir, raw_path_entries(env_path)), collapse = .Platform$path.sep)
+}
+
+raw_path_entries <- function(env_path = Sys.getenv("PATH")) {
+  if (is.null(env_path) || !length(env_path) || is.na(env_path)) {
+    return(character())
+  }
   entries <- strsplit(env_path, .Platform$path.sep, fixed = TRUE)[[1L]]
-  entries <- entries[nzchar(entries)]
-  normalizePath(entries, mustWork = FALSE)
+  entries[nzchar(entries)]
+}
+
+path_entries <- function(env_path = Sys.getenv("PATH")) {
+  normalizePath(raw_path_entries(env_path), mustWork = FALSE)
 }
 
 is_macos <- function() {
