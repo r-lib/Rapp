@@ -45,6 +45,11 @@
   directory to the user's zsh profile on macOS when it is not already on
   `PATH`. It respects `ZDOTDIR` and warns if the profile cannot be
   updated (#35).
+- On Windows, `install_pkg_cli_apps()` no longer replaces the current
+  process `PATH` with only the user-level `Path` after adding launcher
+  directories. It now avoids duplicate entries, uses a short path when
+  available, and reports too-long user-level `Path` values with a
+  remediation hint (#38).
 
 # Rapp 0.3.0
 
