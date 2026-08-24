@@ -40,7 +40,10 @@ snapshot_command_runs <- function(app_path, ...) {
       )
     })
   )
-  expect_snapshot(yaml12::write_yaml(snapshot))
+  expect_snapshot(
+    yaml12::write_yaml(snapshot),
+    variant = yaml12_snapshot_variant()
+  )
 
   runs
 }

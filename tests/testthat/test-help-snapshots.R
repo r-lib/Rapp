@@ -103,11 +103,25 @@ test_that("command --help snapshots", {
 # })
 
 test_that("--help-yaml snapshots", {
-  expect_snapshot(write_cli_output("flip-coin", "--help-yaml"))
-  expect_snapshot(write_cli_output("todo", "--help-yaml"))
-  expect_snapshot(write_cli_output("nested-commands", "--help-yaml"))
-  expect_snapshot(write_cli_output("todo", c("list", "--help-yaml")))
+  variant <- yaml12_snapshot_variant()
   expect_snapshot(
-    write_cli_output("nested-commands", c("parent", "child2", "--help-yaml"))
+    write_cli_output("flip-coin", "--help-yaml"),
+    variant = variant
+  )
+  expect_snapshot(
+    write_cli_output("todo", "--help-yaml"),
+    variant = variant
+  )
+  expect_snapshot(
+    write_cli_output("nested-commands", "--help-yaml"),
+    variant = variant
+  )
+  expect_snapshot(
+    write_cli_output("todo", c("list", "--help-yaml")),
+    variant = variant
+  )
+  expect_snapshot(
+    write_cli_output("nested-commands", c("parent", "child2", "--help-yaml")),
+    variant = variant
   )
 })

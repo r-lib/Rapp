@@ -14,8 +14,15 @@ test_that("ls app accepts same option multiple times", {
 
   # run_ls_app(c(dir, "-p", "alpha", "-p", "\\.txt$"))
 
-  expect_snapshot(run_ls_app(c(dir, "-p", "alpha", "-p", "\\.txt$")))
-  expect_snapshot(run_ls_app(c(dir, "--pattern", "t$", "-p", "^beta")))
+  variant <- yaml12_snapshot_variant()
+  expect_snapshot(
+    run_ls_app(c(dir, "-p", "alpha", "-p", "\\.txt$")),
+    variant = variant
+  )
+  expect_snapshot(
+    run_ls_app(c(dir, "--pattern", "t$", "-p", "^beta")),
+    variant = variant
+  )
 
   app <- Rapp:::as_app(ls_app)
   expect_identical(app$args$root$arg_type, "positional")
