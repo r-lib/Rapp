@@ -1,5 +1,8 @@
 # Rapp (development version)
 
+- Updated snapshot tests for yaml12 0.2.0's revised output formatting. This
+  does not change Rapp's behavior.
+
 # Rapp 0.4.0
 
 ## Breaking changes
