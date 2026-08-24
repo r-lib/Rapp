@@ -2,6 +2,17 @@ is_windows <- function() {
   identical(.Platform$OS.type, "windows")
 }
 
+yaml12_snapshot_variant <- function(
+  version = utils::packageVersion("yaml12")
+) {
+  version <- base::package_version(as.character(version))
+  if (version > base::package_version("0.1.0")) {
+    "yaml12-0.2"
+  } else {
+    "yaml12-0.1"
+  }
+}
+
 # options(Rapp.quit_on_error = FALSE)
 
 setup_fake_rapp_package <- function(base, suffix, package = "Rapp") {
